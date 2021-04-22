@@ -1,9 +1,15 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
+import { selectHexGameState } from './hexGameSlice';
 
 interface HexagonProps {
   translateX: number;
   translateY: number;
   scale: number;
+}
+
+interface HexBoardProps {
+  size: number;
 }
 
 function Hexagon(props: HexagonProps) {
@@ -17,12 +23,20 @@ function Hexagon(props: HexagonProps) {
   );
 }
 
-export default function HexGame() {
+function HexBoard(props: HexBoardProps) {
+  const { size } = props;
   return (
     <div>
+      {size}
       <svg viewBox="0 0 100 100" width={100} height={100}>
         <Hexagon translateX={20} translateY={20} scale={20} />
       </svg>
     </div>
   );
+}
+
+export default function HexGame() {
+  const { settings } = useSelector(selectHexGameState);
+  const { boardSize } = settings;
+  return <HexBoard size={boardSize} />;
 }

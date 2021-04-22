@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
+import { hexGameStateUpdated } from './hexGameSlice';
 import './App.global.css';
 
 interface BoardSizeSelectorProps {
@@ -8,7 +10,7 @@ interface BoardSizeSelectorProps {
 }
 
 interface SwapRuleToggleProps {
-  on: boolean;
+  enabled: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -32,21 +34,30 @@ function BoardSizeSelector(props: BoardSizeSelectorProps) {
 }
 
 function SwapRuleToggle(props: SwapRuleToggleProps) {
-  const { on, onChange } = props;
+  const { enabled, onChange } = props;
   return (
     <div>
       Use swap rule
-      <input type="checkbox" checked={on} onChange={onChange} id="swapRule" />
+      <input
+        type="checkbox"
+        checked={enabled}
+        onChange={onChange}
+        id="swapRule"
+      />
     </div>
   );
 }
 
 export default function HexSettings() {
+  const dispatch = useDispatch();
   const history = useHistory();
+
   const [boardSize, setBoardSize] = useState(14);
-  const [swapRule, setSwapRule] = useState(true);
+  const [useSwapRule, setUseSwapRule] = useState(true);
 
   const handleSubmit = () => {
+    const state = { settings: { boardSize, useSwapRule } };
+    dispatch(hexGameStateUpdated(state));
     history.push('/hexGame');
   };
 
@@ -58,8 +69,8 @@ export default function HexSettings() {
           onChange={(e) => setBoardSize(Number(e.target.value))}
         />
         <SwapRuleToggle
-          on={swapRule}
-          onChange={(e) => setSwapRule(e.target.checked)}
+          enabled={useSwapRule}
+          onChange={(e) => setUseSwapRule(e.target.checked)}
         />
         <div className="Hello">
           <button type="submit">Submit</button>
