@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
 import './App.global.css';
-import HexGame from './HexGame';
-import HexSettings from './HexSettings';
-import Home from './Home';
+import HexGame from './components/HexGame';
+import HexSettings from './components/HexSettings';
+import Home from './components/Home';
 
 export default function App() {
   return (

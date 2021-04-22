@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 // eslint-disable-next-line import/no-cycle
-import { RootState } from './store';
-import { GameState } from './types';
+import { RootState } from '../store';
+import { GameState } from '../types';
 
 const initialState: GameState = {
   settings: { boardSize: 14, useSwapRule: true },

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { hexGameStateUpdated } from './hexGameSlice';
-import './App.global.css';
+import { hexGameStateUpdated } from '../slices/hexGameSlice';
+import '../App.global.css';
 
 interface BoardSizeSelectorProps {
   size: number;

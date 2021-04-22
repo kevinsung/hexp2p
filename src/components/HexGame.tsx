@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { selectHexGameState } from './hexGameSlice';
+import { selectHexGameState } from '../slices/hexGameSlice';
 
 interface HexagonProps {
   translateX: number;

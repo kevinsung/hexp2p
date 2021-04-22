@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import icon from '../assets/icon.svg';
-import './App.global.css';
+import icon from '../../assets/icon.svg';
+import '../App.global.css';
 
 export default function Home() {
   return (
