@@ -9,13 +9,12 @@ interface HexagonProps {
 
 interface HexBoardProps {
   size: number;
-  scale: number;
 }
 
 function Hexagon(props: HexagonProps) {
   const { translateX, translateY } = props;
   const transform = `translate(${translateX} ${translateY})`;
-  const d = Math.sqrt(3) / 2;
+  const d = 0.5 * Math.sqrt(3);
   const points = `0,1 ${d},0.5 ${d},-0.5 0,-1 ${-d},-0.5 ${-d},0.5`;
   return (
     <polygon
@@ -29,26 +28,32 @@ function Hexagon(props: HexagonProps) {
 }
 
 function HexBoard(props: HexBoardProps) {
-  const { size, scale } = props;
-  const transform = `scale(${scale})`;
+  const { size } = props;
+
+  const sqrt3 = Math.sqrt(3);
+  // TODO add margin for borders
+  // TODO add colored borders
+  // TODO add coordinate labels
+  const width = (3 * size - 1) * 0.5 * sqrt3;
+  const height = 1.5 * size + 0.5;
+  const viewBox = `0 0 ${width} ${height}`;
+  const yStart = 1;
+  let xStart = 0.5 * sqrt3;
   const hexagons = [];
-  const xDelta = Math.sqrt(3);
-  let xStart = 0;
   for (let row = 0; row < size; row += 1) {
-    const translateY = 1.5 * row;
+    const translateY = yStart + 1.5 * row;
     for (let col = 0; col < size; col += 1) {
-      const translateX = xStart + xDelta * col;
+      const translateX = xStart + sqrt3 * col;
       hexagons.push(
         <Hexagon translateX={translateX} translateY={translateY} />
       );
     }
-    xStart += xDelta / 2;
+    xStart += 0.5 * sqrt3;
   }
   return (
     <div>
-      {size}
-      <svg viewBox="0 0 800 800" width={800} height={800}>
-        <g transform={transform}>{hexagons}</g>
+      <svg className="HexBoard" viewBox={viewBox}>
+        <g>{hexagons}</g>
       </svg>
     </div>
   );
@@ -57,5 +62,9 @@ function HexBoard(props: HexBoardProps) {
 export default function HexGame() {
   const { settings } = useSelector(selectHexGameState);
   const { boardSize } = settings;
-  return <HexBoard size={boardSize} scale={20} />;
+  return (
+    <div>
+      <HexBoard size={boardSize} />
+    </div>
+  );
 }
