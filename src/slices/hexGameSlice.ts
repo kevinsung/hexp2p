@@ -5,6 +5,8 @@ import { GameState } from '../types';
 
 const initialState: GameState = {
   settings: { boardSize: 14, useSwapRule: true },
+  boardState: [],
+  isBlackTurn: true,
 };
 
 const hexGameSlice = createSlice({

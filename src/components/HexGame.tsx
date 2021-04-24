@@ -1,10 +1,17 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { selectHexGameState } from '../slices/hexGameSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  hexGameStateUpdated,
+  selectHexGameState,
+} from '../slices/hexGameSlice';
+import { HexagonState } from '../types';
 
 interface HexagonProps {
   translateX: number;
   translateY: number;
+  row: number;
+  col: number;
+  state: HexagonState;
 }
 
 interface HexBoardProps {
@@ -12,24 +19,97 @@ interface HexBoardProps {
 }
 
 function Hexagon(props: HexagonProps) {
-  const { translateX, translateY } = props;
+  const { row, col, translateX, translateY, state } = props;
+  const dispatch = useDispatch();
+  const { boardState, isBlackTurn } = useSelector(selectHexGameState);
   const transform = `translate(${translateX} ${translateY})`;
   const d = 0.5 * Math.sqrt(3);
   const points = `0,1 ${d},0.5 ${d},-0.5 0,-1 ${-d},-0.5 ${-d},0.5`;
+
+  let circleFill = '#000000';
+  let circleOpacity = 0.0;
+  switch (state) {
+    case HexagonState.BLACK:
+      circleFill = '#000000';
+      circleOpacity = 1.0;
+      break;
+    case HexagonState.BLACK_PARTIAL:
+      circleFill = '#000000';
+      circleOpacity = 0.5;
+      break;
+    case HexagonState.WHITE:
+      circleFill = '#ffffff';
+      circleOpacity = 1.0;
+      break;
+    case HexagonState.WHITE_PARTIAL:
+      circleFill = '#ffffff';
+      circleOpacity = 0.5;
+      break;
+    // no default
+  }
+
+  const onMouseOver = () => {
+    if (boardState[row][col] === HexagonState.EMPTY) {
+      const boardStateCopy = boardState.map((a) => a.slice());
+      boardStateCopy[row][col] = isBlackTurn
+        ? HexagonState.BLACK_PARTIAL
+        : HexagonState.WHITE_PARTIAL;
+      dispatch(hexGameStateUpdated({ boardState: boardStateCopy }));
+    }
+  };
+
+  const onMouseOut = () => {
+    if (
+      boardState[row][col] === HexagonState.BLACK_PARTIAL ||
+      boardState[row][col] === HexagonState.WHITE_PARTIAL
+    ) {
+      const boardStateCopy = boardState.map((a) => a.slice());
+      boardStateCopy[row][col] = HexagonState.EMPTY;
+      dispatch(hexGameStateUpdated({ boardState: boardStateCopy }));
+    }
+  };
+
+  const onClick = () => {
+    if (
+      boardState[row][col] === HexagonState.EMPTY ||
+      boardState[row][col] === HexagonState.BLACK_PARTIAL ||
+      boardState[row][col] === HexagonState.WHITE_PARTIAL
+    ) {
+      const boardStateCopy = boardState.map((a) => a.slice());
+      boardStateCopy[row][col] = isBlackTurn
+        ? HexagonState.BLACK
+        : HexagonState.WHITE;
+      dispatch(
+        hexGameStateUpdated({
+          boardState: boardStateCopy,
+          isBlackTurn: !isBlackTurn,
+        })
+      );
+    }
+  };
+
   return (
-    <polygon
-      points={points}
-      transform={transform}
-      fill="#808080"
-      stroke="#404040"
-      strokeWidth="0.05"
-    />
+    <g onMouseOver={onMouseOver} onMouseLeave={onMouseOut} onClick={onClick}>
+      <polygon
+        points={points}
+        transform={transform}
+        fill="#808080"
+        stroke="#404040"
+        strokeWidth="0.05"
+      />
+      <circle
+        r="0.64"
+        transform={transform}
+        fill={circleFill}
+        opacity={circleOpacity}
+      />
+    </g>
   );
 }
 
 function HexBoard(props: HexBoardProps) {
   const { size } = props;
-
+  const { boardState } = useSelector(selectHexGameState);
   const sqrt3 = Math.sqrt(3);
   // TODO add margin for borders
   // TODO add colored borders
@@ -44,8 +124,16 @@ function HexBoard(props: HexBoardProps) {
     const translateY = yStart + 1.5 * row;
     for (let col = 0; col < size; col += 1) {
       const translateX = xStart + sqrt3 * col;
+      const key = `hexagon ${row} ${col}`;
       hexagons.push(
-        <Hexagon translateX={translateX} translateY={translateY} />
+        <Hexagon
+          key={key}
+          row={row}
+          col={col}
+          translateX={translateX}
+          translateY={translateY}
+          state={boardState[row][col]}
+        />
       );
     }
     xStart += 0.5 * sqrt3;

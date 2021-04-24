@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { hexGameStateUpdated } from '../slices/hexGameSlice';
+import { HexagonState } from '../types';
 import '../App.global.css';
 
 interface BoardSizeSelectorProps {
@@ -56,7 +57,16 @@ export default function HexSettings() {
   const [useSwapRule, setUseSwapRule] = useState(true);
 
   const handleSubmit = () => {
-    const state = { settings: { boardSize, useSwapRule } };
+    const settings = { boardSize, useSwapRule };
+    const boardState = [];
+    for (let row = 0; row < boardSize; row += 1) {
+      const rowState = [];
+      for (let col = 0; col < boardSize; col += 1) {
+        rowState.push(HexagonState.EMPTY);
+      }
+      boardState.push(rowState);
+    }
+    const state = { settings, boardState };
     dispatch(hexGameStateUpdated(state));
     history.push('/hexGame');
   };
