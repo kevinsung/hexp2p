@@ -5,6 +5,10 @@ import { hexGameStateUpdated } from '../slices/hexGameSlice';
 import { HexagonState } from '../types';
 import '../App.global.css';
 
+const MIN_BOARD_SIZE = 5;
+const MAX_BOARD_SIZE = 19;
+const DEFAULT_BOARD_SIZE = 13;
+
 interface BoardSizeSelectorProps {
   size: number;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -23,8 +27,8 @@ function BoardSizeSelector(props: BoardSizeSelectorProps) {
       <div>
         <input
           type="range"
-          min="9"
-          max="19"
+          min={MIN_BOARD_SIZE}
+          max={MAX_BOARD_SIZE}
           value={size}
           onChange={onChange}
           id="boardSize"
@@ -53,7 +57,7 @@ export default function HexSettings() {
   const dispatch = useDispatch();
   const history = useHistory();
 
-  const [boardSize, setBoardSize] = useState(14);
+  const [boardSize, setBoardSize] = useState(DEFAULT_BOARD_SIZE);
   const [useSwapRule, setUseSwapRule] = useState(true);
 
   const handleSubmit = () => {
