@@ -68,3 +68,8 @@ a:hover {
   fill: none;
   stroke-width: 0.2;
 }
+
+.CoordinateLabel {
+  fill: #c0c0c0;
+  font-size: 0.03rem;
+}

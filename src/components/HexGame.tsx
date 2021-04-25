@@ -7,6 +7,8 @@ import {
 import { HexagonState } from '../types';
 import '../App.global.css';
 
+const COORDINATE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
 interface HexagonProps {
   translateX: number;
   translateY: number;
@@ -86,7 +88,6 @@ function HexBoard(props: HexBoardProps) {
   const dispatch = useDispatch();
   const d = 0.5 * Math.sqrt(3);
 
-  // TODO add coordinate labels
   const margin = 1;
   const width = (3 * size - 1) * d + 2 * margin;
   const height = 1.5 * size + 0.5 + 2 * margin;
@@ -118,6 +119,7 @@ function HexBoard(props: HexBoardProps) {
   const bottomBorderPoints = [];
   const leftBorderPoints = [];
   const rightBorderPoints = [];
+  const coordinateLabels = [];
   bottomBorderPoints.push(`${(size - 0.5) * d},${1.5 * size + 0.25}`);
   rightBorderPoints.push(`${(2 * size - 0.5) * d},0.25`);
   for (let i = 0; i < size; i += 1) {
@@ -134,6 +136,20 @@ function HexBoard(props: HexBoardProps) {
       `${(i + 2 * size) * d},${1.5 * i + 0.5} ${(i + 2 * size) * d},${
         1.5 * i + 1.5
       }`
+    );
+
+    const topLabelKey = `coordinateLabel ${COORDINATE_LETTERS[i]}`;
+    const leftLabelKey = `coordinateLabel ${i}`;
+    const leftLabelOffset = i + 1 < 10 ? 0.7 : 0.95;
+    coordinateLabels.push(
+      <text key={topLabelKey} x={2 * i * d} y={-0.05}>
+        {COORDINATE_LETTERS[i]}
+      </text>
+    );
+    coordinateLabels.push(
+      <text key={leftLabelKey} x={i * d - leftLabelOffset} y={1.5 * i + 1.2}>
+        {i + 1}
+      </text>
     );
   }
   topBorderPoints.push(`${(2 * size - 0.5) * d},0.25`);
@@ -153,6 +169,7 @@ function HexBoard(props: HexBoardProps) {
           <polyline points={rightBorderPoints.join(' ')} stroke="#ffffff" />
           <polyline points={bottomBorderPoints.join(' ')} stroke="#000000" />
         </g>
+        <g className="CoordinateLabel">{coordinateLabels}</g>
       </svg>
     </div>
   );
