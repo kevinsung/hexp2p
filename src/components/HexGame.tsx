@@ -91,19 +91,19 @@ function Hexagon(props: HexagonProps) {
 function HexBoard(props: HexBoardProps) {
   const { size } = props;
   const dispatch = useDispatch();
-  const sqrt3 = Math.sqrt(3);
+  const d = 0.5 * Math.sqrt(3);
   // TODO add margin for borders
   // TODO add coordinate labels
-  const width = (3 * size - 1) * 0.5 * sqrt3;
+  const width = (3 * size - 1) * d;
   const height = 1.5 * size + 0.5;
   const viewBox = `0 0 ${width} ${height}`;
   const yStart = 1;
-  let xStart = 0.5 * sqrt3;
+  let xStart = d;
   const hexagons = [];
   for (let row = 0; row < size; row += 1) {
     const translateY = yStart + 1.5 * row;
     for (let col = 0; col < size; col += 1) {
-      const translateX = xStart + sqrt3 * col;
+      const translateX = xStart + 2 * d * col;
       const key = `hexagon ${row} ${col}`;
       hexagons.push(
         <Hexagon
@@ -115,37 +115,32 @@ function HexBoard(props: HexBoardProps) {
         />
       );
     }
-    xStart += 0.5 * sqrt3;
+    xStart += d;
   }
   const topBorderPoints = [];
   const bottomBorderPoints = [];
   const leftBorderPoints = [];
   const rightBorderPoints = [];
-  // TODO make this more readable
-  bottomBorderPoints.push(
-    `${(size * 0.5 - 0.25) * sqrt3},${1.5 * size + 0.25}`
-  );
-  rightBorderPoints.push(`${(size - 0.25) * sqrt3},0.25`);
+  bottomBorderPoints.push(`${(size - 0.5) * d},${1.5 * size + 0.25}`);
+  rightBorderPoints.push(`${(2 * size - 0.5) * d},0.25`);
   for (let i = 0; i < size; i += 1) {
-    topBorderPoints.push(`${i * sqrt3},0.5 ${(i + 0.5) * sqrt3},0`);
+    topBorderPoints.push(`${2 * i * d},0.5 ${(2 * i + 1) * d},0`);
     bottomBorderPoints.push(
-      `${(i + size * 0.5) * sqrt3},${1.5 * size + 0.5} ${
-        (i + 0.5 + size * 0.5) * sqrt3
-      },${1.5 * size}`
+      `${(2 * i + size) * d},${1.5 * size + 0.5} ${(2 * i + size + 1) * d},${
+        1.5 * size
+      }`
     );
     leftBorderPoints.push(
-      `${i * 0.5 * sqrt3},${1.5 * i + 0.5} ${i * 0.5 * sqrt3},${1.5 * i + 1.5}`
+      `${i * d},${1.5 * i + 0.5} ${i * d},${1.5 * i + 1.5}`
     );
     rightBorderPoints.push(
-      `${(i * 0.5 + size) * sqrt3},${1.5 * i + 0.5} ${
-        (i * 0.5 + size) * sqrt3
-      },${1.5 * i + 1.5}`
+      `${(i + 2 * size) * d},${1.5 * i + 0.5} ${(i + 2 * size) * d},${
+        1.5 * i + 1.5
+      }`
     );
   }
-  topBorderPoints.push(`${(size - 0.25) * sqrt3},0.25`);
-  leftBorderPoints.push(
-    `${(size * 0.5 - 0.25) * sqrt3},${1.5 * (size - 1) + 1.75}`
-  );
+  topBorderPoints.push(`${(2 * size - 0.5) * d},0.25`);
+  leftBorderPoints.push(`${(size - 0.5) * d},${1.5 * (size - 1) + 1.75}`);
 
   const onMouseLeave = () => {
     dispatch(hexGameStateUpdated({ selectedHexagon: [NaN, NaN] }));
