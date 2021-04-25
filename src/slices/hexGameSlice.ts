@@ -7,6 +7,7 @@ const initialState: GameState = {
   settings: { boardSize: 14, useSwapRule: true },
   boardState: [],
   isBlackTurn: true,
+  selectedHexagon: [NaN, NaN],
 };
 
 const hexGameSlice = createSlice({

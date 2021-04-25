@@ -13,7 +13,6 @@ interface HexagonProps {
   translateY: number;
   row: number;
   col: number;
-  state: HexagonState;
 }
 
 interface HexBoardProps {
@@ -21,62 +20,42 @@ interface HexBoardProps {
 }
 
 function Hexagon(props: HexagonProps) {
-  const { row, col, translateX, translateY, state } = props;
+  const { row, col, translateX, translateY } = props;
   const dispatch = useDispatch();
-  const { boardState, isBlackTurn } = useSelector(selectHexGameState);
+  const { boardState, isBlackTurn, selectedHexagon } = useSelector(
+    selectHexGameState
+  );
+  const [selectedRow, selectedCol] = selectedHexagon;
   const transform = `translate(${translateX} ${translateY})`;
   const d = 0.5 * Math.sqrt(3);
   const points = `0,1 ${d},0.5 ${d},-0.5 0,-1 ${-d},-0.5 ${-d},0.5`;
 
   let circleFill = '#000000';
   let circleOpacity = 0.0;
-  switch (state) {
+  switch (boardState[row][col]) {
     case HexagonState.BLACK:
       circleFill = '#000000';
       circleOpacity = 1.0;
-      break;
-    case HexagonState.BLACK_PARTIAL:
-      circleFill = '#000000';
-      circleOpacity = 0.5;
       break;
     case HexagonState.WHITE:
       circleFill = '#ffffff';
       circleOpacity = 1.0;
       break;
-    case HexagonState.WHITE_PARTIAL:
-      circleFill = '#ffffff';
-      circleOpacity = 0.5;
+    case HexagonState.EMPTY:
+      if (row === selectedRow && col === selectedCol) {
+        circleFill = isBlackTurn ? '#000000' : '#ffffff';
+        circleOpacity = 0.5;
+      }
       break;
     // no default
   }
 
   const onMouseOver = () => {
-    if (boardState[row][col] === HexagonState.EMPTY) {
-      const boardStateCopy = boardState.map((a) => a.slice());
-      boardStateCopy[row][col] = isBlackTurn
-        ? HexagonState.BLACK_PARTIAL
-        : HexagonState.WHITE_PARTIAL;
-      dispatch(hexGameStateUpdated({ boardState: boardStateCopy }));
-    }
-  };
-
-  const onMouseOut = () => {
-    if (
-      boardState[row][col] === HexagonState.BLACK_PARTIAL ||
-      boardState[row][col] === HexagonState.WHITE_PARTIAL
-    ) {
-      const boardStateCopy = boardState.map((a) => a.slice());
-      boardStateCopy[row][col] = HexagonState.EMPTY;
-      dispatch(hexGameStateUpdated({ boardState: boardStateCopy }));
-    }
+    dispatch(hexGameStateUpdated({ selectedHexagon: [row, col] }));
   };
 
   const onClick = () => {
-    if (
-      boardState[row][col] === HexagonState.EMPTY ||
-      boardState[row][col] === HexagonState.BLACK_PARTIAL ||
-      boardState[row][col] === HexagonState.WHITE_PARTIAL
-    ) {
+    if (!boardState[row][col]) {
       const boardStateCopy = boardState.map((a) => a.slice());
       boardStateCopy[row][col] = isBlackTurn
         ? HexagonState.BLACK
@@ -91,7 +70,7 @@ function Hexagon(props: HexagonProps) {
   };
 
   return (
-    <g onMouseOver={onMouseOver} onMouseLeave={onMouseOut} onClick={onClick}>
+    <g onMouseOver={onMouseOver} onClick={onClick}>
       <polygon
         points={points}
         transform={transform}
@@ -111,7 +90,6 @@ function Hexagon(props: HexagonProps) {
 
 function HexBoard(props: HexBoardProps) {
   const { size } = props;
-  const { boardState } = useSelector(selectHexGameState);
   const sqrt3 = Math.sqrt(3);
   // TODO add margin for borders
   // TODO add coordinate labels
@@ -133,7 +111,6 @@ function HexBoard(props: HexBoardProps) {
           col={col}
           translateX={translateX}
           translateY={translateY}
-          state={boardState[row][col]}
         />
       );
     }

@@ -1,9 +1,7 @@
 export enum HexagonState {
-  WHITE = -2,
-  WHITE_PARTIAL = -1,
+  WHITE = -1,
   EMPTY = 0,
-  BLACK_PARTIAL = 1,
-  BLACK = 2,
+  BLACK = 1,
 }
 
 export interface HexSettings {
@@ -15,4 +13,5 @@ export interface GameState {
   settings: HexSettings;
   boardState: Array<Array<HexagonState>>;
   isBlackTurn: boolean;
+  selectedHexagon: Array<number>;
 }
