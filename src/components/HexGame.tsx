@@ -50,7 +50,7 @@ function Hexagon(props: HexagonProps) {
     // no default
   }
 
-  const onMouseOver = () => {
+  const onMouseEnter = () => {
     dispatch(hexGameStateUpdated({ selectedHexagon: [row, col] }));
   };
 
@@ -70,7 +70,7 @@ function Hexagon(props: HexagonProps) {
   };
 
   return (
-    <g onMouseOver={onMouseOver} onClick={onClick}>
+    <g onMouseEnter={onMouseEnter} onClick={onClick}>
       <polygon
         points={points}
         transform={transform}
@@ -90,6 +90,7 @@ function Hexagon(props: HexagonProps) {
 
 function HexBoard(props: HexBoardProps) {
   const { size } = props;
+  const dispatch = useDispatch();
   const sqrt3 = Math.sqrt(3);
   // TODO add margin for borders
   // TODO add coordinate labels
@@ -145,10 +146,15 @@ function HexBoard(props: HexBoardProps) {
   leftBorderPoints.push(
     `${(size * 0.5 - 0.25) * sqrt3},${1.5 * (size - 1) + 1.75}`
   );
+
+  const onMouseLeave = () => {
+    dispatch(hexGameStateUpdated({ selectedHexagon: [NaN, NaN] }));
+  };
+
   return (
     <div>
       <svg className="HexBoard" viewBox={viewBox}>
-        <g>{hexagons}</g>
+        <g onMouseLeave={onMouseLeave}>{hexagons}</g>
         <polyline
           points={topBorderPoints.join(' ')}
           fill="none"
