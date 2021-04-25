@@ -5,8 +5,7 @@ import {
   selectHexGameState,
 } from '../slices/hexGameSlice';
 import { HexagonState } from '../types';
-
-const BORDER_STROKE_WIDTH = 0.1;
+import '../App.global.css';
 
 interface HexagonProps {
   translateX: number;
@@ -71,15 +70,9 @@ function Hexagon(props: HexagonProps) {
 
   return (
     <g onMouseEnter={onMouseEnter} onClick={onClick}>
-      <polygon
-        points={points}
-        transform={transform}
-        fill="#808080"
-        stroke="#404040"
-        strokeWidth="0.05"
-      />
+      <polygon className="Hexagon" points={points} transform={transform} />
       <circle
-        r="0.64"
+        r="0.6"
         transform={transform}
         fill={circleFill}
         opacity={circleOpacity}
@@ -92,14 +85,16 @@ function HexBoard(props: HexBoardProps) {
   const { size } = props;
   const dispatch = useDispatch();
   const d = 0.5 * Math.sqrt(3);
-  // TODO add margin for borders
+
   // TODO add coordinate labels
-  const width = (3 * size - 1) * d;
-  const height = 1.5 * size + 0.5;
-  const viewBox = `0 0 ${width} ${height}`;
+  const margin = 1;
+  const width = (3 * size - 1) * d + 2 * margin;
+  const height = 1.5 * size + 0.5 + 2 * margin;
+  const viewBox = `${-margin} ${-margin} ${width} ${height}`;
+
+  const hexagons = [];
   const yStart = 1;
   let xStart = d;
-  const hexagons = [];
   for (let row = 0; row < size; row += 1) {
     const translateY = yStart + 1.5 * row;
     for (let col = 0; col < size; col += 1) {
@@ -117,6 +112,8 @@ function HexBoard(props: HexBoardProps) {
     }
     xStart += d;
   }
+
+  // TODO fix borders overlapping in top left and bottom right corners
   const topBorderPoints = [];
   const bottomBorderPoints = [];
   const leftBorderPoints = [];
@@ -150,30 +147,12 @@ function HexBoard(props: HexBoardProps) {
     <div>
       <svg className="HexBoard" viewBox={viewBox}>
         <g onMouseLeave={onMouseLeave}>{hexagons}</g>
-        <polyline
-          points={topBorderPoints.join(' ')}
-          fill="none"
-          stroke="#000000"
-          strokeWidth={BORDER_STROKE_WIDTH}
-        />
-        <polyline
-          points={bottomBorderPoints.join(' ')}
-          fill="none"
-          stroke="#000000"
-          strokeWidth={BORDER_STROKE_WIDTH}
-        />
-        <polyline
-          points={leftBorderPoints.join(' ')}
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth={BORDER_STROKE_WIDTH}
-        />
-        <polyline
-          points={rightBorderPoints.join(' ')}
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth={BORDER_STROKE_WIDTH}
-        />
+        <g className="Border">
+          <polyline points={topBorderPoints.join(' ')} stroke="#000000" />
+          <polyline points={leftBorderPoints.join(' ')} stroke="#ffffff" />
+          <polyline points={rightBorderPoints.join(' ')} stroke="#ffffff" />
+          <polyline points={bottomBorderPoints.join(' ')} stroke="#000000" />
+        </g>
       </svg>
     </div>
   );

@@ -57,3 +57,14 @@ a:hover {
 .HexBoard {
   height: 75vh;
 }
+
+.Hexagon {
+  fill: #808080;
+  stroke: #404040;
+  stroke-width: 0.05;
+}
+
+.Border {
+  fill: none;
+  stroke-width: 0.2;
+}
