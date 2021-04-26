@@ -11,6 +11,8 @@ export interface GameSettings {
 
 export interface GameState {
   settings: GameSettings;
+  moveHistory: Array<Array<number>>;
+  moveNumber: number;
   boardState: Array<Array<HexagonState>>;
   isBlackTurn: boolean;
   selectedHexagon: Array<number>;

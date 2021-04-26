@@ -2,9 +2,10 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
-  hexGameStateUpdated,
-  selectHexGameState,
-} from '../slices/hexGameSlice';
+  gameStateUpdated,
+  moveMade,
+  selectGameState,
+} from '../slices/gameSlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
 import '../App.global.css';
@@ -34,7 +35,7 @@ function Hexagon(props: HexagonProps) {
   const { row, col, disabled } = props;
   const dispatch = useDispatch();
   const { boardState, isBlackTurn, selectedHexagon } = useSelector(
-    selectHexGameState
+    selectGameState
   );
   const [selectedRow, selectedCol] = selectedHexagon;
 
@@ -66,22 +67,13 @@ function Hexagon(props: HexagonProps) {
 
   const onMouseEnter = () => {
     if (!disabled) {
-      dispatch(hexGameStateUpdated({ selectedHexagon: [row, col] }));
+      dispatch(gameStateUpdated({ selectedHexagon: [row, col] }));
     }
   };
 
   const onClick = () => {
     if (!disabled && !boardState[row][col]) {
-      const boardStateCopy = boardState.map((a) => a.slice());
-      boardStateCopy[row][col] = isBlackTurn
-        ? HexagonState.BLACK
-        : HexagonState.WHITE;
-      dispatch(
-        hexGameStateUpdated({
-          boardState: boardStateCopy,
-          isBlackTurn: !isBlackTurn,
-        })
-      );
+      dispatch(moveMade([row, col]));
     }
   };
 
@@ -100,7 +92,7 @@ function Hexagon(props: HexagonProps) {
 
 function Hexagons(props: HexagonsProps) {
   const { disabled } = props;
-  const { settings } = useSelector(selectHexGameState);
+  const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const dispatch = useDispatch();
 
@@ -115,14 +107,14 @@ function Hexagons(props: HexagonsProps) {
   }
 
   const onMouseLeave = () => {
-    dispatch(hexGameStateUpdated({ selectedHexagon: [NaN, NaN] }));
+    dispatch(gameStateUpdated({ selectedHexagon: [NaN, NaN] }));
   };
 
   return <g onMouseLeave={onMouseLeave}>{hexagons}</g>;
 }
 
 function Borders() {
-  const { settings } = useSelector(selectHexGameState);
+  const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const d = 0.5 * Math.sqrt(3);
 
@@ -165,7 +157,7 @@ function Borders() {
 }
 
 function CoordinateLabels() {
-  const { settings } = useSelector(selectHexGameState);
+  const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const d = 0.5 * Math.sqrt(3);
 
@@ -206,7 +198,7 @@ function ComponentMarker(props: ComponentMarkerProps) {
 
 function HexBoard(props: HexBoardProps) {
   const { winningComponent } = props;
-  const { settings } = useSelector(selectHexGameState);
+  const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
 
   const d = 0.5 * Math.sqrt(3);
@@ -228,7 +220,7 @@ function HexBoard(props: HexBoardProps) {
 }
 
 export default function HexGame() {
-  const { boardState } = useSelector(selectHexGameState);
+  const { boardState } = useSelector(selectGameState);
   const winningComponent = getWinningConnectedComponent(boardState);
   return (
     <div>

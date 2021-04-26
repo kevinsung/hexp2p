@@ -5,16 +5,18 @@ import { GameState, HexagonState } from '../types';
 
 const initialState: GameState = {
   settings: { boardSize: 14, useSwapRule: true },
+  moveHistory: [],
+  moveNumber: 0,
   boardState: [],
   isBlackTurn: true,
   selectedHexagon: [NaN, NaN],
 };
 
-const hexGameSlice = createSlice({
-  name: 'hexGame',
+const gameSlice = createSlice({
+  name: 'game',
   initialState,
   reducers: {
-    startGame: (state, action) => {
+    gameStarted: (state, action) => {
       const settings = action.payload;
       const { boardSize } = settings;
       const boardState = [];
@@ -25,20 +27,29 @@ const hexGameSlice = createSlice({
         }
         boardState.push(rowState);
       }
+      // set state
+      Object.assign(state, initialState);
       state.settings = settings;
       state.boardState = boardState;
-      state.isBlackTurn = true;
-      state.selectedHexagon = [NaN, NaN];
     },
-    hexGameStateUpdated: (state, action) => {
+    moveMade: (state, action) => {
+      const { moveHistory, boardState, isBlackTurn } = state;
+      const [row, col] = action.payload;
+      moveHistory.push([row, col]);
+      boardState[row][col] = isBlackTurn
+        ? HexagonState.BLACK
+        : HexagonState.WHITE;
+      state.isBlackTurn = !isBlackTurn;
+    },
+    gameStateUpdated: (state, action) => {
       const stateUpdate = action.payload;
       Object.assign(state, stateUpdate);
     },
   },
 });
 
-export const { startGame, hexGameStateUpdated } = hexGameSlice.actions;
+export const { gameStarted, moveMade, gameStateUpdated } = gameSlice.actions;
 
-export const selectHexGameState = (state: RootState) => state.hexGame;
+export const selectGameState = (state: RootState) => state.game;
 
-export default hexGameSlice.reducer;
+export default gameSlice.reducer;

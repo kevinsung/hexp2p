@@ -1,10 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
 // eslint-disable-next-line import/no-cycle
-import hexGameReducer from './slices/hexGameSlice';
+import gameReducer from './slices/gameSlice';
 
 export const store = configureStore({
   reducer: {
-    hexGame: hexGameReducer,
+    game: gameReducer,
   },
 });
 

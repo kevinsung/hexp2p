@@ -11,7 +11,7 @@ export default function Home() {
       </div>
       <h1>electron-react-boilerplate</h1>
       <div className="Hello">
-        <Link to="/hexSettings">
+        <Link to="/settings">
           <button type="button">Play Hex</button>
         </Link>
       </div>

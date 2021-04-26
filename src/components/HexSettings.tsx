@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router-dom';
-import { startGame } from '../slices/hexGameSlice';
+import { gameStarted } from '../slices/gameSlice';
 import { GameSettings } from '../types';
 import '../App.global.css';
 
@@ -62,8 +62,8 @@ export default function HexSettings() {
 
   const handleSubmit = () => {
     const settings: GameSettings = { boardSize, useSwapRule };
-    dispatch(startGame(settings));
-    history.push('/hexGame');
+    dispatch(gameStarted(settings));
+    history.push('/game');
   };
 
   return (
