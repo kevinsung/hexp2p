@@ -11,7 +11,7 @@ import getWinningConnectedComponent from '../slices/getWinningConnectedComponent
 import { HexagonState } from '../types';
 import '../App.global.css';
 
-const COORDINATE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 
 interface HexagonProps {
   boardState: Array<Array<number>>;
