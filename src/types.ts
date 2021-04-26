@@ -4,13 +4,13 @@ export enum HexagonState {
   BLACK = 1,
 }
 
-export interface HexSettings {
+export interface GameSettings {
   boardSize: number;
   useSwapRule: boolean;
 }
 
 export interface GameState {
-  settings: HexSettings;
+  settings: GameSettings;
   boardState: Array<Array<HexagonState>>;
   isBlackTurn: boolean;
   selectedHexagon: Array<number>;

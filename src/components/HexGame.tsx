@@ -14,6 +14,11 @@ const COORDINATE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 interface HexagonProps {
   row: number;
   col: number;
+  disabled: boolean;
+}
+
+interface HexagonsProps {
+  disabled: boolean;
 }
 
 interface HexBoardProps {
@@ -26,7 +31,7 @@ interface ComponentMarkerProps {
 
 function Hexagon(props: HexagonProps) {
   // TODO just use row and col, no need for translateX and translateY
-  const { row, col } = props;
+  const { row, col, disabled } = props;
   const dispatch = useDispatch();
   const { boardState, isBlackTurn, selectedHexagon } = useSelector(
     selectHexGameState
@@ -60,11 +65,13 @@ function Hexagon(props: HexagonProps) {
   }
 
   const onMouseEnter = () => {
-    dispatch(hexGameStateUpdated({ selectedHexagon: [row, col] }));
+    if (!disabled) {
+      dispatch(hexGameStateUpdated({ selectedHexagon: [row, col] }));
+    }
   };
 
   const onClick = () => {
-    if (!boardState[row][col]) {
+    if (!disabled && !boardState[row][col]) {
       const boardStateCopy = boardState.map((a) => a.slice());
       boardStateCopy[row][col] = isBlackTurn
         ? HexagonState.BLACK
@@ -91,7 +98,8 @@ function Hexagon(props: HexagonProps) {
   );
 }
 
-function Hexagons() {
+function Hexagons(props: HexagonsProps) {
+  const { disabled } = props;
   const { settings } = useSelector(selectHexGameState);
   const { boardSize } = settings;
   const dispatch = useDispatch();
@@ -100,7 +108,9 @@ function Hexagons() {
   for (let row = 0; row < boardSize; row += 1) {
     for (let col = 0; col < boardSize; col += 1) {
       const key = `hexagon ${row} ${col}`;
-      hexagons.push(<Hexagon key={key} row={row} col={col} />);
+      hexagons.push(
+        <Hexagon key={key} row={row} col={col} disabled={disabled} />
+      );
     }
   }
 
@@ -188,7 +198,8 @@ function ComponentMarker(props: ComponentMarkerProps) {
     const translateX = (row + 1 + 2 * col) * d;
     const translateY = 1 + 1.5 * row;
     const transform = `translate(${translateX} ${translateY})`;
-    markers.push(<circle r="0.2" transform={transform} />);
+    const key = `pieceMarker ${row} ${col}`;
+    markers.push(<circle key={key} r="0.2" transform={transform} />);
   }
   return <g className="PieceMarker">{markers}</g>;
 }
@@ -207,7 +218,7 @@ function HexBoard(props: HexBoardProps) {
   return (
     <div>
       <svg className="HexBoard" viewBox={viewBox}>
-        <Hexagons />
+        <Hexagons disabled={winningComponent.length > 0} />
         <Borders />
         <CoordinateLabels />
         <ComponentMarker component={winningComponent} />
