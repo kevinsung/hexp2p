@@ -7,8 +7,6 @@ const initialState: GameState = {
   settings: { boardSize: 14, useSwapRule: true },
   moveHistory: [],
   moveNumber: 0,
-  boardState: [],
-  isBlackTurn: true,
   selectedHexagon: [NaN, NaN],
 };
 
@@ -18,38 +16,43 @@ const gameSlice = createSlice({
   reducers: {
     gameStarted: (state, action) => {
       const settings = action.payload;
-      const { boardSize } = settings;
-      const boardState = [];
-      for (let row = 0; row < boardSize; row += 1) {
-        const rowState = [];
-        for (let col = 0; col < boardSize; col += 1) {
-          rowState.push(HexagonState.EMPTY);
-        }
-        boardState.push(rowState);
-      }
-      // set state
       Object.assign(state, initialState);
       state.settings = settings;
-      state.boardState = boardState;
+    },
+    hexagonSelected: (state, action) => {
+      const coordinates = action.payload;
+      state.selectedHexagon = coordinates;
     },
     moveMade: (state, action) => {
-      const { moveHistory, boardState, isBlackTurn } = state;
-      const [row, col] = action.payload;
-      moveHistory.push([row, col]);
-      boardState[row][col] = isBlackTurn
-        ? HexagonState.BLACK
-        : HexagonState.WHITE;
-      state.isBlackTurn = !isBlackTurn;
-    },
-    gameStateUpdated: (state, action) => {
-      const stateUpdate = action.payload;
-      Object.assign(state, stateUpdate);
+      const { moveHistory } = state;
+      const coordinates = action.payload;
+      moveHistory.push(coordinates);
+      state.moveNumber += 1;
     },
   },
 });
 
-export const { gameStarted, moveMade, gameStateUpdated } = gameSlice.actions;
+export const { gameStarted, hexagonSelected, moveMade } = gameSlice.actions;
 
 export const selectGameState = (state: RootState) => state.game;
+
+export const selectBoardState = (state: RootState) => {
+  const { settings, moveHistory, moveNumber } = state.game;
+  const { boardSize } = settings;
+  const boardState = [];
+  for (let row = 0; row < boardSize; row += 1) {
+    const rowState = [];
+    for (let col = 0; col < boardSize; col += 1) {
+      rowState.push(HexagonState.EMPTY);
+    }
+    boardState.push(rowState);
+  }
+  for (let i = 0; i < moveNumber; i += 1) {
+    const [row, col] = moveHistory[i];
+    boardState[row][col] =
+      i % 2 === 0 ? HexagonState.BLACK : HexagonState.WHITE;
+  }
+  return boardState;
+};
 
 export default gameSlice.reducer;

@@ -2,8 +2,9 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
-  gameStateUpdated,
+  hexagonSelected,
   moveMade,
+  selectBoardState,
   selectGameState,
 } from '../slices/gameSlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
@@ -13,16 +14,19 @@ import '../App.global.css';
 const COORDINATE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 interface HexagonProps {
+  boardState: Array<Array<number>>;
   row: number;
   col: number;
   disabled: boolean;
 }
 
 interface HexagonsProps {
+  boardState: Array<Array<number>>;
   disabled: boolean;
 }
 
 interface HexBoardProps {
+  boardState: Array<Array<number>>;
   winningComponent: Array<Array<number>>;
 }
 
@@ -32,11 +36,9 @@ interface ComponentMarkerProps {
 
 function Hexagon(props: HexagonProps) {
   // TODO just use row and col, no need for translateX and translateY
-  const { row, col, disabled } = props;
+  const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
-  const { boardState, isBlackTurn, selectedHexagon } = useSelector(
-    selectGameState
-  );
+  const { moveNumber, selectedHexagon } = useSelector(selectGameState);
   const [selectedRow, selectedCol] = selectedHexagon;
 
   const d = 0.5 * Math.sqrt(3);
@@ -58,7 +60,7 @@ function Hexagon(props: HexagonProps) {
       break;
     case HexagonState.EMPTY:
       if (row === selectedRow && col === selectedCol) {
-        circleFill = isBlackTurn ? '#000000' : '#ffffff';
+        circleFill = moveNumber % 2 === 0 ? '#000000' : '#ffffff';
         circleOpacity = 0.5;
       }
       break;
@@ -67,7 +69,7 @@ function Hexagon(props: HexagonProps) {
 
   const onMouseEnter = () => {
     if (!disabled) {
-      dispatch(gameStateUpdated({ selectedHexagon: [row, col] }));
+      dispatch(hexagonSelected([row, col]));
     }
   };
 
@@ -91,7 +93,7 @@ function Hexagon(props: HexagonProps) {
 }
 
 function Hexagons(props: HexagonsProps) {
-  const { disabled } = props;
+  const { boardState, disabled } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const dispatch = useDispatch();
@@ -101,13 +103,19 @@ function Hexagons(props: HexagonsProps) {
     for (let col = 0; col < boardSize; col += 1) {
       const key = `hexagon ${row} ${col}`;
       hexagons.push(
-        <Hexagon key={key} row={row} col={col} disabled={disabled} />
+        <Hexagon
+          key={key}
+          boardState={boardState}
+          row={row}
+          col={col}
+          disabled={disabled}
+        />
       );
     }
   }
 
   const onMouseLeave = () => {
-    dispatch(gameStateUpdated({ selectedHexagon: [NaN, NaN] }));
+    dispatch(hexagonSelected([NaN, NaN]));
   };
 
   return <g onMouseLeave={onMouseLeave}>{hexagons}</g>;
@@ -197,7 +205,7 @@ function ComponentMarker(props: ComponentMarkerProps) {
 }
 
 function HexBoard(props: HexBoardProps) {
-  const { winningComponent } = props;
+  const { boardState, winningComponent } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
 
@@ -210,7 +218,10 @@ function HexBoard(props: HexBoardProps) {
   return (
     <div>
       <svg className="HexBoard" viewBox={viewBox}>
-        <Hexagons disabled={winningComponent.length > 0} />
+        <Hexagons
+          boardState={boardState}
+          disabled={winningComponent.length > 0}
+        />
         <Borders />
         <CoordinateLabels />
         <ComponentMarker component={winningComponent} />
@@ -220,12 +231,12 @@ function HexBoard(props: HexBoardProps) {
 }
 
 export default function HexGame() {
-  const { boardState } = useSelector(selectGameState);
+  const boardState = useSelector(selectBoardState);
   const winningComponent = getWinningConnectedComponent(boardState);
   return (
     <div>
       <Link to="/">Home</Link>
-      <HexBoard winningComponent={winningComponent} />
+      <HexBoard boardState={boardState} winningComponent={winningComponent} />
     </div>
   );
 }
