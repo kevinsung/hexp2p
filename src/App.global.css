@@ -73,3 +73,7 @@ a:hover {
   fill: #c0c0c0;
   font-size: 0.03rem;
 }
+
+.WinningComponentMarker {
+  fill: #808080;
+}

@@ -1,34 +1,53 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import {
   hexGameStateUpdated,
   selectHexGameState,
 } from '../slices/hexGameSlice';
+import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
 import '../App.global.css';
 
 const COORDINATE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
+interface WinningComponentMarkerProps {
+  row: number;
+  col: number;
+}
+
 interface HexagonProps {
-  translateX: number;
-  translateY: number;
   row: number;
   col: number;
 }
 
 interface HexBoardProps {
   size: number;
+  winningComponent: Array<Array<number>>;
+}
+
+function WinningComponentMarker(props: WinningComponentMarkerProps) {
+  const { row, col } = props;
+  const d = 0.5 * Math.sqrt(3);
+  const translateX = (row + 1 + 2 * col) * d;
+  const translateY = 1 + 1.5 * row;
+  const transform = `translate(${translateX} ${translateY})`;
+  return <circle r="0.2" transform={transform} />;
 }
 
 function Hexagon(props: HexagonProps) {
-  const { row, col, translateX, translateY } = props;
+  // TODO just use row and col, no need for translateX and translateY
+  const { row, col } = props;
   const dispatch = useDispatch();
   const { boardState, isBlackTurn, selectedHexagon } = useSelector(
     selectHexGameState
   );
   const [selectedRow, selectedCol] = selectedHexagon;
-  const transform = `translate(${translateX} ${translateY})`;
+
   const d = 0.5 * Math.sqrt(3);
+  const translateX = (row + 1 + 2 * col) * d;
+  const translateY = 1 + 1.5 * row;
+  const transform = `translate(${translateX} ${translateY})`;
   const points = `0,1 ${d},0.5 ${d},-0.5 0,-1 ${-d},-0.5 ${-d},0.5`;
 
   let circleFill = '#000000';
@@ -84,7 +103,7 @@ function Hexagon(props: HexagonProps) {
 }
 
 function HexBoard(props: HexBoardProps) {
-  const { size } = props;
+  const { size, winningComponent } = props;
   const dispatch = useDispatch();
   const d = 0.5 * Math.sqrt(3);
 
@@ -94,24 +113,11 @@ function HexBoard(props: HexBoardProps) {
   const viewBox = `${-margin} ${-margin} ${width} ${height}`;
 
   const hexagons = [];
-  const yStart = 1;
-  let xStart = d;
   for (let row = 0; row < size; row += 1) {
-    const translateY = yStart + 1.5 * row;
     for (let col = 0; col < size; col += 1) {
-      const translateX = xStart + 2 * d * col;
       const key = `hexagon ${row} ${col}`;
-      hexagons.push(
-        <Hexagon
-          key={key}
-          row={row}
-          col={col}
-          translateX={translateX}
-          translateY={translateY}
-        />
-      );
+      hexagons.push(<Hexagon key={key} row={row} col={col} />);
     }
-    xStart += d;
   }
 
   // TODO fix borders overlapping in top left and bottom right corners
@@ -155,6 +161,14 @@ function HexBoard(props: HexBoardProps) {
   topBorderPoints.push(`${(2 * size - 0.5) * d},0.25`);
   leftBorderPoints.push(`${(size - 0.5) * d},${1.5 * (size - 1) + 1.75}`);
 
+  const winningComponentMarkers = [];
+  for (let i = 0; i < winningComponent.length; i += 1) {
+    const [row, col] = winningComponent[i];
+    winningComponentMarkers.push(
+      <WinningComponentMarker row={row} col={col} />
+    );
+  }
+
   const onMouseLeave = () => {
     dispatch(hexGameStateUpdated({ selectedHexagon: [NaN, NaN] }));
   };
@@ -170,17 +184,20 @@ function HexBoard(props: HexBoardProps) {
           <polyline points={bottomBorderPoints.join(' ')} stroke="#000000" />
         </g>
         <g className="CoordinateLabel">{coordinateLabels}</g>
+        <g className="WinningComponentMarker">{winningComponentMarkers}</g>
       </svg>
     </div>
   );
 }
 
 export default function HexGame() {
-  const { settings } = useSelector(selectHexGameState);
+  const { settings, boardState } = useSelector(selectHexGameState);
   const { boardSize } = settings;
+  const winningComponent = getWinningConnectedComponent(boardState);
   return (
     <div>
-      <HexBoard size={boardSize} />
+      <Link to="/">Home</Link>
+      <HexBoard size={boardSize} winningComponent={winningComponent} />
     </div>
   );
 }

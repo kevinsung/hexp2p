@@ -82,10 +82,12 @@ function connectedComponents(boardState: Array<Array<HexagonState>>) {
   return components;
 }
 
-export default function getWinner(boardState: Array<Array<HexagonState>>) {
+export default function getWinningConnectedComponent(
+  boardState: Array<Array<HexagonState>>
+) {
   const size = boardState.length;
   const components = connectedComponents(boardState);
-  let winner = 0;
+  let winningComponent: Array<Array<number>> = [];
   for (let i = 0; i < components.length; i += 1) {
     const component = components[i];
     const [row, col] = component[0];
@@ -93,16 +95,16 @@ export default function getWinner(boardState: Array<Array<HexagonState>>) {
     if (state === HexagonState.BLACK) {
       const rows = component.map((coordinates) => coordinates[0]);
       if (Math.min(...rows) === 0 && Math.max(...rows) === size - 1) {
-        winner = HexagonState.BLACK;
+        winningComponent = component;
         break;
       }
     } else if (state === HexagonState.WHITE) {
       const cols = component.map((coordinates) => coordinates[1]);
       if (Math.min(...cols) === 0 && Math.max(...cols) === size - 1) {
-        winner = HexagonState.WHITE;
+        winningComponent = component;
         break;
       }
     }
   }
-  return winner;
+  return winningComponent;
 }

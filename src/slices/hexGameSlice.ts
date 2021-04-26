@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 // eslint-disable-next-line import/no-cycle
 import { RootState } from '../store';
-import getWinner from './getWinner';
 import { GameState } from '../types';
 
 const initialState: GameState = {
@@ -18,7 +17,6 @@ const hexGameSlice = createSlice({
     hexGameStateUpdated: (state, action) => {
       const stateUpdate = action.payload;
       Object.assign(state, stateUpdate);
-      state.winner = getWinner(state.boardState);
     },
   },
 });
