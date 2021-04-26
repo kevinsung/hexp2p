@@ -78,3 +78,9 @@ a:hover {
 .PieceMarker {
   fill: #808080;
 }
+
+.LastMoveMarker {
+  fill: none;
+  stroke: #808080;
+  stroke-width: 0.08;
+}

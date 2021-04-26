@@ -35,10 +35,11 @@ interface ComponentMarkerProps {
 }
 
 function Hexagon(props: HexagonProps) {
-  // TODO just use row and col, no need for translateX and translateY
   const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
-  const { moveNumber, selectedHexagon } = useSelector(selectGameState);
+  const { moveHistory, moveNumber, selectedHexagon } = useSelector(
+    selectGameState
+  );
   const [selectedRow, selectedCol] = selectedHexagon;
 
   const d = 0.5 * Math.sqrt(3);
@@ -67,6 +68,10 @@ function Hexagon(props: HexagonProps) {
     // no default
   }
 
+  const lastMove = moveNumber > 0 ? moveHistory[moveNumber - 1] : [NaN, NaN];
+  const [lrow, lcol] = lastMove;
+  const markerOpacity = lrow === row && lcol === col ? 1.0 : 0.0;
+
   const onMouseEnter = () => {
     if (!disabled) {
       dispatch(hexagonSelected([row, col]));
@@ -87,6 +92,12 @@ function Hexagon(props: HexagonProps) {
         transform={transform}
         fill={circleFill}
         opacity={circleOpacity}
+      />
+      <circle
+        className="LastMoveMarker"
+        r="0.3"
+        transform={transform}
+        opacity={markerOpacity}
       />
     </g>
   );
