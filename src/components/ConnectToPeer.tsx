@@ -5,9 +5,14 @@ import '../App.global.css';
 export default function ConnectToPeer() {
   const [hostCode, setHostCode] = useState('');
 
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    startNetplay(hostCode);
+  };
+
   return (
     <div>
-      <form onSubmit={() => startNetplay(hostCode)}>
+      <form onSubmit={handleSubmit}>
         <label htmlFor="hostCode">
           Enter host code
           <input

@@ -62,7 +62,8 @@ export default function HexSettings() {
   const [boardSize, setBoardSize] = useState(DEFAULT_BOARD_SIZE);
   const [useSwapRule, setUseSwapRule] = useState(true);
 
-  const handleSubmit = () => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const settings: GameSettings = { boardSize, useSwapRule };
     dispatch(gameStarted(settings));
     history.push('/game');
