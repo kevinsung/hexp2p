@@ -20,6 +20,7 @@ interface SwapRuleToggleProps {
 }
 
 function BoardSizeSelector(props: BoardSizeSelectorProps) {
+  // TODO use "label" html element
   const { size, onChange } = props;
   return (
     <div>
@@ -39,6 +40,7 @@ function BoardSizeSelector(props: BoardSizeSelectorProps) {
 }
 
 function SwapRuleToggle(props: SwapRuleToggleProps) {
+  // TODO use "label" html element
   const { enabled, onChange } = props;
   return (
     <div>

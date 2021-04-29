@@ -1,4 +1,6 @@
 import { Socket, createSocket } from 'dgram';
+import { store } from '../store';
+import { hostCodeReceived } from './netplaySlice';
 
 const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
 const TRAVERSAL_SERVER_PORT = 6363;
@@ -31,23 +33,27 @@ function attemptTraversal(socket: Socket, port: number, address: string) {
   }, 1000);
 }
 
-function initializeSocket() {
+export default function startNetplay(hostCode?: string) {
   const traversalServerSocket = createSocket({ type: 'udp4', reuseAddr: true });
   const peerPublicSocket = createSocket({ type: 'udp4', reuseAddr: true });
   const peerPrivateSocket = createSocket({ type: 'udp4', reuseAddr: true });
 
+  traversalServerSocket.on('error', (err) => {
+    console.log(err);
+  });
+
   traversalServerSocket.on('message', (msg, rinfo) => {
     console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${msg}`);
     const {
-      hostCode,
+      hostCode: receivedHostCode,
       peerPublicAddress,
       peerPublicPort,
       peerPrivateAddress,
       peerPrivatePort,
     } = JSON.parse(String(msg));
 
-    if (hostCode) {
-      console.log(hostCode);
+    if (receivedHostCode) {
+      store.dispatch(hostCodeReceived(receivedHostCode));
     }
 
     if (peerPublicAddress && peerPublicPort) {
@@ -69,10 +75,8 @@ function initializeSocket() {
       } = traversalServerSocket.address();
       peerPublicSocket.bind(privatePort, privateAddress);
       peerPrivateSocket.bind(privatePort, privateAddress);
-      const message = { privateAddress, privatePort };
+      const message = { privateAddress, privatePort, hostCode };
       traversalServerSocket.send(JSON.stringify(message));
     }
   );
 }
-
-initializeSocket();

@@ -15,3 +15,7 @@ export interface GameState {
   moveNumber: number;
   selectedHexagon: Array<number>;
 }
+
+export interface NetplayState {
+  hostCode?: string;
+}

@@ -29,6 +29,10 @@ button:hover {
   transform: scale(1.05);
 }
 
+button:disabled:hover {
+  transform: none;
+}
+
 li {
   list-style: none;
 }
