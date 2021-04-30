@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import startNetplay from '../slices/netplayClient';
 import '../App.global.css';
 
@@ -12,6 +13,7 @@ export default function ConnectToPeer() {
 
   return (
     <div>
+      <Link to="/home">Home</Link>
       <form onSubmit={handleSubmit}>
         <label htmlFor="hostCode">
           Enter host code
