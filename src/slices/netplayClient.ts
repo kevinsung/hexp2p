@@ -1,9 +1,16 @@
+import { createImmutableStateInvariantMiddleware } from '@reduxjs/toolkit';
 import { Socket, createSocket } from 'dgram';
 import { store } from '../store';
 import { hostCodeReceived } from './netplaySlice';
 
+// TODO use { type, payload } structure for messages
+
 const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
 const TRAVERSAL_SERVER_PORT = 6363;
+
+const TRAVERSAL_PACKET_INTERVAL = 1000;
+const KEEP_ALIVE_PACKET_INTERVAL = 1000;
+const DISCONNECT_TIMEOUT_INTERVAL = 10000;
 
 let SOCKET: Socket | null;
 
@@ -11,10 +18,26 @@ let TRAVERSAL_SERVER_SOCKET: Socket;
 let PEER_PUBLIC_SOCKET: Socket;
 let PEER_PRIVATE_SOCKET: Socket;
 
-function attachListeners(socket: Socket) {
-  setInterval(() => {
+let KEEP_ALIVE_TIMEOUT: NodeJS.Timeout;
+let DISCONNECT_TIMEOUT: NodeJS.Timeout;
+let CONNECTED = false;
+
+function initializeConnection(socket: Socket) {
+  clearInterval(KEEP_ALIVE_TIMEOUT);
+  KEEP_ALIVE_TIMEOUT = setInterval(() => {
+    // TODO throws ERR_SOCKET_DGRAM_NOT_RUNNING when
+    // restarting netplay without closing the previous session
+    // we should instead just close the previous session, and handle
+    // disconnects elsewhere
     socket.send('keepalive');
-  }, 1000);
+    socket.on('message', (msg) => {
+      const message = String(msg);
+      if (message === 'keepalive') {
+        clearTimeout(DISCONNECT_TIMEOUT);
+        CONNECTED = true;
+      }
+    });
+  }, KEEP_ALIVE_PACKET_INTERVAL);
 }
 
 function attemptTraversal(socket: Socket, port: number, address: string) {
@@ -23,11 +46,11 @@ function attemptTraversal(socket: Socket, port: number, address: string) {
     if (rinfo.address === address && rinfo.port === port && !SOCKET) {
       SOCKET = socket;
       socket.connect(port, address);
-      attachListeners(socket);
+      initializeConnection(socket);
     }
   });
   const timer = setInterval(() => {
-    // TODO if socket is already closed, then either don't send or catch error
+    // TODO check if this can cause an error (if socket could be closed)
     socket.send('traversal', port, address);
     if (SOCKET) {
       clearTimeout(timer);
@@ -35,19 +58,35 @@ function attemptTraversal(socket: Socket, port: number, address: string) {
         socket.close();
       }
     }
-  }, 1000);
+  }, TRAVERSAL_PACKET_INTERVAL);
+}
+
+function closeAllSockets() {
+  if (TRAVERSAL_SERVER_SOCKET) {
+    try {
+      TRAVERSAL_SERVER_SOCKET.close();
+    } catch {
+      // socket might have already been closed
+    }
+  }
+  if (PEER_PUBLIC_SOCKET) {
+    try {
+      PEER_PUBLIC_SOCKET.close();
+    } catch {
+      // socket might have already been closed
+    }
+  }
+  if (PEER_PRIVATE_SOCKET) {
+    try {
+      PEER_PRIVATE_SOCKET.close();
+    } catch {
+      // socket might have already been closed
+    }
+  }
 }
 
 export default function startNetplay(hostCode?: string) {
-  if (TRAVERSAL_SERVER_SOCKET) {
-    TRAVERSAL_SERVER_SOCKET.close();
-  }
-  if (PEER_PUBLIC_SOCKET) {
-    PEER_PUBLIC_SOCKET.close();
-  }
-  if (PEER_PRIVATE_SOCKET) {
-    PEER_PRIVATE_SOCKET.close();
-  }
+  closeAllSockets();
 
   SOCKET = null;
   TRAVERSAL_SERVER_SOCKET = createSocket({ type: 'udp4', reuseAddr: true });
@@ -57,11 +96,22 @@ export default function startNetplay(hostCode?: string) {
   TRAVERSAL_SERVER_SOCKET.on('error', (err) => {
     console.log(err);
   });
+  // TODO merge redundant code between public and private sockets
   PEER_PUBLIC_SOCKET.on('error', (err) => {
-    console.log(err);
+    if (CONNECTED) {
+      DISCONNECT_TIMEOUT = setTimeout(() => {
+        console.log('disconnected');
+      }, DISCONNECT_TIMEOUT_INTERVAL);
+      CONNECTED = false;
+    }
   });
   PEER_PRIVATE_SOCKET.on('error', (err) => {
-    console.log(err);
+    if (CONNECTED) {
+      DISCONNECT_TIMEOUT = setTimeout(() => {
+        console.log('disconnected');
+      }, DISCONNECT_TIMEOUT_INTERVAL);
+      CONNECTED = false;
+    }
   });
 
   TRAVERSAL_SERVER_SOCKET.on('message', (msg, rinfo) => {
@@ -91,6 +141,7 @@ export default function startNetplay(hostCode?: string) {
     }
   });
 
+  // TODO if traversal socket only ever connects once, listen for "connect" event instead
   const sendMessage = () => {
     const {
       address: privateAddress,
@@ -102,14 +153,11 @@ export default function startNetplay(hostCode?: string) {
     TRAVERSAL_SERVER_SOCKET.send(JSON.stringify(message));
   };
 
-  try {
-    TRAVERSAL_SERVER_SOCKET.connect(
-      TRAVERSAL_SERVER_PORT,
-      TRAVERSAL_SERVER_ADDRESS,
-      sendMessage
-    );
-  } catch (error) {
-    // socket is already connected
-    sendMessage();
-  }
+  // TODO check if this can throw error (if already connected)
+  // if throws error, just call sendMessage
+  TRAVERSAL_SERVER_SOCKET.connect(
+    TRAVERSAL_SERVER_PORT,
+    TRAVERSAL_SERVER_ADDRESS,
+    sendMessage
+  );
 }
