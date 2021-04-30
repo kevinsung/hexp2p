@@ -86,3 +86,15 @@ a:hover {
   stroke: #808080;
   stroke-width: 0.08;
 }
+
+.ClickToCopy {
+  font-family: monospace;
+  font-weight: bold;
+  color: white;
+  background-color: #202020;
+  outline: none;
+}
+.ClickToCopy:hover {
+  text-decoration: underline;
+  transform: none;
+}

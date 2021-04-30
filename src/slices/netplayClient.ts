@@ -23,6 +23,7 @@ function attemptTraversal(socket: Socket, port: number, address: string) {
     }
   });
   const timer = setInterval(() => {
+    // TODO if socket is already closed, then either don't send or catch error
     socket.send('traversal', port, address);
     if (SOCKET) {
       clearTimeout(timer);
