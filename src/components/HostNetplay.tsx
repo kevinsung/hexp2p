@@ -19,9 +19,8 @@ function HostCodeDisplay() {
   };
 
   return (
-    <div className="Hello">
-      <div>Host code</div>
-      <div>{copiedStatus}</div>
+    <div>
+      <div>Host code {copiedStatus}</div>
       <button className="ClickToCopy" type="button" onClick={copyText}>
         {hostCode}
       </button>
@@ -31,10 +30,10 @@ function HostCodeDisplay() {
 
 export default function HostNetplay() {
   return (
-    <div>
+    <div className="HostNetplay">
       <Link to="/home">Home</Link>
       <HostCodeDisplay />
-      <div className="Hello">Waiting for peer to join...</div>
+      <div>Waiting for peer to join...</div>
     </div>
   );
 }

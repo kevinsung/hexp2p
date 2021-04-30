@@ -98,3 +98,10 @@ a:hover {
   text-decoration: underline;
   transform: none;
 }
+
+.HostNetplay {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
