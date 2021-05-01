@@ -5,8 +5,18 @@ import HexGame from './components/HexGame';
 import HexSettings from './components/HexSettings';
 import Home from './components/Home';
 import HostNetplay from './components/HostNetplay';
+import { stopNetplay } from './slices/netplayClient';
 import { history } from './store';
 import './App.global.css';
+
+history.listen((location) => {
+  console.log(
+    `The current URL is ${location.pathname}${location.search}${location.hash}`
+  );
+  if (location.pathname === '/') {
+    stopNetplay();
+  }
+});
 
 export default function App() {
   return (

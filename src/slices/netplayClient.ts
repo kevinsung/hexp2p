@@ -23,6 +23,7 @@ let DISCONNECT_TIMEOUT: NodeJS.Timeout;
 let TRAVERSAL_SERVER_SOCKET: Socket;
 let PEER_PUBLIC_SOCKET: Socket;
 let PEER_PRIVATE_SOCKET: Socket;
+
 let SOCKET: Socket | null;
 let CONNECTED = false;
 
@@ -105,8 +106,17 @@ function closeAllSockets() {
   }
 }
 
-export default function startNetplay(hostCode?: string) {
+export function stopNetplay() {
+  clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
+  clearInterval(PEER_KEEPALIVE_TIMEOUT);
+  clearInterval(DISCONNECT_TIMEOUT);
   closeAllSockets();
+  SOCKET = null;
+  CONNECTED = false;
+}
+
+export function startNetplay(hostCode?: string) {
+  stopNetplay();
 
   SOCKET = null;
   TRAVERSAL_SERVER_SOCKET = createSocket({ type: 'udp4', reuseAddr: true });

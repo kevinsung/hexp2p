@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { gameStarted } from '../slices/gameSlice';
-import startNetplay from '../slices/netplayClient';
+import { startNetplay } from '../slices/netplayClient';
 import { selectNetplayActive } from '../slices/netplaySlice';
 import { GameSettings } from '../types';
 import '../App.global.css';
