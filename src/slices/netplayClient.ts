@@ -11,23 +11,25 @@ import {
 const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
 const TRAVERSAL_SERVER_PORT = 6363;
 
+// TODO make traversal server keepalive interval longer (10 seconds)
+const TRAVERSAL_SERVER_KEEPALIVE_INTERVAL = 1000;
 const TRAVERSAL_PACKET_INTERVAL = 1000;
-const KEEP_ALIVE_PACKET_INTERVAL = 1000;
+const PEER_KEEPALIVE_INTERVAL = 1000;
 const DISCONNECT_TIMEOUT_INTERVAL = 10000;
 
-let SOCKET: Socket | null;
+let TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT: NodeJS.Timeout;
+let PEER_KEEPALIVE_TIMEOUT: NodeJS.Timeout;
+let DISCONNECT_TIMEOUT: NodeJS.Timeout;
 
 let TRAVERSAL_SERVER_SOCKET: Socket;
 let PEER_PUBLIC_SOCKET: Socket;
 let PEER_PRIVATE_SOCKET: Socket;
-
-let KEEP_ALIVE_TIMEOUT: NodeJS.Timeout;
-let DISCONNECT_TIMEOUT: NodeJS.Timeout;
+let SOCKET: Socket | null;
 let CONNECTED = false;
 
 function initializeConnection(socket: Socket) {
-  clearInterval(KEEP_ALIVE_TIMEOUT);
-  KEEP_ALIVE_TIMEOUT = setInterval(() => {
+  clearInterval(PEER_KEEPALIVE_TIMEOUT);
+  PEER_KEEPALIVE_TIMEOUT = setInterval(() => {
     // TODO throws ERR_SOCKET_DGRAM_NOT_RUNNING when
     // restarting netplay without closing the previous session
     // we should instead just close the previous session, and handle
@@ -41,7 +43,7 @@ function initializeConnection(socket: Socket) {
         CONNECTED = true;
       }
     });
-  }, KEEP_ALIVE_PACKET_INTERVAL);
+  }, PEER_KEEPALIVE_INTERVAL);
 }
 
 function attemptTraversal(socket: Socket, port: number, address: string) {
@@ -51,6 +53,9 @@ function attemptTraversal(socket: Socket, port: number, address: string) {
       SOCKET = socket;
       socket.connect(port, address);
       initializeConnection(socket);
+      // TODO check if this can cause error
+      clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
+      TRAVERSAL_SERVER_SOCKET.close();
       history.push('/game');
     }
   });
@@ -91,7 +96,6 @@ function closeAllSockets() {
 }
 
 export default function startNetplay(hostCode?: string) {
-  // TODO send keepalive to traversal server
   closeAllSockets();
 
   SOCKET = null;
@@ -143,7 +147,7 @@ export default function startNetplay(hostCode?: string) {
   });
 
   // TODO if traversal socket only ever connects once, listen for "connect" event instead
-  const sendMessage = () => {
+  const onConnect = () => {
     const {
       address: privateAddress,
       port: privatePort,
@@ -152,13 +156,17 @@ export default function startNetplay(hostCode?: string) {
     PEER_PRIVATE_SOCKET.bind(privatePort, privateAddress);
     const message = { privateAddress, privatePort, hostCode };
     TRAVERSAL_SERVER_SOCKET.send(JSON.stringify(message));
+    clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
+    TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT = setInterval(() => {
+      TRAVERSAL_SERVER_SOCKET.send('keepalive');
+    }, TRAVERSAL_SERVER_KEEPALIVE_INTERVAL);
   };
 
   // TODO check if this can throw error (if already connected)
-  // if throws error, just call sendMessage
+  // if throws error, just call onConnect
   TRAVERSAL_SERVER_SOCKET.connect(
     TRAVERSAL_SERVER_PORT,
     TRAVERSAL_SERVER_ADDRESS,
-    sendMessage
+    onConnect
   );
 }

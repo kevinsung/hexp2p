@@ -19,8 +19,12 @@ function main() {
   socket.bind(LISTEN_PORT);
 
   socket.on('message', (msg, rinfo) => {
-    console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${msg}`);
-    const { privateAddress, privatePort, hostCode } = JSON.parse(String(msg));
+    const message = String(msg);
+    console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${message}`);
+    if (message === 'keepalive') {
+      return;
+    }
+    const { privateAddress, privatePort, hostCode } = JSON.parse(message);
     const { address: publicAddress, port: publicPort } = rinfo;
 
     if (hostCode) {
@@ -32,7 +36,7 @@ function main() {
           privateAddress: peerPrivateAddress,
           privatePort: peerPrivatePort,
         } = HOSTS.get(hostCode) as ClientInfo;
-        const message = {
+        const replyMessage = {
           peerPublicAddress,
           peerPublicPort,
           peerPrivateAddress,
@@ -44,7 +48,7 @@ function main() {
           peerPrivateAddress: privateAddress,
           peerPrivatePort: privatePort,
         };
-        socket.send(JSON.stringify(message), publicPort, publicAddress);
+        socket.send(JSON.stringify(replyMessage), publicPort, publicAddress);
         socket.send(
           JSON.stringify(hostMessage),
           peerPublicPort,
@@ -63,8 +67,8 @@ function main() {
           privatePort,
         });
         HOST_CODES.set(key, newHostCode);
-        const message = { hostCode: newHostCode };
-        socket.send(JSON.stringify(message), publicPort, publicAddress);
+        const replyMessage = { hostCode: newHostCode };
+        socket.send(JSON.stringify(replyMessage), publicPort, publicAddress);
       }
     }
   });
