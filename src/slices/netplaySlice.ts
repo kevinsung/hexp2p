@@ -3,12 +3,18 @@ import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import { NetplayState } from '../types';
 
-const initialState: NetplayState = {};
+const initialState: NetplayState = { connected: false };
 
 const netplaySlice = createSlice({
   name: 'netplay',
   initialState,
   reducers: {
+    connectedToPeer: (state) => {
+      state.connected = true;
+    },
+    disconnectedFromPeer: (state) => {
+      state.connected = false;
+    },
     hostCodeReceived: (state, action) => {
       const hostCode = action.payload;
       state.hostCode = hostCode;
@@ -16,7 +22,13 @@ const netplaySlice = createSlice({
   },
 });
 
-export const { hostCodeReceived } = netplaySlice.actions;
+export const {
+  connectedToPeer,
+  disconnectedFromPeer,
+  hostCodeReceived,
+} = netplaySlice.actions;
+
+export const selectConnected = (state: RootState) => state.netplay.connected;
 
 export const selectHostCode = (state: RootState) => state.netplay.hostCode;
 

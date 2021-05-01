@@ -1,7 +1,10 @@
-import { createImmutableStateInvariantMiddleware } from '@reduxjs/toolkit';
 import { Socket, createSocket } from 'dgram';
 import { store } from '../store';
-import { hostCodeReceived } from './netplaySlice';
+import {
+  connectedToPeer,
+  disconnectedFromPeer,
+  hostCodeReceived,
+} from './netplaySlice';
 
 // TODO use { type, payload } structure for messages
 
@@ -33,7 +36,9 @@ function initializeConnection(socket: Socket) {
     socket.on('message', (msg) => {
       const message = String(msg);
       if (message === 'keepalive') {
+        console.log('CONNECTED');
         clearTimeout(DISCONNECT_TIMEOUT);
+        store.dispatch(connectedToPeer());
         CONNECTED = true;
       }
     });
@@ -96,23 +101,18 @@ export default function startNetplay(hostCode?: string) {
   TRAVERSAL_SERVER_SOCKET.on('error', (err) => {
     console.log(err);
   });
-  // TODO merge redundant code between public and private sockets
-  PEER_PUBLIC_SOCKET.on('error', (err) => {
+
+  const handleError = (err) => {
     if (CONNECTED) {
+      console.log('DISCONNECTED');
       DISCONNECT_TIMEOUT = setTimeout(() => {
-        console.log('disconnected');
+        store.dispatch(disconnectedFromPeer());
       }, DISCONNECT_TIMEOUT_INTERVAL);
       CONNECTED = false;
     }
-  });
-  PEER_PRIVATE_SOCKET.on('error', (err) => {
-    if (CONNECTED) {
-      DISCONNECT_TIMEOUT = setTimeout(() => {
-        console.log('disconnected');
-      }, DISCONNECT_TIMEOUT_INTERVAL);
-      CONNECTED = false;
-    }
-  });
+  };
+  PEER_PUBLIC_SOCKET.on('error', handleError);
+  PEER_PRIVATE_SOCKET.on('error', handleError);
 
   TRAVERSAL_SERVER_SOCKET.on('message', (msg, rinfo) => {
     console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${msg}`);
