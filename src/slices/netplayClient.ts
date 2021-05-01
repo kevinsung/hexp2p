@@ -11,8 +11,7 @@ import {
 const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
 const TRAVERSAL_SERVER_PORT = 6363;
 
-// TODO make traversal server keepalive interval longer (10 seconds)
-const TRAVERSAL_SERVER_KEEPALIVE_INTERVAL = 1000;
+const TRAVERSAL_SERVER_KEEPALIVE_INTERVAL = 10000;
 const TRAVERSAL_PACKET_INTERVAL = 1000;
 const PEER_KEEPALIVE_INTERVAL = 1000;
 const DISCONNECT_TIMEOUT_INTERVAL = 10000;
@@ -35,6 +34,7 @@ function initializeConnection(socket: Socket) {
     // we should instead just close the previous session, and handle
     // disconnects elsewhere
     socket.send('keepalive');
+    // TODO validate message came from correct address
     socket.on('message', (msg) => {
       const message = String(msg);
       if (message === 'keepalive') {
@@ -46,12 +46,22 @@ function initializeConnection(socket: Socket) {
   }, PEER_KEEPALIVE_INTERVAL);
 }
 
-function attemptTraversal(socket: Socket, port: number, address: string) {
+function attemptTraversal(
+  socket: Socket,
+  port: number,
+  address: string,
+  altPort: number,
+  altAddress: string
+) {
   socket.on('message', (msg, rinfo) => {
     console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${msg}`);
-    if (rinfo.address === address && rinfo.port === port && !SOCKET) {
+    if (
+      !SOCKET &&
+      ((rinfo.address === address && rinfo.port === port) ||
+        (rinfo.address === altAddress && rinfo.port === altPort))
+    ) {
       SOCKET = socket;
-      socket.connect(port, address);
+      socket.connect(rinfo.port, rinfo.address);
       initializeConnection(socket);
       // TODO check if this can cause error
       clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
@@ -134,14 +144,22 @@ export default function startNetplay(hostCode?: string) {
     }
 
     if (peerPublicAddress && peerPublicPort) {
-      attemptTraversal(PEER_PUBLIC_SOCKET, peerPublicPort, peerPublicAddress);
+      attemptTraversal(
+        PEER_PUBLIC_SOCKET,
+        peerPublicPort,
+        peerPublicAddress,
+        peerPrivatePort,
+        peerPrivateAddress
+      );
     }
 
     if (peerPrivateAddress && peerPrivatePort) {
       attemptTraversal(
         PEER_PRIVATE_SOCKET,
         peerPrivatePort,
-        peerPrivateAddress
+        peerPrivateAddress,
+        peerPublicPort,
+        peerPublicAddress
       );
     }
   });
