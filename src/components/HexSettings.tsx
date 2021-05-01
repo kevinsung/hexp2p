@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { gameStarted } from '../slices/gameSlice';
+import startNetplay from '../slices/netplayClient';
 import { selectNetplayActive } from '../slices/netplaySlice';
 import { GameSettings } from '../types';
 import '../App.global.css';
@@ -68,6 +69,9 @@ export default function HexSettings() {
     event.preventDefault();
     const settings: GameSettings = { boardSize, useSwapRule };
     dispatch(gameStarted(settings));
+    if (netplayActive) {
+      startNetplay();
+    }
     history.push(netplayActive ? '/hostNetplay' : '/game');
   };
 

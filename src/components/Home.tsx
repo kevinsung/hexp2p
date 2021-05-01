@@ -2,7 +2,6 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import icon from '../../assets/icon.svg';
-import startNetplay from '../slices/netplayClient';
 import { activateNetplay, deactivateNetplay } from '../slices/netplaySlice';
 import '../App.global.css';
 
@@ -15,7 +14,6 @@ export default function Home() {
 
   const handleHostNetplay = () => {
     dispatch(activateNetplay());
-    startNetplay();
   };
 
   return (
