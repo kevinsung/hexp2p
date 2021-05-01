@@ -1,10 +1,23 @@
 import React from 'react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import icon from '../../assets/icon.svg';
 import startNetplay from '../slices/netplayClient';
+import { activateNetplay, deactivateNetplay } from '../slices/netplaySlice';
 import '../App.global.css';
 
 export default function Home() {
+  const dispatch = useDispatch();
+
+  const handlePlayLocalGame = () => {
+    dispatch(deactivateNetplay());
+  };
+
+  const handleHostNetplay = () => {
+    dispatch(activateNetplay());
+    startNetplay();
+  };
+
   return (
     <div>
       <div className="Hello">
@@ -13,12 +26,14 @@ export default function Home() {
       <h1>electron-react-boilerplate</h1>
       <div className="Hello">
         <Link to="/settings">
-          <button type="button">Play local game</button>
+          <button type="button" onClick={handlePlayLocalGame}>
+            Play local game
+          </button>
         </Link>
       </div>
       <div className="Hello">
-        <Link to="/hostNetplay">
-          <button type="button" onClick={() => startNetplay()}>
+        <Link to="/settings">
+          <button type="button" onClick={handleHostNetplay}>
             Host netplay
           </button>
         </Link>

@@ -1,5 +1,5 @@
 import { Socket, createSocket } from 'dgram';
-import { store } from '../store';
+import { history, store } from '../store';
 import {
   connectedToPeer,
   disconnectedFromPeer,
@@ -36,7 +36,6 @@ function initializeConnection(socket: Socket) {
     socket.on('message', (msg) => {
       const message = String(msg);
       if (message === 'keepalive') {
-        console.log('CONNECTED');
         clearTimeout(DISCONNECT_TIMEOUT);
         store.dispatch(connectedToPeer());
         CONNECTED = true;
@@ -52,6 +51,7 @@ function attemptTraversal(socket: Socket, port: number, address: string) {
       SOCKET = socket;
       socket.connect(port, address);
       initializeConnection(socket);
+      history.push('/game');
     }
   });
   const timer = setInterval(() => {
@@ -91,6 +91,7 @@ function closeAllSockets() {
 }
 
 export default function startNetplay(hostCode?: string) {
+  // TODO send keepalive to traversal server
   closeAllSockets();
 
   SOCKET = null;
@@ -102,7 +103,7 @@ export default function startNetplay(hostCode?: string) {
     console.log(err);
   });
 
-  const handleError = (err) => {
+  const handleError = () => {
     if (CONNECTED) {
       console.log('DISCONNECTED');
       DISCONNECT_TIMEOUT = setTimeout(() => {

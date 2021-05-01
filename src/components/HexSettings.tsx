@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { gameStarted } from '../slices/gameSlice';
+import { selectNetplayActive } from '../slices/netplaySlice';
 import { GameSettings } from '../types';
 import '../App.global.css';
 
@@ -58,6 +59,7 @@ function SwapRuleToggle(props: SwapRuleToggleProps) {
 export default function HexSettings() {
   const dispatch = useDispatch();
   const history = useHistory();
+  const netplayActive = useSelector(selectNetplayActive);
 
   const [boardSize, setBoardSize] = useState(DEFAULT_BOARD_SIZE);
   const [useSwapRule, setUseSwapRule] = useState(true);
@@ -66,7 +68,7 @@ export default function HexSettings() {
     event.preventDefault();
     const settings: GameSettings = { boardSize, useSwapRule };
     dispatch(gameStarted(settings));
-    history.push('/game');
+    history.push(netplayActive ? '/hostNetplay' : '/game');
   };
 
   return (
