@@ -9,6 +9,14 @@ import { stopNetplay } from './slices/netplayClient';
 import { history } from './store';
 import './App.global.css';
 
+// eslint-disable-next-line consistent-return
+history.block((_location, action) => {
+  // disable "back" navigation
+  if (action === 'POP') {
+    return false;
+  }
+});
+
 history.listen((location) => {
   if (location.pathname === '/') {
     stopNetplay();
