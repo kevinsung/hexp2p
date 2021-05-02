@@ -22,10 +22,20 @@ function main() {
   socket.on('message', (msg, rinfo) => {
     const message = String(msg);
     console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${message}`);
+
     if (message === 'keepalive') {
       return;
     }
-    const { privateAddress, privatePort, hostCode } = JSON.parse(message);
+
+    let parsedMessage;
+    try {
+      parsedMessage = JSON.parse(message);
+    } catch {
+      // ignore badly formed messages
+      return;
+    }
+
+    const { privateAddress, privatePort, hostCode } = parsedMessage;
     const { address: publicAddress, port: publicPort } = rinfo;
 
     if (hostCode) {
