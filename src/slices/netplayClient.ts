@@ -1,12 +1,21 @@
 import { Socket, createSocket } from 'dgram';
 import { history, store } from '../store';
+import { gameStarted, moveMade, selectGameState } from './gameSlice';
 import {
   connectedToPeer,
   disconnectedFromPeer,
   hostCodeReceived,
+  selectHosting,
 } from './netplaySlice';
+import { GameSettings } from '../types';
 
 // TODO use { type, payload } structure for messages
+
+interface MessageData {
+  settings?: GameSettings;
+  move?: Array<number>;
+  swap?: boolean;
+}
 
 const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
 const TRAVERSAL_SERVER_PORT = 6363;
@@ -27,19 +36,48 @@ let PEER_PRIVATE_SOCKET: Socket;
 let SOCKET: Socket | null;
 let CONNECTED = false;
 
+function handleMessage(messageData: MessageData) {
+  const { settings, move, swap } = messageData;
+  if (settings) {
+    store.dispatch(gameStarted(settings));
+  } else if (move) {
+    store.dispatch(moveMade(move));
+  }
+}
+
 function initializeConnection(socket: Socket) {
+  // start sending keepalive packets
   clearInterval(PEER_KEEPALIVE_TIMEOUT);
   PEER_KEEPALIVE_TIMEOUT = setInterval(() => {
     socket.send('keepalive');
-    socket.on('message', (msg) => {
-      const message = String(msg);
-      if (message === 'keepalive') {
-        clearTimeout(DISCONNECT_TIMEOUT);
-        store.dispatch(connectedToPeer());
-        CONNECTED = true;
-      }
-    });
   }, PEER_KEEPALIVE_INTERVAL);
+
+  socket.send('keepalive');
+
+  // if hosting, send game settings
+  const hosting = selectHosting(store.getState());
+  if (hosting) {
+    const { settings } = selectGameState(store.getState());
+    const message = { settings };
+    socket.send(JSON.stringify(message));
+  }
+
+  socket.on('message', (msg) => {
+    const message = String(msg);
+
+    if (message === 'keepalive') {
+      clearTimeout(DISCONNECT_TIMEOUT);
+      store.dispatch(connectedToPeer());
+      CONNECTED = true;
+      return;
+    }
+
+    try {
+      handleMessage(JSON.parse(message));
+    } catch (error) {
+      // ignore badly formed messages
+    }
+  });
 }
 
 function attemptTraversal(
@@ -57,13 +95,14 @@ function attemptTraversal(
         (rinfo.address === altAddress && rinfo.port === altPort))
     ) {
       SOCKET = socket;
-      socket.connect(rinfo.port, rinfo.address);
-      initializeConnection(socket);
+      socket.connect(rinfo.port, rinfo.address, () => {
+        initializeConnection(socket);
+        store.dispatch(connectedToPeer());
+        history.push('/game');
+      });
       clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
       // TODO check if this can cause error
       TRAVERSAL_SERVER_SOCKET.close();
-      store.dispatch(connectedToPeer());
-      history.push('/game');
     }
   });
   const timer = setInterval(() => {

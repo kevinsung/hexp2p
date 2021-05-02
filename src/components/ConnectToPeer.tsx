@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { startNetplay } from '../slices/netplayClient';
+import { hostCodeSubmitted } from '../slices/netplaySlice';
 import '../App.global.css';
 
 export default function ConnectToPeer() {
+  const dispatch = useDispatch();
   const [hostCode, setHostCode] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!submitted) {
-      startNetplay(hostCode);
       setSubmitted(true);
+      dispatch(hostCodeSubmitted());
+      startNetplay(hostCode);
     }
   };
 

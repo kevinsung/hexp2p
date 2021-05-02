@@ -6,6 +6,7 @@ import { NetplayState } from '../types';
 const initialState: NetplayState = {
   active: false,
   connected: false,
+  hosting: false,
 };
 
 const netplaySlice = createSlice({
@@ -27,6 +28,10 @@ const netplaySlice = createSlice({
     hostCodeReceived: (state, action) => {
       const hostCode = action.payload;
       state.hostCode = hostCode;
+      state.hosting = true;
+    },
+    hostCodeSubmitted: (state) => {
+      state.hosting = false;
     },
   },
 });
@@ -37,6 +42,7 @@ export const {
   connectedToPeer,
   disconnectedFromPeer,
   hostCodeReceived,
+  hostCodeSubmitted,
 } = netplaySlice.actions;
 
 export const selectNetplayActive = (state: RootState) => state.netplay.active;
@@ -44,5 +50,7 @@ export const selectNetplayActive = (state: RootState) => state.netplay.active;
 export const selectConnected = (state: RootState) => state.netplay.connected;
 
 export const selectHostCode = (state: RootState) => state.netplay.hostCode;
+
+export const selectHosting = (state: RootState) => state.netplay.hosting;
 
 export default netplaySlice.reducer;

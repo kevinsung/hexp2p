@@ -19,5 +19,6 @@ export interface GameState {
 export interface NetplayState {
   active: boolean;
   connected: boolean;
+  hosting: boolean;
   hostCode?: string;
 }
