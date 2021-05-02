@@ -8,14 +8,6 @@ import '../App.global.css';
 export default function Home() {
   const dispatch = useDispatch();
 
-  const handlePlayLocalGame = () => {
-    dispatch(deactivateNetplay());
-  };
-
-  const handleHostNetplay = () => {
-    dispatch(activateNetplay());
-  };
-
   return (
     <div>
       <div className="Hello">
@@ -24,21 +16,38 @@ export default function Home() {
       <h1>electron-react-boilerplate</h1>
       <div className="Hello">
         <Link to="/settings">
-          <button type="button" onClick={handlePlayLocalGame}>
+          <button
+            type="button"
+            onClick={() => {
+              dispatch(deactivateNetplay());
+            }}
+          >
             Play local game
           </button>
         </Link>
       </div>
       <div className="Hello">
         <Link to="/settings">
-          <button type="button" onClick={handleHostNetplay}>
+          <button
+            type="button"
+            onClick={() => {
+              dispatch(activateNetplay());
+            }}
+          >
             Host netplay
           </button>
         </Link>
       </div>
       <div className="Hello">
         <Link to="/connectToPeer">
-          <button type="button">Connect to peer</button>
+          <button
+            type="button"
+            onClick={() => {
+              dispatch(activateNetplay());
+            }}
+          >
+            Connect to peer
+          </button>
         </Link>
       </div>
     </div>

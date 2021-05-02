@@ -7,11 +7,10 @@ import {
   selectBoardState,
   selectGameState,
 } from '../slices/gameSlice';
+import { selectConnected, selectNetplayActive } from '../slices/netplaySlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
 import '../App.global.css';
-
-const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 
 interface HexagonProps {
   boardState: Array<Array<number>>;
@@ -33,6 +32,8 @@ interface HexBoardProps {
 interface ComponentMarkerProps {
   component: Array<Array<number>>;
 }
+
+const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 
 function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
@@ -242,11 +243,26 @@ function HexBoard(props: HexBoardProps) {
 }
 
 export default function HexGame() {
+  const netplayActive = useSelector(selectNetplayActive);
+  const connected = useSelector(selectConnected);
   const boardState = useSelector(selectBoardState);
+
+  // TODO make a better indicator
+  let connectionIndicator = '';
+  if (netplayActive) {
+    if (connected) {
+      connectionIndicator = 'CONNECTED';
+    } else {
+      connectionIndicator = 'DISCONNECTED';
+    }
+  }
+
   const winningComponent = getWinningConnectedComponent(boardState);
+
   return (
     <div>
       <Link to="/">Home</Link>
+      <div>{connectionIndicator}</div>
       <HexBoard boardState={boardState} winningComponent={winningComponent} />
     </div>
   );

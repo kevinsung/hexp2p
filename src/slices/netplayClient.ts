@@ -12,7 +12,7 @@ const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
 const TRAVERSAL_SERVER_PORT = 6363;
 
 const TRAVERSAL_SERVER_KEEPALIVE_INTERVAL = 10000;
-const TRAVERSAL_PACKET_INTERVAL = 1000;
+const TRAVERSAL_PACKET_INTERVAL = 200;
 const PEER_KEEPALIVE_INTERVAL = 1000;
 const DISCONNECT_TIMEOUT_INTERVAL = 10000;
 
@@ -62,6 +62,7 @@ function attemptTraversal(
       clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
       // TODO check if this can cause error
       TRAVERSAL_SERVER_SOCKET.close();
+      store.dispatch(connectedToPeer());
       history.push('/game');
     }
   });
@@ -122,7 +123,6 @@ export function startNetplay(hostCode?: string) {
 
   const handleError = () => {
     if (CONNECTED) {
-      console.log('DISCONNECTED');
       DISCONNECT_TIMEOUT = setTimeout(() => {
         store.dispatch(disconnectedFromPeer());
       }, DISCONNECT_TIMEOUT_INTERVAL);
