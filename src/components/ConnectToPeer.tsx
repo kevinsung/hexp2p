@@ -5,10 +5,14 @@ import '../App.global.css';
 
 export default function ConnectToPeer() {
   const [hostCode, setHostCode] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    startNetplay(hostCode);
+    if (!submitted) {
+      startNetplay(hostCode);
+      setSubmitted(true);
+    }
   };
 
   return (
