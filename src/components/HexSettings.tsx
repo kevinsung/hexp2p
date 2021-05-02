@@ -7,7 +7,7 @@ import { selectNetplayActive } from '../slices/netplaySlice';
 import { GameSettings } from '../types';
 import '../App.global.css';
 
-const MIN_BOARD_SIZE = 5;
+const MIN_BOARD_SIZE = 7;
 const MAX_BOARD_SIZE = 19;
 const DEFAULT_BOARD_SIZE = 13;
 

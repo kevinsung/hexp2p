@@ -30,12 +30,7 @@ let CONNECTED = false;
 function initializeConnection(socket: Socket) {
   clearInterval(PEER_KEEPALIVE_TIMEOUT);
   PEER_KEEPALIVE_TIMEOUT = setInterval(() => {
-    // TODO throws ERR_SOCKET_DGRAM_NOT_RUNNING when
-    // restarting netplay without closing the previous session
-    // we should instead just close the previous session, and handle
-    // disconnects elsewhere
     socket.send('keepalive');
-    // TODO validate message came from correct address
     socket.on('message', (msg) => {
       const message = String(msg);
       if (message === 'keepalive') {
@@ -64,14 +59,13 @@ function attemptTraversal(
       SOCKET = socket;
       socket.connect(rinfo.port, rinfo.address);
       initializeConnection(socket);
-      // TODO check if this can cause error
       clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
+      // TODO check if this can cause error
       TRAVERSAL_SERVER_SOCKET.close();
       history.push('/game');
     }
   });
   const timer = setInterval(() => {
-    // TODO check if this can cause an error (if socket could be closed)
     socket.send('traversal', port, address);
     if (SOCKET) {
       clearTimeout(timer);
@@ -118,7 +112,6 @@ export function stopNetplay() {
 export function startNetplay(hostCode?: string) {
   stopNetplay();
 
-  SOCKET = null;
   TRAVERSAL_SERVER_SOCKET = createSocket({ type: 'udp4', reuseAddr: true });
   PEER_PUBLIC_SOCKET = createSocket({ type: 'udp4', reuseAddr: true });
   PEER_PRIVATE_SOCKET = createSocket({ type: 'udp4', reuseAddr: true });
@@ -174,8 +167,7 @@ export function startNetplay(hostCode?: string) {
     }
   });
 
-  // TODO if traversal socket only ever connects once, listen for "connect" event instead
-  const onConnect = () => {
+  TRAVERSAL_SERVER_SOCKET.on('connect', () => {
     const {
       address: privateAddress,
       port: privatePort,
@@ -188,13 +180,10 @@ export function startNetplay(hostCode?: string) {
     TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT = setInterval(() => {
       TRAVERSAL_SERVER_SOCKET.send('keepalive');
     }, TRAVERSAL_SERVER_KEEPALIVE_INTERVAL);
-  };
+  });
 
-  // TODO check if this can throw error (if already connected)
-  // if throws error, just call onConnect
   TRAVERSAL_SERVER_SOCKET.connect(
     TRAVERSAL_SERVER_PORT,
-    TRAVERSAL_SERVER_ADDRESS,
-    onConnect
+    TRAVERSAL_SERVER_ADDRESS
   );
 }

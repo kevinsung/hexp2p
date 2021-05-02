@@ -10,9 +10,6 @@ import { history } from './store';
 import './App.global.css';
 
 history.listen((location) => {
-  console.log(
-    `The current URL is ${location.pathname}${location.search}${location.hash}`
-  );
   if (location.pathname === '/') {
     stopNetplay();
   }
