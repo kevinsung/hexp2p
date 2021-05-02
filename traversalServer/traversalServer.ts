@@ -10,11 +10,12 @@ interface ClientInfo {
 
 const LISTEN_PORT = 6363;
 
+const HOST_CODE_EXPIRATION_TIME = 600000;
+
 const HOSTS: Map<string, ClientInfo> = new Map();
 const HOST_CODES: Map<string, string> = new Map();
 
 function main() {
-  // TODO handle deleting clients
   const socket = createSocket('udp4');
   socket.bind(LISTEN_PORT);
 
@@ -29,6 +30,7 @@ function main() {
 
     if (hostCode) {
       // client is requesting connection to peer
+      // TODO inform client if host code does not exist
       if (HOSTS.has(hostCode)) {
         const {
           publicAddress: peerPublicAddress,
@@ -57,19 +59,24 @@ function main() {
       }
     } else {
       // client is hosting
-      const key = `${publicAddress}:${publicPort}`;
-      if (!HOST_CODES.has(key)) {
-        const newHostCode = randomBytes(16).toString('hex');
-        HOSTS.set(newHostCode, {
-          publicAddress,
-          publicPort,
-          privateAddress,
-          privatePort,
-        });
-        HOST_CODES.set(key, newHostCode);
-        const replyMessage = { hostCode: newHostCode };
-        socket.send(JSON.stringify(replyMessage), publicPort, publicAddress);
+      const key = `${publicAddress}:${publicPort}-${privateAddress}:${privatePort}`;
+      if (HOST_CODES.has(key)) {
+        HOSTS.delete(HOST_CODES.get(key) as string);
       }
+      const newHostCode = randomBytes(16).toString('hex');
+      HOSTS.set(newHostCode, {
+        publicAddress,
+        publicPort,
+        privateAddress,
+        privatePort,
+      });
+      HOST_CODES.set(key, newHostCode);
+      const replyMessage = { hostCode: newHostCode };
+      socket.send(JSON.stringify(replyMessage), publicPort, publicAddress);
+      setTimeout(() => {
+        HOSTS.delete(newHostCode);
+        HOST_CODES.delete(key);
+      }, HOST_CODE_EXPIRATION_TIME);
     }
   });
 }
