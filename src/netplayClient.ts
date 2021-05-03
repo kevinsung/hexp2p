@@ -206,13 +206,22 @@ export function startNetplay(hostCode?: string) {
 
   TRAVERSAL_SERVER_SOCKET.on('message', (msg, rinfo) => {
     console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${msg}`);
+
+    let parsedMessage;
+    try {
+      parsedMessage = JSON.parse(String(msg));
+    } catch {
+      // ignore badly formed messages
+      return;
+    }
+
     const {
       hostCode: receivedHostCode,
       peerPublicAddress,
       peerPublicPort,
       peerPrivateAddress,
       peerPrivatePort,
-    } = JSON.parse(String(msg));
+    } = parsedMessage;
 
     if (receivedHostCode) {
       store.dispatch(hostCodeReceived(receivedHostCode));

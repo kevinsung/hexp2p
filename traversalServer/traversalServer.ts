@@ -20,8 +20,9 @@ function main() {
   socket.bind(LISTEN_PORT);
 
   socket.on('message', (msg, rinfo) => {
+    console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${msg}`);
+
     const message = String(msg);
-    console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${message}`);
 
     if (message === 'keepalive') {
       return;
