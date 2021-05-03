@@ -6,9 +6,15 @@ import {
   moveMade,
   selectBoardState,
   selectGameState,
+  swapPhaseCompleted,
 } from '../slices/gameSlice';
-import { sendMove } from '../netplayClient';
-import { selectConnected, selectNetplayActive } from '../slices/netplaySlice';
+import { sendMove, sendSwap } from '../netplayClient';
+import {
+  selectConnected,
+  selectIsBlack,
+  selectNetplayActive,
+  swapChosen,
+} from '../slices/netplaySlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
 import '../App.global.css';
@@ -28,6 +34,7 @@ interface HexagonsProps {
 interface HexBoardProps {
   boardState: Array<Array<number>>;
   winningComponent: Array<Array<number>>;
+  disabled: boolean;
 }
 
 interface ComponentMarkerProps {
@@ -35,6 +42,45 @@ interface ComponentMarkerProps {
 }
 
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
+
+function SwapDialog() {
+  const dispatch = useDispatch();
+  const netplayActive = useSelector(selectNetplayActive);
+  const connected = useSelector(selectConnected);
+  const isBlack = useSelector(selectIsBlack);
+  const { moveNumber, settings, swapPhaseComplete } = useSelector(
+    selectGameState
+  );
+  const { useSwapRule } = settings;
+
+  if (!useSwapRule || swapPhaseComplete || moveNumber !== 1) {
+    return <div />;
+  }
+
+  if (netplayActive && isBlack) {
+    return <div>SWAP PHASE: Waiting for opponent to choose color...</div>;
+  }
+
+  const handleSwap = (swap: boolean) => {
+    dispatch(swapPhaseCompleted());
+    if (netplayActive && connected) {
+      dispatch(swapChosen(swap));
+      sendSwap(swap);
+    }
+  };
+
+  return (
+    <div>
+      SWAP PHASE: Choose your color
+      <button type="button" onClick={() => handleSwap(true)}>
+        Black
+      </button>
+      <button type="button" onClick={() => handleSwap(false)}>
+        White
+      </button>
+    </div>
+  );
+}
 
 function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
@@ -224,7 +270,7 @@ function ComponentMarker(props: ComponentMarkerProps) {
 }
 
 function HexBoard(props: HexBoardProps) {
-  const { boardState, winningComponent } = props;
+  const { boardState, winningComponent, disabled } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
 
@@ -239,7 +285,7 @@ function HexBoard(props: HexBoardProps) {
       <svg className="HexBoard" viewBox={viewBox}>
         <Hexagons
           boardState={boardState}
-          disabled={winningComponent.length > 0}
+          disabled={winningComponent.length > 0 || disabled}
         />
         <Borders />
         <CoordinateLabels />
@@ -252,11 +298,25 @@ function HexBoard(props: HexBoardProps) {
 export default function HexGame() {
   const netplayActive = useSelector(selectNetplayActive);
   const connected = useSelector(selectConnected);
+  const isBlack = useSelector(selectIsBlack);
   const boardState = useSelector(selectBoardState);
+  const { moveNumber, settings, swapPhaseComplete } = useSelector(
+    selectGameState
+  );
+  const { useSwapRule } = settings;
 
+  const winningComponent = getWinningConnectedComponent(boardState);
+
+  let disabled = useSwapRule && !swapPhaseComplete && moveNumber === 1;
   // TODO make a better indicator
   let connectionIndicator = '';
   if (netplayActive) {
+    if (
+      (moveNumber % 2 === 0 && !isBlack) ||
+      (moveNumber % 2 === 1 && isBlack)
+    ) {
+      disabled = true;
+    }
     if (connected) {
       connectionIndicator = 'CONNECTED';
     } else {
@@ -264,13 +324,16 @@ export default function HexGame() {
     }
   }
 
-  const winningComponent = getWinningConnectedComponent(boardState);
-
   return (
     <div>
       <Link to="/">Home</Link>
       <div>{connectionIndicator}</div>
-      <HexBoard boardState={boardState} winningComponent={winningComponent} />
+      <SwapDialog />
+      <HexBoard
+        boardState={boardState}
+        winningComponent={winningComponent}
+        disabled={disabled}
+      />
     </div>
   );
 }

@@ -34,6 +34,16 @@ const netplaySlice = createSlice({
     hostCodeSubmitted: (state) => {
       state.hosting = false;
     },
+    colorChosen: (state, action) => {
+      const isBlack = action.payload;
+      state.isBlack = isBlack;
+    },
+    swapChosen: (state, action) => {
+      const swap = action.payload;
+      if (swap) {
+        state.isBlack = !state.isBlack;
+      }
+    },
   },
 });
 
@@ -44,7 +54,11 @@ export const {
   disconnectedFromPeer,
   hostCodeReceived,
   hostCodeSubmitted,
+  colorChosen,
+  swapChosen,
 } = netplaySlice.actions;
+
+// TODO just have one reducer selectNetplayState
 
 export const selectNetplayActive = (state: RootState) => state.netplay.active;
 
@@ -53,5 +67,7 @@ export const selectConnected = (state: RootState) => state.netplay.connected;
 export const selectHostCode = (state: RootState) => state.netplay.hostCode;
 
 export const selectHosting = (state: RootState) => state.netplay.hosting;
+
+export const selectIsBlack = (state: RootState) => state.netplay.isBlack;
 
 export default netplaySlice.reducer;

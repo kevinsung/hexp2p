@@ -13,6 +13,7 @@ export interface GameState {
   settings: GameSettings;
   moveHistory: Array<Array<number>>;
   moveNumber: number;
+  swapPhaseComplete: boolean;
   selectedHexagon: Array<number>;
 }
 

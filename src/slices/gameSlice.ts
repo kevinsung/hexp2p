@@ -7,6 +7,7 @@ const initialState: GameState = {
   settings: { boardSize: 14, useSwapRule: true },
   moveHistory: [],
   moveNumber: 0,
+  swapPhaseComplete: false,
   selectedHexagon: [NaN, NaN],
 };
 
@@ -19,20 +20,28 @@ const gameSlice = createSlice({
       Object.assign(state, initialState);
       state.settings = settings;
     },
-    hexagonSelected: (state, action) => {
-      const coordinates = action.payload;
-      state.selectedHexagon = coordinates;
-    },
     moveMade: (state, action) => {
       const { moveHistory } = state;
       const coordinates = action.payload;
       moveHistory.push(coordinates);
       state.moveNumber += 1;
     },
+    swapPhaseCompleted: (state) => {
+      state.swapPhaseComplete = true;
+    },
+    hexagonSelected: (state, action) => {
+      const coordinates = action.payload;
+      state.selectedHexagon = coordinates;
+    },
   },
 });
 
-export const { gameStarted, hexagonSelected, moveMade } = gameSlice.actions;
+export const {
+  gameStarted,
+  hexagonSelected,
+  moveMade,
+  swapPhaseCompleted,
+} = gameSlice.actions;
 
 export const selectGameState = (state: RootState) => state.game;
 

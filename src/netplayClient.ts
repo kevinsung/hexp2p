@@ -1,16 +1,25 @@
 import { Socket, createSocket } from 'dgram';
 import { history, store } from './store';
-import { gameStarted, moveMade, selectGameState } from './slices/gameSlice';
 import {
+  gameStarted,
+  moveMade,
+  selectGameState,
+  swapPhaseCompleted,
+} from './slices/gameSlice';
+import {
+  colorChosen,
   connectedToPeer,
   disconnectedFromPeer,
   hostCodeReceived,
   selectHosting,
+  selectIsBlack,
+  swapChosen,
 } from './slices/netplaySlice';
 import { GameSettings } from './types';
 
 interface MessageData {
   settings?: GameSettings;
+  isBlack?: boolean;
   move?: Array<number>;
   swap?: boolean;
 }
@@ -35,11 +44,19 @@ let SOCKET: Socket | null;
 let CONNECTED = false;
 
 function handleMessage(messageData: MessageData) {
-  const { settings, move, swap } = messageData;
+  const { settings, isBlack, move, swap } = messageData;
   if (settings) {
     store.dispatch(gameStarted(settings));
-  } else if (move) {
+  }
+  if (typeof isBlack === 'boolean') {
+    store.dispatch(colorChosen(isBlack));
+  }
+  if (move) {
     store.dispatch(moveMade(move));
+  }
+  if (typeof swap === 'boolean') {
+    store.dispatch(swapChosen(swap));
+    store.dispatch(swapPhaseCompleted());
   }
 }
 
@@ -52,11 +69,12 @@ function initializeConnection(socket: Socket) {
 
   socket.send('keepalive');
 
-  // if hosting, send game settings
+  // if hosting, send game settings and color
   const hosting = selectHosting(store.getState());
   if (hosting) {
     const { settings } = selectGameState(store.getState());
-    const message = { settings };
+    const isBlack = selectIsBlack(store.getState());
+    const message = { settings, isBlack: !isBlack };
     socket.send(JSON.stringify(message));
   }
 
@@ -104,6 +122,7 @@ function attemptTraversal(
     }
   });
   const timer = setInterval(() => {
+    // TODO this can throw ERR_SOCKET_DGRAM_NOT_RUNNING, fix it
     socket.send('traversal', port, address);
     if (SOCKET) {
       clearTimeout(timer);
@@ -223,6 +242,13 @@ export function startNetplay(hostCode?: string) {
     TRAVERSAL_SERVER_PORT,
     TRAVERSAL_SERVER_ADDRESS
   );
+}
+
+export function sendSwap(swap: boolean) {
+  if (SOCKET) {
+    const message = { swap };
+    SOCKET.send(JSON.stringify(message));
+  }
 }
 
 export function sendMove(move: Array<number>) {
