@@ -24,7 +24,10 @@ const gameSlice = createSlice({
       const { moveHistory } = state;
       const coordinates = action.payload;
       moveHistory.push(coordinates);
-      state.moveNumber += 1;
+      // only increment move number if board is set to latest position
+      if (state.moveNumber === moveHistory.length - 1) {
+        state.moveNumber += 1;
+      }
     },
     swapPhaseCompleted: (state) => {
       state.swapPhaseComplete = true;
