@@ -20,5 +20,6 @@ export interface NetplayState {
   active: boolean;
   connected: boolean;
   hosting: boolean;
+  isBlack: boolean;
   hostCode?: string;
 }

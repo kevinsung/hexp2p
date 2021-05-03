@@ -5,7 +5,7 @@ import HexGame from './components/HexGame';
 import HexSettings from './components/HexSettings';
 import Home from './components/Home';
 import HostNetplay from './components/HostNetplay';
-import { stopNetplay } from './slices/netplayClient';
+import { stopNetplay } from './netplayClient';
 import { history } from './store';
 import './App.global.css';
 

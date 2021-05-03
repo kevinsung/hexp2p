@@ -7,6 +7,7 @@ import {
   selectBoardState,
   selectGameState,
 } from '../slices/gameSlice';
+import { sendMove } from '../netplayClient';
 import { selectConnected, selectNetplayActive } from '../slices/netplaySlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
@@ -38,6 +39,8 @@ const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
+  const netplayActive = useSelector(selectNetplayActive);
+  const connected = useSelector(selectConnected);
   const { moveHistory, moveNumber, selectedHexagon } = useSelector(
     selectGameState
   );
@@ -81,7 +84,11 @@ function Hexagon(props: HexagonProps) {
 
   const onClick = () => {
     if (!disabled && !boardState[row][col]) {
-      dispatch(moveMade([row, col]));
+      const move = [row, col];
+      dispatch(moveMade(move));
+      if (netplayActive && connected) {
+        sendMove(move);
+      }
     }
   };
 

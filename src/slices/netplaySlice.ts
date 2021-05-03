@@ -7,6 +7,7 @@ const initialState: NetplayState = {
   active: false,
   connected: false,
   hosting: false,
+  isBlack: false,
 };
 
 const netplaySlice = createSlice({

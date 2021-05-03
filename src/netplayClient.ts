@@ -1,15 +1,13 @@
 import { Socket, createSocket } from 'dgram';
-import { history, store } from '../store';
-import { gameStarted, moveMade, selectGameState } from './gameSlice';
+import { history, store } from './store';
+import { gameStarted, moveMade, selectGameState } from './slices/gameSlice';
 import {
   connectedToPeer,
   disconnectedFromPeer,
   hostCodeReceived,
   selectHosting,
-} from './netplaySlice';
-import { GameSettings } from '../types';
-
-// TODO use { type, payload } structure for messages
+} from './slices/netplaySlice';
+import { GameSettings } from './types';
 
 interface MessageData {
   settings?: GameSettings;
@@ -21,7 +19,7 @@ const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
 const TRAVERSAL_SERVER_PORT = 6363;
 
 const TRAVERSAL_SERVER_KEEPALIVE_INTERVAL = 10000;
-const TRAVERSAL_PACKET_INTERVAL = 200;
+const TRAVERSAL_PACKET_INTERVAL = 100;
 const PEER_KEEPALIVE_INTERVAL = 1000;
 const DISCONNECT_TIMEOUT_INTERVAL = 10000;
 
@@ -225,4 +223,11 @@ export function startNetplay(hostCode?: string) {
     TRAVERSAL_SERVER_PORT,
     TRAVERSAL_SERVER_ADDRESS
   );
+}
+
+export function sendMove(move: Array<number>) {
+  if (SOCKET) {
+    const message = { move };
+    SOCKET.send(JSON.stringify(message));
+  }
 }
