@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { gameStarted } from '../slices/gameSlice';
 import { startNetplay } from '../netplayClient';
-import { colorChosen, selectNetplayActive } from '../slices/netplaySlice';
+import { colorChosen, selectNetplayState } from '../slices/netplaySlice';
 import { GameSettings } from '../types';
 import '../App.global.css';
 
@@ -115,7 +115,7 @@ function ColorSelector(props: ColorSelectorProps) {
 export default function HexSettings() {
   const dispatch = useDispatch();
   const history = useHistory();
-  const netplayActive = useSelector(selectNetplayActive);
+  const { active: netplayActive } = useSelector(selectNetplayState);
 
   const [boardSize, setBoardSize] = useState(DEFAULT_BOARD_SIZE);
   const [useSwapRule, setUseSwapRule] = useState(true);

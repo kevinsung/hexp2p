@@ -58,16 +58,6 @@ export const {
   swapChosen,
 } = netplaySlice.actions;
 
-// TODO just have one reducer selectNetplayState
-
-export const selectNetplayActive = (state: RootState) => state.netplay.active;
-
-export const selectConnected = (state: RootState) => state.netplay.connected;
-
-export const selectHostCode = (state: RootState) => state.netplay.hostCode;
-
-export const selectHosting = (state: RootState) => state.netplay.hosting;
-
-export const selectIsBlack = (state: RootState) => state.netplay.isBlack;
+export const selectNetplayState = (state: RootState) => state.netplay;
 
 export default netplaySlice.reducer;

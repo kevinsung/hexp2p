@@ -11,8 +11,7 @@ import {
   connectedToPeer,
   disconnectedFromPeer,
   hostCodeReceived,
-  selectHosting,
-  selectIsBlack,
+  selectNetplayState,
   swapChosen,
 } from './slices/netplaySlice';
 import { GameSettings } from './types';
@@ -70,10 +69,9 @@ function initializeConnection(socket: Socket) {
   socket.send('keepalive');
 
   // if hosting, send game settings and color
-  const hosting = selectHosting(store.getState());
+  const { hosting, isBlack } = selectNetplayState(store.getState());
   if (hosting) {
     const { settings } = selectGameState(store.getState());
-    const isBlack = selectIsBlack(store.getState());
     const message = { settings, isBlack: !isBlack };
     socket.send(JSON.stringify(message));
   }

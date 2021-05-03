@@ -9,12 +9,7 @@ import {
   swapPhaseCompleted,
 } from '../slices/gameSlice';
 import { sendMove, sendSwap } from '../netplayClient';
-import {
-  selectConnected,
-  selectIsBlack,
-  selectNetplayActive,
-  swapChosen,
-} from '../slices/netplaySlice';
+import { selectNetplayState, swapChosen } from '../slices/netplaySlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
 import '../App.global.css';
@@ -45,9 +40,9 @@ const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 
 function SwapDialog() {
   const dispatch = useDispatch();
-  const netplayActive = useSelector(selectNetplayActive);
-  const connected = useSelector(selectConnected);
-  const isBlack = useSelector(selectIsBlack);
+  const { active: netplayActive, connected, isBlack } = useSelector(
+    selectNetplayState
+  );
   const { moveNumber, settings, swapPhaseComplete } = useSelector(
     selectGameState
   );
@@ -85,8 +80,7 @@ function SwapDialog() {
 function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
-  const netplayActive = useSelector(selectNetplayActive);
-  const connected = useSelector(selectConnected);
+  const { active: netplayActive, connected } = useSelector(selectNetplayState);
   const { moveHistory, moveNumber, selectedHexagon } = useSelector(
     selectGameState
   );
@@ -296,9 +290,9 @@ function HexBoard(props: HexBoardProps) {
 }
 
 export default function HexGame() {
-  const netplayActive = useSelector(selectNetplayActive);
-  const connected = useSelector(selectConnected);
-  const isBlack = useSelector(selectIsBlack);
+  const { active: netplayActive, connected, isBlack } = useSelector(
+    selectNetplayState
+  );
   const boardState = useSelector(selectBoardState);
   const { moveNumber, settings, swapPhaseComplete } = useSelector(
     selectGameState

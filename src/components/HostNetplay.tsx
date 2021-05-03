@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { selectHostCode } from '../slices/netplaySlice';
+import { selectNetplayState } from '../slices/netplaySlice';
 import '../App.global.css';
 
 function HostCodeDisplay() {
   // TODO display different message if host code not obtained
-  const hostCode = useSelector(selectHostCode);
+  const { hostCode } = useSelector(selectNetplayState);
   const [copied, setCopied] = useState(false);
 
   const copiedStatus = copied ? '(Copied!)' : '(Click to copy)';
