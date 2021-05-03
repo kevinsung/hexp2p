@@ -63,17 +63,24 @@ function initializeConnection(socket: Socket) {
   // start sending keepalive packets
   clearInterval(PEER_KEEPALIVE_TIMEOUT);
   PEER_KEEPALIVE_TIMEOUT = setInterval(() => {
-    socket.send('keepalive');
+    try {
+      socket.send('keepalive');
+    } catch {
+      // socket has been closed
+      clearInterval(PEER_KEEPALIVE_TIMEOUT);
+    }
   }, PEER_KEEPALIVE_INTERVAL);
-
-  socket.send('keepalive');
 
   // if hosting, send game settings and color
   const { hosting, isBlack } = selectNetplayState(store.getState());
   if (hosting) {
     const { settings } = selectGameState(store.getState());
     const message = { settings, isBlack: !isBlack };
-    socket.send(JSON.stringify(message));
+    try {
+      socket.send(JSON.stringify(message));
+    } catch {
+      // socket has been closed
+    }
   }
 
   socket.on('message', (msg) => {
@@ -115,18 +122,29 @@ function attemptTraversal(
         history.push('/game');
       });
       clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
-      // TODO check if this can cause error
-      TRAVERSAL_SERVER_SOCKET.close();
+      try {
+        TRAVERSAL_SERVER_SOCKET.close();
+      } catch {
+        // socket has been closed already
+      }
     }
   });
   const timer = setInterval(() => {
-    // TODO this can throw ERR_SOCKET_DGRAM_NOT_RUNNING, fix it
-    socket.send('traversal', port, address);
     if (SOCKET) {
       clearTimeout(timer);
       if (SOCKET !== socket) {
-        socket.close();
+        try {
+          socket.close();
+        } catch {
+          // socket has been closed already
+        }
       }
+    }
+    try {
+      socket.send('traversal', port, address);
+    } catch {
+      // socket has been closed already
+      clearTimeout(timer);
     }
   }, TRAVERSAL_PACKET_INTERVAL);
 }
