@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { startNetplay } from '../netplayClient';
 import { hostCodeSubmitted } from '../slices/netplaySlice';
-import '../App.global.css';
+import '../App.global.scss';
 
 export default function ConnectToPeer() {
   const dispatch = useDispatch();

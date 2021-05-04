@@ -7,7 +7,7 @@ import Home from './components/Home';
 import HostNetplay from './components/HostNetplay';
 import { stopNetplay } from './netplayClient';
 import { history } from './store';
-import './App.global.css';
+import './App.global.scss';
 
 // eslint-disable-next-line consistent-return
 history.block((_location, action) => {

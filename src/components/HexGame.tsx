@@ -1,4 +1,5 @@
 import React from 'react';
+import classnames from 'classnames';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
@@ -13,7 +14,7 @@ import { sendMove, sendSwap } from '../netplayClient';
 import { selectNetplayState } from '../slices/netplaySlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
-import '../App.global.css';
+import '../App.global.scss';
 
 interface HexagonProps {
   boardState: Array<Array<number>>;
@@ -54,7 +55,7 @@ function SwapDialog() {
   }
 
   if (netplayActive && isBlack) {
-    return <div>SWAP PHASE: Waiting for opponent...</div>;
+    return <div>SWAP PHASE: Opponent is choosing whether to swap...</div>;
   }
 
   const handleSwap = (swap: boolean) => {
@@ -338,6 +339,23 @@ function ConnectionStatus() {
   return <div>{status}</div>;
 }
 
+function PlayerNames() {
+  // TODO in netplay, host is always player 1
+  const { moveNumber, swapped } = useSelector(selectGameState);
+  // TODO add isBlackTurn selector
+  const isBlackTurn = Boolean(moveNumber % 2) === swapped;
+  return (
+    <div className="PlayerInfo">
+      <div className={classnames('black', { partialOpacity: !isBlackTurn })}>
+        Player 1
+      </div>
+      <div className={classnames('white', { partialOpacity: isBlackTurn })}>
+        Player 2
+      </div>
+    </div>
+  );
+}
+
 export default function HexGame() {
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
   const boardState = useSelector(selectBoardState);
@@ -365,6 +383,7 @@ export default function HexGame() {
   return (
     <div>
       <Link to="/">Home</Link>
+      <PlayerNames />
       <ConnectionStatus />
       <SwapDialog />
       <HexBoard

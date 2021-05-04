@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { selectNetplayState } from '../slices/netplaySlice';
-import '../App.global.css';
+import '../App.global.scss';
 
 function HostCodeDisplay() {
   // TODO display different message if host code not obtained

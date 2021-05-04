@@ -6,7 +6,7 @@ import { gameStarted } from '../slices/gameSlice';
 import { startNetplay } from '../netplayClient';
 import { colorChosen, selectNetplayState } from '../slices/netplaySlice';
 import { GameSettings } from '../types';
-import '../App.global.css';
+import '../App.global.scss';
 
 interface BoardSizeSelectorProps {
   size: number;

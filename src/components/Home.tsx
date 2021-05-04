@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import icon from '../../assets/icon.svg';
 import { activateNetplay, deactivateNetplay } from '../slices/netplaySlice';
-import '../App.global.css';
+import '../App.global.scss';
 
 export default function Home() {
   const dispatch = useDispatch();
