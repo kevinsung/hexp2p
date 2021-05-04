@@ -7,6 +7,7 @@ const initialState: GameState = {
   settings: { boardSize: 14, useSwapRule: true },
   moveHistory: [],
   moveNumber: 0,
+  swapped: false,
   swapPhaseComplete: false,
   selectedHexagon: [NaN, NaN],
 };
@@ -29,7 +30,14 @@ const gameSlice = createSlice({
         state.moveNumber += 1;
       }
     },
-    swapPhaseCompleted: (state) => {
+    swapChosen: (state, action) => {
+      const { moveHistory } = state;
+      const swap = action.payload;
+      if (swap) {
+        const [row, col] = moveHistory.pop() as Array<number>;
+        moveHistory.push([col, row]);
+        state.swapped = true;
+      }
       state.swapPhaseComplete = true;
     },
     hexagonSelected: (state, action) => {
@@ -48,13 +56,13 @@ export const {
   hexagonSelected,
   moveMade,
   navigateMoveHistory,
-  swapPhaseCompleted,
+  swapChosen,
 } = gameSlice.actions;
 
 export const selectGameState = (state: RootState) => state.game;
 
 export const selectBoardState = (state: RootState) => {
-  const { settings, moveHistory, moveNumber } = state.game;
+  const { settings, moveHistory, moveNumber, swapped } = state.game;
   const { boardSize } = settings;
   const boardState = [];
   for (let row = 0; row < boardSize; row += 1) {
@@ -67,7 +75,7 @@ export const selectBoardState = (state: RootState) => {
   for (let i = 0; i < moveNumber; i += 1) {
     const [row, col] = moveHistory[i];
     boardState[row][col] =
-      i % 2 === 0 ? HexagonState.BLACK : HexagonState.WHITE;
+      Boolean(i % 2) === swapped ? HexagonState.BLACK : HexagonState.WHITE;
   }
   return boardState;
 };

@@ -7,10 +7,10 @@ import {
   navigateMoveHistory,
   selectBoardState,
   selectGameState,
-  swapPhaseCompleted,
+  swapChosen,
 } from '../slices/gameSlice';
 import { sendMove, sendSwap } from '../netplayClient';
-import { selectNetplayState, swapChosen } from '../slices/netplaySlice';
+import { selectNetplayState } from '../slices/netplaySlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
 import '../App.global.css';
@@ -54,25 +54,24 @@ function SwapDialog() {
   }
 
   if (netplayActive && isBlack) {
-    return <div>SWAP PHASE: Waiting for opponent to choose color...</div>;
+    return <div>SWAP PHASE: Waiting for opponent...</div>;
   }
 
   const handleSwap = (swap: boolean) => {
-    dispatch(swapPhaseCompleted());
+    dispatch(swapChosen(swap));
     if (netplayActive && connected) {
-      dispatch(swapChosen(swap));
       sendSwap(swap);
     }
   };
 
   return (
     <div>
-      SWAP PHASE: Choose your color
+      SWAP PHASE: Do you want to swap pieces?
       <button type="button" onClick={() => handleSwap(true)}>
-        Black
+        YES
       </button>
       <button type="button" onClick={() => handleSwap(false)}>
-        White
+        NO
       </button>
     </div>
   );
@@ -82,7 +81,7 @@ function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
   const { active: netplayActive, connected } = useSelector(selectNetplayState);
-  const { moveHistory, moveNumber, selectedHexagon } = useSelector(
+  const { moveHistory, moveNumber, selectedHexagon, swapped } = useSelector(
     selectGameState
   );
   const [selectedRow, selectedCol] = selectedHexagon;
@@ -106,7 +105,8 @@ function Hexagon(props: HexagonProps) {
       break;
     case HexagonState.EMPTY:
       if (row === selectedRow && col === selectedCol) {
-        circleFill = moveNumber % 2 === 0 ? '#000000' : '#ffffff';
+        circleFill =
+          Boolean(moveNumber % 2) === swapped ? '#000000' : '#ffffff';
         circleOpacity = 0.5;
       }
       break;
@@ -341,9 +341,13 @@ function ConnectionStatus() {
 export default function HexGame() {
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
   const boardState = useSelector(selectBoardState);
-  const { moveHistory, moveNumber, settings, swapPhaseComplete } = useSelector(
-    selectGameState
-  );
+  const {
+    moveHistory,
+    moveNumber,
+    settings,
+    swapped,
+    swapPhaseComplete,
+  } = useSelector(selectGameState);
   const { useSwapRule } = settings;
 
   const winningComponent = getWinningConnectedComponent(boardState);
@@ -355,8 +359,8 @@ export default function HexGame() {
     moveNumber !== moveHistory.length ||
     // disable board during opponent's turn
     (netplayActive &&
-      ((moveNumber % 2 === 0 && !isBlack) ||
-        (moveNumber % 2 === 1 && isBlack)));
+      ((isBlack && Boolean(moveNumber % 2) !== swapped) ||
+        (!isBlack && Boolean(moveNumber % 2) === swapped)));
 
   return (
     <div>

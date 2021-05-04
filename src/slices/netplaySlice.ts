@@ -38,12 +38,6 @@ const netplaySlice = createSlice({
       const isBlack = action.payload;
       state.isBlack = isBlack;
     },
-    swapChosen: (state, action) => {
-      const swap = action.payload;
-      if (swap) {
-        state.isBlack = !state.isBlack;
-      }
-    },
   },
 });
 
@@ -55,7 +49,6 @@ export const {
   hostCodeReceived,
   hostCodeSubmitted,
   colorChosen,
-  swapChosen,
 } = netplaySlice.actions;
 
 export const selectNetplayState = (state: RootState) => state.netplay;

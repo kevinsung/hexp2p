@@ -4,7 +4,7 @@ import {
   gameStarted,
   moveMade,
   selectGameState,
-  swapPhaseCompleted,
+  swapChosen,
 } from './slices/gameSlice';
 import {
   colorChosen,
@@ -12,7 +12,6 @@ import {
   disconnectedFromPeer,
   hostCodeReceived,
   selectNetplayState,
-  swapChosen,
 } from './slices/netplaySlice';
 import { GameSettings } from './types';
 
@@ -55,7 +54,6 @@ function handleMessage(messageData: MessageData) {
   }
   if (typeof swap === 'boolean') {
     store.dispatch(swapChosen(swap));
-    store.dispatch(swapPhaseCompleted());
   }
 }
 
