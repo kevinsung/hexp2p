@@ -60,6 +60,46 @@ function handleMessage(messageData: MessageData) {
 }
 
 function initializeConnection(socket: Socket) {
+  socket.on('message', (msg) => {
+    clearTimeout(DISCONNECT_TIMEOUT);
+    store.dispatch(connectedToPeer());
+    CONNECTED = true;
+
+    const message = String(msg);
+
+    if (message === 'keepalive') {
+      return;
+    }
+
+    if (message === 'established') {
+      // if hosting, send game settings and color
+      const { hosting, isBlack } = selectNetplayState(store.getState());
+      if (hosting) {
+        const { settings } = selectGameState(store.getState());
+        const settingsMessage = { settings, isBlack: !isBlack };
+        try {
+          socket.send(JSON.stringify(settingsMessage));
+        } catch {
+          // socket has been closed
+        }
+      }
+      return;
+    }
+
+    try {
+      handleMessage(JSON.parse(message));
+    } catch (error) {
+      // ignore badly formed messages
+    }
+  });
+
+  // notify that connection has been established
+  try {
+    socket.send('established');
+  } catch {
+    // socket has been closed
+  }
+
   // start sending keepalive packets
   clearInterval(PEER_KEEPALIVE_TIMEOUT);
   PEER_KEEPALIVE_TIMEOUT = setInterval(() => {
@@ -70,35 +110,6 @@ function initializeConnection(socket: Socket) {
       clearInterval(PEER_KEEPALIVE_TIMEOUT);
     }
   }, PEER_KEEPALIVE_INTERVAL);
-
-  // if hosting, send game settings and color
-  const { hosting, isBlack } = selectNetplayState(store.getState());
-  if (hosting) {
-    const { settings } = selectGameState(store.getState());
-    const message = { settings, isBlack: !isBlack };
-    try {
-      socket.send(JSON.stringify(message));
-    } catch {
-      // socket has been closed
-    }
-  }
-
-  socket.on('message', (msg) => {
-    const message = String(msg);
-
-    if (message === 'keepalive') {
-      clearTimeout(DISCONNECT_TIMEOUT);
-      store.dispatch(connectedToPeer());
-      CONNECTED = true;
-      return;
-    }
-
-    try {
-      handleMessage(JSON.parse(message));
-    } catch (error) {
-      // ignore badly formed messages
-    }
-  });
 }
 
 function attemptTraversal(
