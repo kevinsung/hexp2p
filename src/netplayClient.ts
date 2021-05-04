@@ -152,6 +152,7 @@ function attemptTraversal(
       }
     }
   });
+  // TODO check if this executes unnecessarily when address and ports align
   const timer = setInterval(() => {
     if (SOCKET) {
       clearTimeout(timer);
@@ -162,6 +163,7 @@ function attemptTraversal(
           // socket has been closed already
         }
       }
+      return;
     }
     try {
       socket.send('traversal', port, address);
