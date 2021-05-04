@@ -31,6 +31,7 @@ const PEER_KEEPALIVE_INTERVAL = 1000;
 const DISCONNECT_TIMEOUT_INTERVAL = 10000;
 
 let TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT: NodeJS.Timeout;
+let PEER_ESTABLISHMENT_TIMEOUT: NodeJS.Timeout;
 let PEER_KEEPALIVE_TIMEOUT: NodeJS.Timeout;
 let DISCONNECT_TIMEOUT: NodeJS.Timeout;
 
@@ -69,7 +70,16 @@ function initializeConnection(socket: Socket) {
       return;
     }
 
+    if (message === 'acknowledged') {
+      clearInterval(PEER_ESTABLISHMENT_TIMEOUT);
+    }
+
     if (message === 'established') {
+      try {
+        socket.send('acknowledged');
+      } catch {
+        // socket has been closed
+      }
       // if hosting, send game settings and color
       const { hosting, isBlack } = selectNetplayState(store.getState());
       if (hosting) {
@@ -92,11 +102,15 @@ function initializeConnection(socket: Socket) {
   });
 
   // notify that connection has been established
-  try {
-    socket.send('established');
-  } catch {
-    // socket has been closed
-  }
+  clearInterval(PEER_ESTABLISHMENT_TIMEOUT);
+  PEER_ESTABLISHMENT_TIMEOUT = setInterval(() => {
+    try {
+      socket.send('established');
+    } catch {
+      // socket has been closed
+      clearInterval(PEER_ESTABLISHMENT_TIMEOUT);
+    }
+  }, TRAVERSAL_PACKET_INTERVAL);
 
   // start sending keepalive packets
   clearInterval(PEER_KEEPALIVE_TIMEOUT);
