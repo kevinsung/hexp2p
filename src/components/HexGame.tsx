@@ -326,10 +326,20 @@ function MoveHistoryButtons() {
   );
 }
 
+function ConnectionStatus() {
+  // TODO make this better
+  const { active: netplayActive, connected } = useSelector(selectNetplayState);
+  let status = '';
+  if (netplayActive && connected) {
+    status = 'CONNECTED';
+  } else if (netplayActive && !connected) {
+    status = 'DISCONNECTED';
+  }
+  return <div>{status}</div>;
+}
+
 export default function HexGame() {
-  const { active: netplayActive, connected, isBlack } = useSelector(
-    selectNetplayState
-  );
+  const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
   const boardState = useSelector(selectBoardState);
   const { moveHistory, moveNumber, settings, swapPhaseComplete } = useSelector(
     selectGameState
@@ -338,32 +348,20 @@ export default function HexGame() {
 
   const winningComponent = getWinningConnectedComponent(boardState);
 
-  let disabled =
+  const disabled =
     // disable board during swap phase
     (useSwapRule && !swapPhaseComplete && moveNumber === 1) ||
     // disable board when it is not set to latest position
-    moveNumber !== moveHistory.length;
-
-  // TODO make a better indicator
-  let connectionIndicator = '';
-  if (netplayActive) {
-    if (
-      (moveNumber % 2 === 0 && !isBlack) ||
-      (moveNumber % 2 === 1 && isBlack)
-    ) {
-      disabled = true;
-    }
-    if (connected) {
-      connectionIndicator = 'CONNECTED';
-    } else {
-      connectionIndicator = 'DISCONNECTED';
-    }
-  }
+    moveNumber !== moveHistory.length ||
+    // disable board during opponent's turn
+    (netplayActive &&
+      ((moveNumber % 2 === 0 && !isBlack) ||
+        (moveNumber % 2 === 1 && isBlack)));
 
   return (
     <div>
       <Link to="/">Home</Link>
-      <div>{connectionIndicator}</div>
+      <ConnectionStatus />
       <SwapDialog />
       <HexBoard
         boardState={boardState}
