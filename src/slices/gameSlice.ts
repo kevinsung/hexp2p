@@ -36,6 +36,10 @@ const gameSlice = createSlice({
       const coordinates = action.payload;
       state.selectedHexagon = coordinates;
     },
+    navigateMoveHistory: (state, action) => {
+      const moveNumber = action.payload;
+      state.moveNumber = moveNumber;
+    },
   },
 });
 
@@ -43,6 +47,7 @@ export const {
   gameStarted,
   hexagonSelected,
   moveMade,
+  navigateMoveHistory,
   swapPhaseCompleted,
 } = gameSlice.actions;
 

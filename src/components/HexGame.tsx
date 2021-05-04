@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   hexagonSelected,
   moveMade,
+  navigateMoveHistory,
   selectBoardState,
   selectGameState,
   swapPhaseCompleted,
@@ -289,19 +290,60 @@ function HexBoard(props: HexBoardProps) {
   );
 }
 
+function MoveHistoryButtons() {
+  const dispatch = useDispatch();
+  const { moveHistory, moveNumber } = useSelector(selectGameState);
+
+  const shiftMoveNumber = (offset: number) => {
+    dispatch(
+      navigateMoveHistory(
+        Math.max(0, Math.min(moveHistory.length, moveNumber + offset))
+      )
+    );
+  };
+
+  return (
+    <div>
+      <button type="button" onClick={() => shiftMoveNumber(-Infinity)}>
+        |&lt;
+      </button>
+      <button type="button" onClick={() => shiftMoveNumber(-6)}>
+        &lt;&lt;
+      </button>
+      <button type="button" onClick={() => shiftMoveNumber(-1)}>
+        &lt;
+      </button>
+      <button type="button" onClick={() => shiftMoveNumber(1)}>
+        &gt;
+      </button>
+      <button type="button" onClick={() => shiftMoveNumber(6)}>
+        &gt;&gt;
+      </button>
+      <button type="button" onClick={() => shiftMoveNumber(Infinity)}>
+        &gt;|
+      </button>
+    </div>
+  );
+}
+
 export default function HexGame() {
   const { active: netplayActive, connected, isBlack } = useSelector(
     selectNetplayState
   );
   const boardState = useSelector(selectBoardState);
-  const { moveNumber, settings, swapPhaseComplete } = useSelector(
+  const { moveHistory, moveNumber, settings, swapPhaseComplete } = useSelector(
     selectGameState
   );
   const { useSwapRule } = settings;
 
   const winningComponent = getWinningConnectedComponent(boardState);
 
-  let disabled = useSwapRule && !swapPhaseComplete && moveNumber === 1;
+  let disabled =
+    // disable board during swap phase
+    (useSwapRule && !swapPhaseComplete && moveNumber === 1) ||
+    // disable board when it is not set to latest position
+    moveNumber !== moveHistory.length;
+
   // TODO make a better indicator
   let connectionIndicator = '';
   if (netplayActive) {
@@ -328,6 +370,7 @@ export default function HexGame() {
         winningComponent={winningComponent}
         disabled={disabled}
       />
+      <MoveHistoryButtons />
     </div>
   );
 }
