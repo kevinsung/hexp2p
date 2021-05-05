@@ -10,6 +10,7 @@ import {
   selectGameState,
   selectIsBlackTurn,
   swapChosen,
+  undoMove,
 } from '../slices/gameSlice';
 import { sendMove, sendSwap } from '../netplayClient';
 import { selectNetplayState } from '../slices/netplaySlice';
@@ -338,6 +339,24 @@ function MoveHistoryButtons() {
   );
 }
 
+function UndoButton() {
+  const dispatch = useDispatch();
+  const { moveHistory, moveNumber } = useSelector(selectGameState);
+  const disabled = !moveHistory.length || moveNumber !== moveHistory.length;
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => dispatch(undoMove())}
+        disabled={disabled}
+      >
+        Undo
+      </button>
+    </div>
+  );
+}
+
 function ConnectionStatus() {
   // TODO make this better
   const { active: netplayActive, connected } = useSelector(selectNetplayState);
@@ -411,6 +430,7 @@ export default function HexGame() {
         disabled={disabled}
       />
       <MoveHistoryButtons />
+      <UndoButton />
     </div>
   );
 }

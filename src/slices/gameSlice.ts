@@ -48,6 +48,11 @@ const gameSlice = createSlice({
       const moveNumber = action.payload;
       state.moveNumber = moveNumber;
     },
+    undoMove: (state) => {
+      const { moveHistory } = state;
+      moveHistory.pop();
+      state.moveNumber -= 1;
+    },
   },
 });
 
@@ -57,6 +62,7 @@ export const {
   moveMade,
   navigateMoveHistory,
   swapChosen,
+  undoMove,
 } = gameSlice.actions;
 
 export const selectGameState = (state: RootState) => state.game;
