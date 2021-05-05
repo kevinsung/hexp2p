@@ -49,6 +49,32 @@ a:hover {
   text-decoration: none;
 }
 
+.black {
+  color: black;
+  fill: black;
+  stroke: black;
+}
+
+.white {
+  color: white;
+  fill: white;
+  stroke: white;
+}
+
+.gray {
+  color: #808080;
+  fill: #808080;
+  stroke: #808080;
+}
+
+.partialOpacity {
+  opacity: 0.5;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
 .Hello {
   display: flex;
   justify-content: center;
@@ -62,9 +88,12 @@ a:hover {
 }
 
 .Hexagon {
-  fill: #808080;
   stroke: #404040;
   stroke-width: 0.05;
+}
+
+.Circle {
+  stroke: none;
 }
 
 .Border {
@@ -78,12 +107,12 @@ a:hover {
 }
 
 .PieceMarker {
-  fill: #808080;
+  stroke: none;
 }
 
 .LastMoveMarker {
+  color: none;
   fill: none;
-  stroke: #808080;
   stroke-width: 0.08;
 }
 
@@ -109,16 +138,4 @@ a:hover {
 .PlayerInfo {
   background-color: #808080;
   font-size: 2rem;
-}
-
-.black {
-  color: black;
-}
-
-.white {
-  color: white;
-}
-
-.partialOpacity {
-  opacity: 0.5;
 }

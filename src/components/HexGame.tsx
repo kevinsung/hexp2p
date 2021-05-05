@@ -86,6 +86,8 @@ function Hexagon(props: HexagonProps) {
     selectGameState
   );
   const [selectedRow, selectedCol] = selectedHexagon;
+  // TODO add isBlackTurn selector
+  const isBlackTurn = Boolean(moveNumber % 2) === swapped;
 
   const d = 0.5 * Math.sqrt(3);
   const translateX = (row + 1 + 2 * col) * d;
@@ -93,22 +95,25 @@ function Hexagon(props: HexagonProps) {
   const transform = `translate(${translateX} ${translateY})`;
   const points = `0,1 ${d},0.5 ${d},-0.5 0,-1 ${-d},-0.5 ${-d},0.5`;
 
-  let circleFill = '#000000';
-  let circleOpacity = 0.0;
+  // circle properties
+  let circleBlack;
+  let circlePartialOpacity;
+  let circleInvisible = false;
   switch (boardState[row][col]) {
     case HexagonState.BLACK:
-      circleFill = '#000000';
-      circleOpacity = 1.0;
+      circleBlack = true;
+      circlePartialOpacity = false;
       break;
     case HexagonState.WHITE:
-      circleFill = '#ffffff';
-      circleOpacity = 1.0;
+      circleBlack = false;
+      circlePartialOpacity = false;
       break;
     case HexagonState.EMPTY:
       if (row === selectedRow && col === selectedCol) {
-        circleFill =
-          Boolean(moveNumber % 2) === swapped ? '#000000' : '#ffffff';
-        circleOpacity = 0.5;
+        circleBlack = isBlackTurn;
+        circlePartialOpacity = true;
+      } else {
+        circleInvisible = true;
       }
       break;
     // no default
@@ -116,7 +121,7 @@ function Hexagon(props: HexagonProps) {
 
   const lastMove = moveNumber > 0 ? moveHistory[moveNumber - 1] : [NaN, NaN];
   const [lrow, lcol] = lastMove;
-  const markerOpacity = lrow === row && lcol === col ? 1.0 : 0.0;
+  const markerInvisible = lrow !== row || lcol !== col;
 
   const onMouseEnter = () => {
     if (!disabled) {
@@ -136,18 +141,24 @@ function Hexagon(props: HexagonProps) {
 
   return (
     <g onMouseEnter={onMouseEnter} onClick={onClick}>
-      <polygon className="Hexagon" points={points} transform={transform} />
+      <polygon className="Hexagon gray" points={points} transform={transform} />
       <circle
+        className={classnames(
+          'Circle',
+          { black: circleBlack },
+          { white: !circleBlack },
+          { partialOpacity: circlePartialOpacity },
+          { invisible: circleInvisible }
+        )}
         r="0.6"
         transform={transform}
-        fill={circleFill}
-        opacity={circleOpacity}
       />
       <circle
-        className="LastMoveMarker"
+        className={classnames('LastMoveMarker', 'gray', {
+          invisible: markerInvisible,
+        })}
         r="0.3"
         transform={transform}
-        opacity={markerOpacity}
       />
     </g>
   );
@@ -262,7 +273,7 @@ function ComponentMarker(props: ComponentMarkerProps) {
     const key = `pieceMarker ${row} ${col}`;
     markers.push(<circle key={key} r="0.2" transform={transform} />);
   }
-  return <g className="PieceMarker">{markers}</g>;
+  return <g className="PieceMarker gray">{markers}</g>;
 }
 
 function HexBoard(props: HexBoardProps) {
