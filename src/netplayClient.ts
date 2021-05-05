@@ -5,6 +5,7 @@ import {
   moveMade,
   selectGameState,
   swapChosen,
+  undoMove,
 } from './slices/gameSlice';
 import {
   colorChosen,
@@ -12,6 +13,8 @@ import {
   disconnectedFromPeer,
   hostCodeReceived,
   selectNetplayState,
+  undoRequestFulfilled,
+  undoRequestReceived,
 } from './slices/netplaySlice';
 import { GameSettings } from './types';
 
@@ -20,6 +23,8 @@ interface MessageData {
   isBlack?: boolean;
   move?: Array<number>;
   swap?: boolean;
+  requestUndo?: boolean;
+  acceptUndo?: boolean;
 }
 
 const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
@@ -43,18 +48,42 @@ let SOCKET: Socket | null;
 let CONNECTED = false;
 
 function handleMessage(messageData: MessageData) {
-  const { settings, isBlack, move, swap } = messageData;
+  const {
+    settings,
+    isBlack,
+    move,
+    swap,
+    requestUndo,
+    acceptUndo,
+  } = messageData;
+
   if (settings) {
     store.dispatch(gameStarted(settings));
   }
+
   if (typeof isBlack === 'boolean') {
     store.dispatch(colorChosen(isBlack));
   }
+
   if (move) {
     store.dispatch(moveMade(move));
+    store.dispatch(undoRequestFulfilled());
   }
+
   if (typeof swap === 'boolean') {
     store.dispatch(swapChosen(swap));
+  }
+
+  if (requestUndo) {
+    store.dispatch(undoRequestReceived());
+  }
+
+  if (acceptUndo) {
+    const { undoRequestSent } = selectNetplayState(store.getState());
+    if (undoRequestSent) {
+      store.dispatch(undoMove());
+      store.dispatch(undoRequestFulfilled());
+    }
   }
 }
 
@@ -294,6 +323,7 @@ export function startNetplay(hostCode?: string) {
   );
 }
 
+// TODO wrap send calls in try catch
 export function sendSwap(swap: boolean) {
   if (SOCKET) {
     const message = { swap };
@@ -304,6 +334,20 @@ export function sendSwap(swap: boolean) {
 export function sendMove(move: Array<number>) {
   if (SOCKET) {
     const message = { move };
+    SOCKET.send(JSON.stringify(message));
+  }
+}
+
+export function sendRequestUndo() {
+  if (SOCKET) {
+    const message = { requestUndo: true };
+    SOCKET.send(JSON.stringify(message));
+  }
+}
+
+export function sendAcceptUndo() {
+  if (SOCKET) {
+    const message = { acceptUndo: true };
     SOCKET.send(JSON.stringify(message));
   }
 }

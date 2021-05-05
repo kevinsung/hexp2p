@@ -12,8 +12,17 @@ import {
   swapChosen,
   undoMove,
 } from '../slices/gameSlice';
-import { sendMove, sendSwap } from '../netplayClient';
-import { selectNetplayState } from '../slices/netplaySlice';
+import {
+  sendMove,
+  sendSwap,
+  sendRequestUndo,
+  sendAcceptUndo,
+} from '../netplayClient';
+import {
+  selectNetplayState,
+  undoRequestFulfilled,
+  undoRequestSent,
+} from '../slices/netplaySlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
 import '../App.global.scss';
@@ -80,6 +89,36 @@ function SwapDialog() {
   );
 }
 
+function UndoDialog() {
+  const dispatch = useDispatch();
+  const { undoRequestSent: undoRequested, undoRequestReceived } = useSelector(
+    selectNetplayState
+  );
+
+  if (undoRequested) {
+    return <div>Undo request sent</div>;
+  }
+
+  const handleClick = () => {
+    sendAcceptUndo();
+    dispatch(undoRequestFulfilled());
+    dispatch(undoMove());
+  };
+
+  if (undoRequestReceived) {
+    return (
+      <div>
+        Opponent requested undo
+        <button type="button" onClick={handleClick}>
+          Accept
+        </button>
+      </div>
+    );
+  }
+
+  return <div />;
+}
+
 function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
@@ -134,8 +173,10 @@ function Hexagon(props: HexagonProps) {
     if (!disabled && !boardState[row][col]) {
       const move = [row, col];
       dispatch(moveMade(move));
+      // TODO don't use connected in this conditional
       if (netplayActive && connected) {
         sendMove(move);
+        dispatch(undoRequestFulfilled());
       }
     }
   };
@@ -341,16 +382,30 @@ function MoveHistoryButtons() {
 
 function UndoButton() {
   const dispatch = useDispatch();
+  const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
   const { moveHistory, moveNumber } = useSelector(selectGameState);
-  const disabled = !moveHistory.length || moveNumber !== moveHistory.length;
+  const isBlackTurn = useSelector(selectIsBlackTurn);
+
+  const disabled =
+    // disable when no moves have been made
+    !moveHistory.length ||
+    // disable when board not set to latest position
+    moveNumber !== moveHistory.length ||
+    // disable during own turn
+    (netplayActive && isBlack === isBlackTurn);
+
+  const handleClick = () => {
+    if (netplayActive) {
+      sendRequestUndo();
+      dispatch(undoRequestSent());
+    } else {
+      dispatch(undoMove());
+    }
+  };
 
   return (
     <div>
-      <button
-        type="button"
-        onClick={() => dispatch(undoMove())}
-        disabled={disabled}
-      >
+      <button type="button" onClick={handleClick} disabled={disabled}>
         Undo
       </button>
     </div>
@@ -424,6 +479,7 @@ export default function HexGame() {
       <PlayerNames />
       <ConnectionStatus />
       <SwapDialog />
+      <UndoDialog />
       <HexBoard
         boardState={boardState}
         winningComponent={winningComponent}

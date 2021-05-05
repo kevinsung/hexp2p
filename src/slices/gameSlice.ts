@@ -22,6 +22,7 @@ const gameSlice = createSlice({
       state.settings = settings;
     },
     moveMade: (state, action) => {
+      // TODO first check that the move is valid (has not already been made)
       const { moveHistory } = state;
       const coordinates = action.payload;
       moveHistory.push(coordinates);
@@ -31,14 +32,17 @@ const gameSlice = createSlice({
       }
     },
     swapChosen: (state, action) => {
-      const { moveHistory } = state;
-      const swap = action.payload;
-      if (swap) {
-        const [row, col] = moveHistory.pop() as Array<number>;
-        moveHistory.push([col, row]);
-        state.swapped = true;
+      const { swapPhaseComplete } = state;
+      if (!swapPhaseComplete) {
+        const { moveHistory } = state;
+        const swap = action.payload;
+        if (swap) {
+          const [row, col] = moveHistory.pop() as Array<number>;
+          moveHistory.push([col, row]);
+          state.swapped = true;
+        }
+        state.swapPhaseComplete = true;
       }
-      state.swapPhaseComplete = true;
     },
     hexagonSelected: (state, action) => {
       const coordinates = action.payload;

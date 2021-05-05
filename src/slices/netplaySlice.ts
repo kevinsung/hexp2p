@@ -7,7 +7,10 @@ const initialState: NetplayState = {
   active: false,
   connected: false,
   hosting: false,
+  hostCode: '',
   isBlack: false,
+  undoRequestSent: false,
+  undoRequestReceived: false,
 };
 
 const netplaySlice = createSlice({
@@ -18,7 +21,7 @@ const netplaySlice = createSlice({
       state.active = true;
     },
     deactivateNetplay: (state) => {
-      state.active = false;
+      Object.assign(state, initialState);
     },
     connectedToPeer: (state) => {
       state.connected = true;
@@ -38,6 +41,16 @@ const netplaySlice = createSlice({
       const isBlack = action.payload;
       state.isBlack = isBlack;
     },
+    undoRequestSent: (state) => {
+      state.undoRequestSent = true;
+    },
+    undoRequestReceived: (state) => {
+      state.undoRequestReceived = true;
+    },
+    undoRequestFulfilled: (state) => {
+      state.undoRequestSent = false;
+      state.undoRequestReceived = false;
+    },
   },
 });
 
@@ -49,6 +62,9 @@ export const {
   hostCodeReceived,
   hostCodeSubmitted,
   colorChosen,
+  undoRequestSent,
+  undoRequestReceived,
+  undoRequestFulfilled,
 } = netplaySlice.actions;
 
 export const selectNetplayState = (state: RootState) => state.netplay;
