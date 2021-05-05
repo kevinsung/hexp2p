@@ -351,14 +351,29 @@ function ConnectionStatus() {
 }
 
 function PlayerNames() {
-  // TODO in netplay, host is always player 1
   const isBlackTurn = useSelector(selectIsBlackTurn);
+  const { active: netplayActive, hosting, isBlack } = useSelector(
+    selectNetplayState
+  );
+  const playerOneIsBlack = !netplayActive || hosting === isBlack;
   return (
     <div className="PlayerInfo">
-      <div className={classnames('black', { partialOpacity: !isBlackTurn })}>
+      <div
+        className={classnames(
+          { black: playerOneIsBlack },
+          { white: !playerOneIsBlack },
+          { partialOpacity: playerOneIsBlack !== isBlackTurn }
+        )}
+      >
         Player 1
       </div>
-      <div className={classnames('white', { partialOpacity: isBlackTurn })}>
+      <div
+        className={classnames(
+          { black: !playerOneIsBlack },
+          { white: playerOneIsBlack },
+          { partialOpacity: playerOneIsBlack === isBlackTurn }
+        )}
+      >
         Player 2
       </div>
     </div>
