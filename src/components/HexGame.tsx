@@ -8,6 +8,7 @@ import {
   navigateMoveHistory,
   selectBoardState,
   selectGameState,
+  selectIsBlackTurn,
   swapChosen,
 } from '../slices/gameSlice';
 import { sendMove, sendSwap } from '../netplayClient';
@@ -82,12 +83,11 @@ function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
   const { active: netplayActive, connected } = useSelector(selectNetplayState);
-  const { moveHistory, moveNumber, selectedHexagon, swapped } = useSelector(
+  const { moveHistory, moveNumber, selectedHexagon } = useSelector(
     selectGameState
   );
+  const isBlackTurn = useSelector(selectIsBlackTurn);
   const [selectedRow, selectedCol] = selectedHexagon;
-  // TODO add isBlackTurn selector
-  const isBlackTurn = Boolean(moveNumber % 2) === swapped;
 
   const d = 0.5 * Math.sqrt(3);
   const translateX = (row + 1 + 2 * col) * d;
@@ -352,9 +352,7 @@ function ConnectionStatus() {
 
 function PlayerNames() {
   // TODO in netplay, host is always player 1
-  const { moveNumber, swapped } = useSelector(selectGameState);
-  // TODO add isBlackTurn selector
-  const isBlackTurn = Boolean(moveNumber % 2) === swapped;
+  const isBlackTurn = useSelector(selectIsBlackTurn);
   return (
     <div className="PlayerInfo">
       <div className={classnames('black', { partialOpacity: !isBlackTurn })}>
@@ -369,14 +367,11 @@ function PlayerNames() {
 
 export default function HexGame() {
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
+  const { moveHistory, moveNumber, settings, swapPhaseComplete } = useSelector(
+    selectGameState
+  );
   const boardState = useSelector(selectBoardState);
-  const {
-    moveHistory,
-    moveNumber,
-    settings,
-    swapped,
-    swapPhaseComplete,
-  } = useSelector(selectGameState);
+  const isBlackTurn = useSelector(selectIsBlackTurn);
   const { useSwapRule } = settings;
 
   const winningComponent = getWinningConnectedComponent(boardState);
@@ -387,9 +382,7 @@ export default function HexGame() {
     // disable board when it is not set to latest position
     moveNumber !== moveHistory.length ||
     // disable board during opponent's turn
-    (netplayActive &&
-      ((isBlack && Boolean(moveNumber % 2) !== swapped) ||
-        (!isBlack && Boolean(moveNumber % 2) === swapped)));
+    (netplayActive && isBlack !== isBlackTurn);
 
   return (
     <div>

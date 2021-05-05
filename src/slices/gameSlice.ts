@@ -80,4 +80,9 @@ export const selectBoardState = (state: RootState) => {
   return boardState;
 };
 
+export const selectIsBlackTurn = (state: RootState) => {
+  const { moveNumber, swapped } = state.game;
+  return Boolean(moveNumber % 2) === swapped;
+};
+
 export default gameSlice.reducer;
