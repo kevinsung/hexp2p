@@ -53,9 +53,7 @@ const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 
 function SwapDialog() {
   const dispatch = useDispatch();
-  const { active: netplayActive, connected, isBlack } = useSelector(
-    selectNetplayState
-  );
+  const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
   const { moveNumber, settings, swapPhaseComplete } = useSelector(
     selectGameState
   );
@@ -71,7 +69,7 @@ function SwapDialog() {
 
   const handleSwap = (swap: boolean) => {
     dispatch(swapChosen(swap));
-    if (netplayActive && connected) {
+    if (netplayActive) {
       sendSwap(swap);
     }
   };
@@ -122,7 +120,7 @@ function UndoDialog() {
 function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
-  const { active: netplayActive, connected } = useSelector(selectNetplayState);
+  const { active: netplayActive } = useSelector(selectNetplayState);
   const { moveHistory, moveNumber, selectedHexagon } = useSelector(
     selectGameState
   );
@@ -173,8 +171,7 @@ function Hexagon(props: HexagonProps) {
     if (!disabled && !boardState[row][col]) {
       const move = [row, col];
       dispatch(moveMade(move));
-      // TODO don't use connected in this conditional
-      if (netplayActive && connected) {
+      if (netplayActive) {
         sendMove(move);
         dispatch(undoRequestFulfilled());
       }
