@@ -22,9 +22,18 @@ const gameSlice = createSlice({
       state.settings = settings;
     },
     moveMade: (state, action) => {
-      // TODO first check that the move is valid (has not already been made)
       const { moveHistory } = state;
       const coordinates = action.payload;
+
+      // if the move has already been made, ignore it
+      const [row, col] = coordinates;
+      for (let i = 0; i < moveHistory.length; i += 1) {
+        const [r, c] = moveHistory[i];
+        if (r === row && c === col) {
+          return;
+        }
+      }
+
       moveHistory.push(coordinates);
       // only increment move number if board is set to latest position
       if (state.moveNumber === moveHistory.length - 1) {
