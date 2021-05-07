@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { randomBytes } from 'crypto';
 import { useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { gameStarted } from '../slices/gameSlice';
 import { startNetplay } from '../netplayClient';
 import { colorChosen, selectNetplayState } from '../slices/netplaySlice';
@@ -35,19 +35,18 @@ function BoardSizeSelector(props: BoardSizeSelectorProps) {
   const { size, onChange } = props;
   return (
     <div>
-      <div>
-        <label htmlFor="boardSize">
-          Board size: {size}
-          <input
-            type="range"
-            min={MIN_BOARD_SIZE}
-            max={MAX_BOARD_SIZE}
-            value={size}
-            onChange={onChange}
-            id="boardSize"
-          />
-        </label>
-      </div>
+      <h3>Board size</h3>
+      <label className="BoardSizeSelector" htmlFor="boardSize">
+        <div className="BoardSize">{size}</div>
+        <input
+          type="range"
+          min={MIN_BOARD_SIZE}
+          max={MAX_BOARD_SIZE}
+          value={size}
+          onChange={onChange}
+          id="boardSize"
+        />
+      </label>
     </div>
   );
 }
@@ -56,14 +55,17 @@ function SwapRuleToggle(props: SwapRuleToggleProps) {
   const { enabled, onChange } = props;
   return (
     <div>
+      <h3>Swap rule</h3>
       <label htmlFor="swapRule">
-        Use swap rule
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={onChange}
-          id="swapRule"
-        />
+        <div>
+          Use swap rule
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={onChange}
+            id="swapRule"
+          />
+        </div>
       </label>
     </div>
   );
@@ -74,40 +76,48 @@ function ColorSelector(props: ColorSelectorProps) {
   const { value, onChange } = props;
   return (
     <div>
-      Color:
-      <label htmlFor="random">
-        Random
-        <input
-          type="radio"
-          name="color"
-          checked={value === 'random'}
-          onChange={onChange}
-          value="random"
-          id="random"
-        />
-      </label>
-      <label htmlFor="black">
-        Black
-        <input
-          type="radio"
-          name="color"
-          checked={value === 'black'}
-          onChange={onChange}
-          value="black"
-          id="black"
-        />
-      </label>
-      <label htmlFor="white">
-        White
-        <input
-          type="radio"
-          name="color"
-          checked={value === 'white'}
-          onChange={onChange}
-          value="white"
-          id="white"
-        />
-      </label>
+      <h3>Color</h3>
+      <div>
+        <div className="ColorChoice">
+          <label htmlFor="random">
+            <input
+              type="radio"
+              name="color"
+              checked={value === 'random'}
+              onChange={onChange}
+              value="random"
+              id="random"
+            />
+            Random
+          </label>
+        </div>
+        <div className="ColorChoice">
+          <label htmlFor="black">
+            <input
+              type="radio"
+              name="color"
+              checked={value === 'black'}
+              onChange={onChange}
+              value="black"
+              id="black"
+            />
+            Black
+          </label>
+        </div>
+        <div className="ColorChoice">
+          <label htmlFor="white">
+            <input
+              type="radio"
+              name="color"
+              checked={value === 'white'}
+              onChange={onChange}
+              value="white"
+              id="white"
+            />
+            White
+          </label>
+        </div>
+      </div>
     </div>
   );
 }
@@ -145,24 +155,30 @@ export default function HexSettings() {
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <BoardSizeSelector
-          size={boardSize}
-          onChange={(e) => setBoardSize(Number(e.target.value))}
-        />
-        <SwapRuleToggle
-          enabled={useSwapRule}
-          onChange={(e) => setUseSwapRule(e.target.checked)}
-        />
-        <ColorSelector
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-        />
-        <div className="Hello">
+    <div className="HexSettings">
+      <div className="HexSettingsTopPanel">
+        <Link to="/">
+          <button type="button">Home</button>
+        </Link>
+      </div>
+      <div>
+        <h1>Settings</h1>
+        <form onSubmit={handleSubmit}>
+          <BoardSizeSelector
+            size={boardSize}
+            onChange={(e) => setBoardSize(Number(e.target.value))}
+          />
+          <SwapRuleToggle
+            enabled={useSwapRule}
+            onChange={(e) => setUseSwapRule(e.target.checked)}
+          />
+          <ColorSelector
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+          />
           <button type="submit">Submit</button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

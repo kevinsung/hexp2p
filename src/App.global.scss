@@ -75,6 +75,7 @@ a:hover {
 }
 
 // Home
+
 .Home {
   display: flex;
   flex-direction: column;
@@ -90,6 +91,62 @@ a:hover {
 .Home button {
   width: 240px;
   margin: 12px;
+}
+
+// Hex settings
+
+.HexSettings {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  margin: 20px 0;
+  font-size: 1.3rem;
+  width: 100vw;
+  height: 100vh;
+}
+
+.HexSettings h3 {
+  margin: 12px 0px;
+}
+
+.HexSettings input {
+  margin: 0px 12px;
+  vertical-align: middle;
+}
+
+.HexSettings > div > form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.HexSettings > div > form > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 36px;
+}
+
+.HexSettingsTopPanel {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.BoardSizeSelector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.BoardSize {
+  padding-bottom: 6px;
+}
+
+.ColorChoice {
+  padding-bottom: 12px;
 }
 
 // Host netplay
