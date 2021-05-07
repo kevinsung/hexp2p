@@ -72,7 +72,12 @@ function SwapRuleToggle(props: SwapRuleToggleProps) {
 }
 
 function ColorSelector(props: ColorSelectorProps) {
-  // TODO don't show this component for local game
+  const { active: netplayActive } = useSelector(selectNetplayState);
+
+  if (!netplayActive) {
+    return null;
+  }
+
   const { value, onChange } = props;
   return (
     <div>
