@@ -151,9 +151,13 @@ a:hover {
 
 .PlayerNames {
   background-color: #808080;
-  padding: 6px 12px;
+  padding: 6px 6px;
   border-radius: 10px;
   font-size: 1.8rem;
+}
+
+.PlayerNames > div {
+  padding: 4px;
 }
 
 // Hex game: top panel
@@ -166,21 +170,28 @@ a:hover {
   width: 100%;
 }
 
+.DialogPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.SwapDialog {
+  font-size: 1.3rem;
+  padding-bottom: 6px;
+}
+
+.SwapDialog > button {
+  margin-left: 12px;
+  width: 80px;
+}
+
 .UndoDialog {
   font-size: 1.3rem;
 }
 
 .UndoDialog > button {
   margin-left: 12px;
-}
-
-.SwapDialog {
-  font-size: 1.3rem;
-}
-
-.SwapDialog > button {
-  margin-left: 12px;
-  width: 80px;
 }
 
 // Hex game: bottom panel

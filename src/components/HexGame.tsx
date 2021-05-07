@@ -75,6 +75,7 @@ function SwapDialog() {
     dispatch(swapChosen(swap));
     if (netplayActive) {
       sendSwap(swap);
+      dispatch(undoRequestFulfilled());
     }
   };
 
@@ -479,9 +480,9 @@ export default function HexGame() {
         <Link to="/">
           <button type="button">Home</button>
         </Link>
-        <div>
-          <UndoDialog />
+        <div className="DialogPanel">
           <SwapDialog />
+          <UndoDialog />
         </div>
         <PlayerNames />
       </div>

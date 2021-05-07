@@ -74,6 +74,7 @@ function handleMessage(messageData: MessageData) {
 
   if (typeof swap === 'boolean') {
     store.dispatch(swapChosen(swap));
+    store.dispatch(undoRequestFulfilled());
   }
 
   if (requestUndo) {
