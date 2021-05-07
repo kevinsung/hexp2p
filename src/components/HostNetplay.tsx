@@ -31,9 +31,15 @@ function HostCodeDisplay() {
 export default function HostNetplay() {
   return (
     <div className="HostNetplay">
-      <Link to="/home">Home</Link>
-      <HostCodeDisplay />
-      <div>Waiting for peer to join...</div>
+      <div className="HomeButtonTopPanel">
+        <Link to="/">
+          <button type="button">Home</button>
+        </Link>
+      </div>
+      <div>
+        <HostCodeDisplay />
+        <div>Waiting for peer to join...</div>
+      </div>
     </div>
   );
 }

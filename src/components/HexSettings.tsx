@@ -162,7 +162,7 @@ export default function HexSettings() {
 
   return (
     <div className="HexSettings">
-      <div className="HexSettingsTopPanel">
+      <div className="HomeButtonTopPanel">
         <Link to="/">
           <button type="button">Home</button>
         </Link>
