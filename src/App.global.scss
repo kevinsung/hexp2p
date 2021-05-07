@@ -15,22 +15,21 @@ body {
 }
 
 button {
-  background-color: white;
+  background-color: #c0c0c0;
   padding: 10px 20px;
   border-radius: 10px;
   border: none;
   appearance: none;
   font-size: 1.3rem;
-  transition: transform ease-in 0.1s;
   cursor: pointer;
 }
 
 button:hover {
-  transform: scale(1.05);
+  background-color: white;
 }
 
 button:disabled:hover {
-  transform: none;
+  background-color: #c0c0c0;
 }
 
 li {
@@ -41,7 +40,6 @@ a {
   text-decoration: none;
   height: fit-content;
   width: fit-content;
-  margin: 10px;
 }
 
 a:hover {
@@ -75,11 +73,45 @@ a:hover {
   visibility: hidden;
 }
 
+// TODO delete this
 .Hello {
   display: flex;
   justify-content: center;
   align-items: center;
   margin: 20px 0;
+}
+
+// Host netplay
+
+.HostNetplay {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.ClickToCopy {
+  font-family: monospace;
+  font-weight: bold;
+  color: white;
+  background-color: #202020;
+  outline: none;
+}
+
+.ClickToCopy:hover {
+  text-decoration: underline;
+  background-color: #202020;
+}
+
+// Hex game
+
+.HexGame {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
 }
 
 .HexBoard {
@@ -116,26 +148,76 @@ a:hover {
   stroke-width: 0.08;
 }
 
-.ClickToCopy {
-  font-family: monospace;
-  font-weight: bold;
-  color: white;
-  background-color: #202020;
-  outline: none;
-}
-.ClickToCopy:hover {
-  text-decoration: underline;
-  transform: none;
-}
-
-.HostNetplay {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.PlayerInfo {
+.PlayerNames {
   background-color: #808080;
-  font-size: 2rem;
+  padding: 6px 12px;
+  border-radius: 10px;
+  font-size: 1.8rem;
+}
+
+// Hex game: top panel
+
+.HexGameTopPanel {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.UndoDialog {
+  font-size: 1.3rem;
+}
+
+.UndoDialog > button {
+  margin-left: 12px;
+}
+
+.SwapDialog {
+  font-size: 1.3rem;
+}
+
+.SwapDialog > button {
+  margin-left: 12px;
+  width: 80px;
+}
+
+// Hex game: bottom panel
+
+.HexGameBottomPanel {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.MoveHistoryButtons {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+}
+
+.MoveHistoryButtons > button {
+  margin-left: 6px;
+  margin-right: 6px;
+  width: 72px;
+}
+
+.ConnectionStatus {
+  flex: 1;
+  display: flex;
+  font-size: 1.3rem;
+}
+
+.ConnectionStatus > span {
+  margin-right: auto;
+}
+
+.UndoButton {
+  flex: 1;
+  display: flex;
+}
+
+.UndoButton > button {
+  margin-left: auto;
 }

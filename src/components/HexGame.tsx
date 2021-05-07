@@ -64,7 +64,11 @@ function SwapDialog() {
   }
 
   if (netplayActive && isBlack) {
-    return <div>SWAP PHASE: Opponent is choosing whether to swap...</div>;
+    return (
+      <div className="SwapDialog">
+        SWAP PHASE: Opponent is choosing whether to swap...
+      </div>
+    );
   }
 
   const handleSwap = (swap: boolean) => {
@@ -75,7 +79,7 @@ function SwapDialog() {
   };
 
   return (
-    <div>
+    <div className="SwapDialog">
       SWAP PHASE: Do you want to swap pieces?
       <button type="button" onClick={() => handleSwap(true)}>
         YES
@@ -94,7 +98,7 @@ function UndoDialog() {
   );
 
   if (undoRequested) {
-    return <div>Undo request sent</div>;
+    return <div className="UndoDialog">Undo request sent</div>;
   }
 
   const handleClick = () => {
@@ -105,7 +109,7 @@ function UndoDialog() {
 
   if (undoRequestReceived) {
     return (
-      <div>
+      <div className="UndoDialog">
         Opponent requested undo
         <button type="button" onClick={handleClick}>
           Accept
@@ -354,7 +358,7 @@ function MoveHistoryButtons() {
   };
 
   return (
-    <div>
+    <div className="MoveHistoryButtons">
       <button type="button" onClick={() => shiftMoveNumber(-Infinity)}>
         |&lt;
       </button>
@@ -401,7 +405,7 @@ function UndoButton() {
   };
 
   return (
-    <div>
+    <div className="UndoButton">
       <button type="button" onClick={handleClick} disabled={disabled}>
         Undo
       </button>
@@ -412,13 +416,12 @@ function UndoButton() {
 function ConnectionStatus() {
   // TODO make this better
   const { active: netplayActive, connected } = useSelector(selectNetplayState);
-  let status = '';
-  if (netplayActive && connected) {
-    status = 'CONNECTED';
-  } else if (netplayActive && !connected) {
-    status = 'DISCONNECTED';
-  }
-  return <div>{status}</div>;
+  const status = netplayActive && !connected ? 'DISCONNECTED' : '';
+  return (
+    <div className="ConnectionStatus">
+      <span>{status}</span>
+    </div>
+  );
 }
 
 function PlayerNames() {
@@ -428,7 +431,7 @@ function PlayerNames() {
   );
   const playerOneIsBlack = !netplayActive || hosting === isBlack;
   return (
-    <div className="PlayerInfo">
+    <div className="PlayerNames">
       <div
         className={classnames(
           { black: playerOneIsBlack },
@@ -471,19 +474,29 @@ export default function HexGame() {
     (netplayActive && isBlack !== isBlackTurn);
 
   return (
-    <div>
-      <Link to="/">Home</Link>
-      <PlayerNames />
-      <ConnectionStatus />
-      <SwapDialog />
-      <UndoDialog />
-      <HexBoard
-        boardState={boardState}
-        winningComponent={winningComponent}
-        disabled={disabled}
-      />
-      <MoveHistoryButtons />
-      <UndoButton />
+    <div className="HexGame">
+      <div className="HexGameTopPanel">
+        <Link to="/">
+          <button type="button">Home</button>
+        </Link>
+        <div>
+          <UndoDialog />
+          <SwapDialog />
+        </div>
+        <PlayerNames />
+      </div>
+      <div>
+        <HexBoard
+          boardState={boardState}
+          winningComponent={winningComponent}
+          disabled={disabled}
+        />
+      </div>
+      <div className="HexGameBottomPanel">
+        <ConnectionStatus />
+        <MoveHistoryButtons />
+        <UndoButton />
+      </div>
     </div>
   );
 }
