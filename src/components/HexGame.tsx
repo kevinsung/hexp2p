@@ -60,7 +60,7 @@ function SwapDialog() {
   const { useSwapRule } = settings;
 
   if (!useSwapRule || swapPhaseComplete || moveNumber !== 1) {
-    return <div />;
+    return null;
   }
 
   if (netplayActive && isBlack) {
@@ -119,7 +119,7 @@ function UndoDialog() {
     );
   }
 
-  return <div />;
+  return null;
 }
 
 function Hexagon(props: HexagonProps) {
