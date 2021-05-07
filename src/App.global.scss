@@ -101,8 +101,8 @@ a:hover {
   justify-content: flex-start;
   align-items: center;
   font-size: 1.3rem;
-  width: 100vw;
-  height: 100vh;
+  width: calc(100vw - 24px);
+  height: calc(100vh - 24px);
 }
 
 .HexSettings h3 {
@@ -161,8 +161,8 @@ a:hover {
   justify-content: flex-start;
   align-items: center;
   font-size: 1.3rem;
-  width: 100vw;
-  height: 100vh;
+  width: calc(100vw - 24px);
+  height: calc(100vh - 24px);
 }
 
 .ClickToCopy {
@@ -184,8 +184,8 @@ a:hover {
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  width: 100vw;
-  height: 100vh;
+  width: calc(100vw - 24px);
+  height: calc(100vh - 24px);
 }
 
 .HexBoard {
