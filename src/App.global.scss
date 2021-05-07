@@ -110,11 +110,6 @@ a:hover {
   margin: 12px 0px;
 }
 
-.HexSettings input {
-  margin: 0px 12px;
-  vertical-align: middle;
-}
-
 .HexSettings > div > form {
   display: flex;
   flex-direction: column;
@@ -145,8 +140,18 @@ a:hover {
   padding-bottom: 6px;
 }
 
+.SwapRuleCheckBox {
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
 .ColorChoice {
   padding-bottom: 12px;
+}
+
+.ColorChoice input {
+  margin-right: 12px;
+  vertical-align: middle;
 }
 
 // Host netplay

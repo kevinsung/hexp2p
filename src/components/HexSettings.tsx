@@ -60,6 +60,7 @@ function SwapRuleToggle(props: SwapRuleToggleProps) {
         <div>
           Use swap rule
           <input
+            className="SwapRuleCheckBox"
             type="checkbox"
             checked={enabled}
             onChange={onChange}
