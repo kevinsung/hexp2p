@@ -10,17 +10,17 @@ import '../App.global.scss';
 
 interface BoardSizeSelectorProps {
   size: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  setBoardSize: (size: number) => void;
 }
 
 interface SwapRuleToggleProps {
   enabled: boolean;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  setUseSwapRule: (useSwapRule: boolean) => void;
 }
 
 interface ColorSelectorProps {
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  setColor: (color: string) => void;
 }
 
 const MIN_BOARD_SIZE = 7;
@@ -32,7 +32,7 @@ function randomBoolean() {
 }
 
 function BoardSizeSelector(props: BoardSizeSelectorProps) {
-  const { size, onChange } = props;
+  const { size, setBoardSize } = props;
   return (
     <div>
       <h3>Board size</h3>
@@ -43,7 +43,7 @@ function BoardSizeSelector(props: BoardSizeSelectorProps) {
           min={MIN_BOARD_SIZE}
           max={MAX_BOARD_SIZE}
           value={size}
-          onChange={onChange}
+          onChange={(e) => setBoardSize(Number(e.target.value))}
           id="boardSize"
         />
       </label>
@@ -52,7 +52,7 @@ function BoardSizeSelector(props: BoardSizeSelectorProps) {
 }
 
 function SwapRuleToggle(props: SwapRuleToggleProps) {
-  const { enabled, onChange } = props;
+  const { enabled, setUseSwapRule } = props;
   return (
     <div>
       <h3>Swap rule</h3>
@@ -63,7 +63,7 @@ function SwapRuleToggle(props: SwapRuleToggleProps) {
             className="SwapRuleCheckBox"
             type="checkbox"
             checked={enabled}
-            onChange={onChange}
+            onChange={(e) => setUseSwapRule(e.target.checked)}
             id="swapRule"
           />
         </div>
@@ -79,7 +79,12 @@ function ColorSelector(props: ColorSelectorProps) {
     return null;
   }
 
-  const { value, onChange } = props;
+  const { value, setColor } = props;
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setColor(e.target.value);
+  };
+
   return (
     <div>
       <h3>Color</h3>
@@ -171,18 +176,12 @@ export default function HexSettings() {
       </div>
       <div>
         <form onSubmit={handleSubmit}>
-          <BoardSizeSelector
-            size={boardSize}
-            onChange={(e) => setBoardSize(Number(e.target.value))}
-          />
+          <BoardSizeSelector size={boardSize} setBoardSize={setBoardSize} />
           <SwapRuleToggle
             enabled={useSwapRule}
-            onChange={(e) => setUseSwapRule(e.target.checked)}
+            setUseSwapRule={setUseSwapRule}
           />
-          <ColorSelector
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-          />
+          <ColorSelector value={color} setColor={setColor} />
           <button type="submit">Submit</button>
         </form>
       </div>
