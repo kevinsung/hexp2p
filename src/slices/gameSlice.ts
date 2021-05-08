@@ -16,6 +16,9 @@ const gameSlice = createSlice({
   name: 'game',
   initialState,
   reducers: {
+    resetGameState: (state) => {
+      Object.assign(state, initialState);
+    },
     gameStarted: (state, action) => {
       const settings = action.payload;
       Object.assign(state, initialState);
@@ -70,6 +73,7 @@ const gameSlice = createSlice({
 });
 
 export const {
+  resetGameState,
   gameStarted,
   hexagonSelected,
   moveMade,
