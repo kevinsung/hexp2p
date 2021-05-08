@@ -5,7 +5,6 @@ import { selectNetplayState } from '../slices/netplaySlice';
 import '../App.global.scss';
 
 function HostCodeDisplay() {
-  // TODO display different message if host code not obtained
   const { hostCode } = useSelector(selectNetplayState);
   const [copied, setCopied] = useState(false);
 

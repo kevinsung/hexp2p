@@ -419,7 +419,6 @@ function UndoButton() {
 }
 
 function ConnectionStatus() {
-  // TODO make this better
   const { active: netplayActive, connected } = useSelector(selectNetplayState);
   const status = netplayActive && !connected ? 'DISCONNECTED' : '';
   return (

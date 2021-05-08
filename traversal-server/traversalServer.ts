@@ -41,7 +41,6 @@ function main() {
 
     if (hostCode) {
       // client is requesting connection to peer
-      // TODO inform client if host code does not exist
       if (HOSTS.has(hostCode)) {
         const {
           publicAddress: peerPublicAddress,

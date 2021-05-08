@@ -326,7 +326,6 @@ export function startNetplay(hostCode?: string) {
   );
 }
 
-// TODO wrap send calls in try catch
 export function sendSwap(swap: boolean) {
   if (SOCKET) {
     const message = { swap };
