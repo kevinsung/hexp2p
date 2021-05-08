@@ -8,6 +8,7 @@ const initialState: NetplayState = {
   connected: false,
   hosting: false,
   hostCode: '',
+  hostCodeSubmitted: false,
   isBlack: false,
   undoRequestSent: false,
   undoRequestReceived: false,
@@ -35,7 +36,11 @@ const netplaySlice = createSlice({
       state.hosting = true;
     },
     hostCodeSubmitted: (state) => {
+      state.hostCodeSubmitted = true;
       state.hosting = false;
+    },
+    hostCodeSubmissionTimedOut: (state) => {
+      state.hostCodeSubmitted = false;
     },
     colorChosen: (state, action) => {
       const isBlack = action.payload;
@@ -61,6 +66,7 @@ export const {
   disconnectedFromPeer,
   hostCodeReceived,
   hostCodeSubmitted,
+  hostCodeSubmissionTimedOut,
   colorChosen,
   undoRequestSent,
   undoRequestReceived,

@@ -23,6 +23,7 @@ export interface NetplayState {
   connected: boolean;
   hosting: boolean;
   hostCode: string;
+  hostCodeSubmitted: boolean;
   isBlack: boolean;
   undoRequestSent: boolean;
   undoRequestReceived: boolean;
