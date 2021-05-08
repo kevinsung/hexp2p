@@ -9,7 +9,7 @@ function HostCodeDisplay() {
   const { hostCode } = useSelector(selectNetplayState);
   const [copied, setCopied] = useState(false);
 
-  const copiedStatus = copied ? '(Copied!)' : '(Click to copy)';
+  const copiedStatus = copied ? 'Copied!' : 'Click to copy';
 
   const copyText = () => {
     if (hostCode) {
@@ -19,11 +19,12 @@ function HostCodeDisplay() {
   };
 
   return (
-    <div>
-      <div>Host code {copiedStatus}</div>
+    <div className="HostCodeDisplay">
+      <h3>Host code</h3>
       <button className="ClickToCopy" type="button" onClick={copyText}>
         {hostCode}
       </button>
+      <div>{copiedStatus}</div>
     </div>
   );
 }
@@ -31,15 +32,13 @@ function HostCodeDisplay() {
 export default function HostNetplay() {
   return (
     <div className="HostNetplay">
-      <div className="HomeButtonTopPanel">
+      <div className="HostNetplayTopPanel">
         <Link to="/">
           <button type="button">Home</button>
         </Link>
       </div>
-      <div>
-        <HostCodeDisplay />
-        <div>Waiting for peer to join...</div>
-      </div>
+      <HostCodeDisplay />
+      <div className="HostNetplayBottomPanel">Waiting for peer to join...</div>
     </div>
   );
 }

@@ -122,7 +122,7 @@ a:hover {
   padding-bottom: 36px;
 }
 
-.HomeButtonTopPanel {
+.HexSettingsTopPanel {
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -135,13 +135,13 @@ a:hover {
   margin-right: auto;
 }
 
-.HomeButtonTopPanel > h1 {
+.HexSettingsTopPanel > h1 {
   flex: 2;
   display: flex;
   justify-content: center;
 }
 
-.HomeButtonTopPanel > div {
+.HexSettingsTopPanel > div {
   flex: 1;
   display: flex;
   margin-left: auto;
@@ -192,6 +192,34 @@ a:hover {
   font-size: 1.3rem;
   width: calc(100vw - 24px);
   height: calc(100vh - 24px);
+}
+
+.HostNetplayTopPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.HostCodeDisplay {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.HostCodeDisplay button {
+  margin-bottom: 12px;
+}
+
+.HostNetplayBottomPanel {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .ClickToCopy {
