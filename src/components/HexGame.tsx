@@ -49,7 +49,30 @@ interface ComponentMarkerProps {
   component: Array<Array<number>>;
 }
 
+interface WinnerAnnouncementProps {
+  boardState: Array<Array<number>>;
+  winningComponent: Array<Array<number>>;
+}
+
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
+
+function WinnerAnnouncement(props: WinnerAnnouncementProps) {
+  const { boardState, winningComponent } = props;
+
+  if (!winningComponent.length) {
+    return null;
+  }
+
+  const [row, col] = winningComponent[0];
+  switch (boardState[row][col]) {
+    case HexagonState.BLACK:
+      return <div className="WinnerAnnouncement">Black wins</div>;
+    case HexagonState.WHITE:
+      return <div className="WinnerAnnouncement">White wins</div>;
+    default:
+      return null;
+  }
+}
 
 function SwapDialog() {
   const dispatch = useDispatch();
@@ -276,10 +299,10 @@ function Borders() {
 
   return (
     <g className="Border">
-      <polyline points={topBorderPoints.join(' ')} stroke="#000000" />
-      <polyline points={leftBorderPoints.join(' ')} stroke="#ffffff" />
-      <polyline points={rightBorderPoints.join(' ')} stroke="#ffffff" />
-      <polyline points={bottomBorderPoints.join(' ')} stroke="#000000" />
+      <polyline points={topBorderPoints.join(' ')} stroke="black" />
+      <polyline points={leftBorderPoints.join(' ')} stroke="white" />
+      <polyline points={rightBorderPoints.join(' ')} stroke="white" />
+      <polyline points={bottomBorderPoints.join(' ')} stroke="black" />
     </g>
   );
 }
@@ -484,6 +507,10 @@ export default function HexGame() {
           <button type="button">Home</button>
         </Link>
         <div className="DialogPanel">
+          <WinnerAnnouncement
+            boardState={boardState}
+            winningComponent={winningComponent}
+          />
           <SwapDialog />
           <UndoDialog />
         </div>
