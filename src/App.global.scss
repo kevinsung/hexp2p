@@ -122,6 +122,16 @@ a:hover {
   padding-bottom: 36px;
 }
 
+.HexSettings input[type='checkbox'] {
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.HexSettings input[type='radio'] {
+  margin-right: 12px;
+  vertical-align: middle;
+}
+
 .HexSettingsTopPanel {
   display: flex;
   flex-direction: row;
@@ -168,18 +178,8 @@ a:hover {
   padding-bottom: 6px;
 }
 
-.SwapRuleCheckBox {
-  margin-left: 12px;
-  vertical-align: middle;
-}
-
 .ColorChoice {
   padding-bottom: 12px;
-}
-
-.ColorChoice input {
-  margin-right: 12px;
-  vertical-align: middle;
 }
 
 // Host netplay
