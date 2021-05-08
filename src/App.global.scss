@@ -204,6 +204,7 @@ a:hover {
   align-items: center;
   width: calc(100vw - 24px);
   height: calc(100vh - 24px);
+  font-size: 1.3rem;
 }
 
 .HexBoard {
@@ -268,7 +269,6 @@ a:hover {
 }
 
 .SwapDialog {
-  font-size: 1.3rem;
   padding-bottom: 6px;
 }
 
@@ -277,11 +277,7 @@ a:hover {
   width: 80px;
 }
 
-.UndoDialog {
-  font-size: 1.3rem;
-}
-
-.UndoDialog > button {
+.UndoDialogButton {
   margin-left: 12px;
 }
 
@@ -309,7 +305,6 @@ a:hover {
 .ConnectionStatus {
   flex: 1;
   display: flex;
-  font-size: 1.3rem;
 }
 
 .ConnectionStatus > span {

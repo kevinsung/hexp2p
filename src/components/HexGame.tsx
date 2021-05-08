@@ -99,7 +99,7 @@ function UndoDialog() {
   );
 
   if (undoRequested) {
-    return <div className="UndoDialog">Undo request sent</div>;
+    return <div>Undo request sent</div>;
   }
 
   const handleClick = () => {
@@ -110,9 +110,13 @@ function UndoDialog() {
 
   if (undoRequestReceived) {
     return (
-      <div className="UndoDialog">
+      <div>
         Opponent requested undo
-        <button type="button" onClick={handleClick}>
+        <button
+          className="UndoDialogButton"
+          type="button"
+          onClick={handleClick}
+        >
           Accept
         </button>
       </div>
