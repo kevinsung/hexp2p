@@ -111,7 +111,7 @@
       "url": "https://github.com/jooohhn"
     }
   ],
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "bugs": {
     "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"
   },
