@@ -38,14 +38,28 @@ function BoardSizeSelector(props: BoardSizeSelectorProps) {
       <h3>Board size</h3>
       <label className="BoardSizeSelector" htmlFor="boardSize">
         <div className="BoardSize">{size}</div>
-        <input
-          type="range"
-          min={MIN_BOARD_SIZE}
-          max={MAX_BOARD_SIZE}
-          value={size}
-          onChange={(e) => setBoardSize(Number(e.target.value))}
-          id="boardSize"
-        />
+        <div>
+          <button
+            type="button"
+            onClick={() => setBoardSize(Math.max(MIN_BOARD_SIZE, size - 1))}
+          >
+            −
+          </button>
+          <input
+            type="range"
+            min={MIN_BOARD_SIZE}
+            max={MAX_BOARD_SIZE}
+            value={size}
+            onChange={(e) => setBoardSize(Number(e.target.value))}
+            id="boardSize"
+          />
+          <button
+            type="button"
+            onClick={() => setBoardSize(Math.min(MAX_BOARD_SIZE, size + 1))}
+          >
+            +
+          </button>
+        </div>
       </label>
     </div>
   );

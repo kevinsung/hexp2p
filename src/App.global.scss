@@ -153,6 +153,17 @@ a:hover {
   align-items: center;
 }
 
+.BoardSizeSelector input {
+  margin: 0px 12px;
+}
+
+.BoardSizeSelector button {
+  width: 36px;
+  height: 36px;
+  padding: 1px 0px 0px 1px;
+  vertical-align: middle;
+}
+
 .BoardSize {
   padding-bottom: 6px;
 }
