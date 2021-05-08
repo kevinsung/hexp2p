@@ -20,24 +20,27 @@ export default function ConnectToPeer() {
   };
 
   return (
-    <div>
-      <Link to="/home">Home</Link>
+    <div className="ConnectToPeer">
+      <div className="ConnectToPeerTopPanel">
+        <Link to="/">
+          <button type="button">Home</button>
+        </Link>
+      </div>
       <form onSubmit={handleSubmit}>
         <label htmlFor="hostCode">
-          Enter host code
+          <h3>Enter host code</h3>
           <input
             type="text"
             id="hostCode"
+            size={32}
             value={hostCode}
             onChange={(event) => setHostCode(event.target.value)}
             required
           />
         </label>
-        <div className="Hello">
-          <button type="submit" disabled={!hostCode}>
-            Submit
-          </button>
-        </div>
+        <button type="submit" disabled={!hostCode}>
+          Submit
+        </button>
       </form>
     </div>
   );

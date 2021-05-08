@@ -215,7 +215,7 @@ a:hover {
 }
 
 .HostNetplayBottomPanel {
-  flex: 2;
+  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -232,6 +232,46 @@ a:hover {
 .ClickToCopy:hover {
   text-decoration: underline;
   background-color: #202020;
+}
+
+// Connect to peer
+
+.ConnectToPeer {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 1.3rem;
+  width: calc(100vw - 24px);
+  height: calc(100vh - 24px);
+}
+
+.ConnectToPeerTopPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.ConnectToPeer form {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.ConnectToPeer form label {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: 200px;
+}
+
+.ConnectToPeer form button {
+  margin-top: 36px;
 }
 
 // Hex game
