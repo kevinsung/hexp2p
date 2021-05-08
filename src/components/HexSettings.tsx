@@ -163,12 +163,13 @@ export default function HexSettings() {
   return (
     <div className="HexSettings">
       <div className="HomeButtonTopPanel">
-        <Link to="/">
+        <Link className="HomeButton" to="/">
           <button type="button">Home</button>
         </Link>
+        <h1>Settings</h1>
+        <div />
       </div>
       <div>
-        <h1>Settings</h1>
         <form onSubmit={handleSubmit}>
           <BoardSizeSelector
             size={boardSize}

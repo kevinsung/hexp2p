@@ -129,6 +129,24 @@ a:hover {
   width: 100%;
 }
 
+.HomeButton {
+  flex: 1;
+  display: flex;
+  margin-right: auto;
+}
+
+.HomeButtonTopPanel > h1 {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+}
+
+.HomeButtonTopPanel > div {
+  flex: 1;
+  display: flex;
+  margin-left: auto;
+}
+
 .BoardSizeSelector {
   display: flex;
   flex-direction: column;
