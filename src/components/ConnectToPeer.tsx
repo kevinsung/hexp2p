@@ -16,6 +16,7 @@ export default function ConnectToPeer() {
       setSubmitted(true);
       dispatch(hostCodeSubmitted());
       startNetplay(hostCode);
+      setTimeout(() => setSubmitted(false), 2000);
     }
   };
 
