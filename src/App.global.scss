@@ -119,7 +119,7 @@ a:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 36px;
+  margin-bottom: 24px;
 }
 
 .HexSettings input[type='checkbox'] {
@@ -286,9 +286,10 @@ a:hover {
   font-size: 1.3rem;
 }
 
+// subtract margins, top panel, and bottom panel
 .HexBoard {
-  height: 75vh;
-  max-width: 100vw;
+  height: calc(100vh - 24px - 98px - 45px);
+  max-width: calc(100vw - 24px);
 }
 
 .Hexagon {

@@ -374,7 +374,7 @@ function HexBoard(props: HexBoardProps) {
   const viewBox = `${-margin} ${-margin} ${width} ${height}`;
 
   return (
-    <div>
+    <div className="HexBoard">
       <svg className="HexBoard" viewBox={viewBox}>
         <Hexagons
           boardState={boardState}
@@ -531,13 +531,11 @@ export default function HexGame() {
         </div>
         <PlayerNames />
       </div>
-      <div>
-        <HexBoard
-          boardState={boardState}
-          winningComponent={winningComponent}
-          disabled={disabled}
-        />
-      </div>
+      <HexBoard
+        boardState={boardState}
+        winningComponent={winningComponent}
+        disabled={disabled}
+      />
       <div className="HexGameBottomPanel">
         <ConnectionStatus />
         <MoveHistoryButtons />
