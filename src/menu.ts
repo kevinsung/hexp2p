@@ -198,14 +198,10 @@ export default class MenuBuilder {
         label: '&File',
         submenu: [
           {
-            label: '&Open',
-            accelerator: 'Ctrl+O',
-          },
-          {
-            label: '&Close',
-            accelerator: 'Ctrl+W',
+            label: '&Quit',
+            accelerator: 'Ctrl+Q',
             click: () => {
-              this.mainWindow.close();
+              app.quit();
             },
           },
         ],
