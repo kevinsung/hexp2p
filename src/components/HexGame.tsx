@@ -306,12 +306,13 @@ function Borders() {
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const d = 0.5 * Math.sqrt(3);
+  const cornerOverlap = 0.1;
 
-  // TODO fix borders overlapping in top left and bottom right corners
   const topBorderPoints = [];
   const bottomBorderPoints = [];
   const leftBorderPoints = [];
   const rightBorderPoints = [];
+  topBorderPoints.push(`0,${0.5 + cornerOverlap}`);
   bottomBorderPoints.push(`${(boardSize - 0.5) * d},${1.5 * boardSize + 0.25}`);
   rightBorderPoints.push(`${(2 * boardSize - 0.5) * d},0.25`);
   for (let i = 0; i < boardSize; i += 1) {
@@ -334,12 +335,15 @@ function Borders() {
   leftBorderPoints.push(
     `${(boardSize - 0.5) * d},${1.5 * (boardSize - 1) + 1.75}`
   );
+  bottomBorderPoints.push(
+    `${(3 * boardSize - 1) * d},${1.5 * boardSize - cornerOverlap}`
+  );
 
   return (
     <g className="Border">
-      <polyline points={topBorderPoints.join(' ')} stroke="black" />
       <polyline points={leftBorderPoints.join(' ')} stroke="white" />
       <polyline points={rightBorderPoints.join(' ')} stroke="white" />
+      <polyline points={topBorderPoints.join(' ')} stroke="black" />
       <polyline points={bottomBorderPoints.join(' ')} stroke="black" />
     </g>
   );
