@@ -64,12 +64,35 @@ interface ComponentMarkerProps {
   component: Array<Array<number>>;
 }
 
+interface NewGameButtonProps {
+  winningComponent: Array<Array<number>>;
+}
+
 interface WinnerAnnouncementProps {
   boardState: Array<Array<number>>;
   winningComponent: Array<Array<number>>;
 }
 
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
+
+function NewGameButton(props: NewGameButtonProps) {
+  const { winningComponent } = props;
+  const { active: netplayActive, hosting } = useSelector(selectNetplayState);
+
+  if (!winningComponent.length) {
+    return null;
+  }
+
+  if (netplayActive && !hosting) {
+    return null;
+  }
+
+  return (
+    <Link to="/settings">
+      <button type="button">New game</button>
+    </Link>
+  );
+}
 
 function WinnerAnnouncement(props: WinnerAnnouncementProps) {
   const { boardState, winningComponent } = props;
@@ -526,6 +549,7 @@ export default function HexGame() {
             boardState={boardState}
             winningComponent={winningComponent}
           />
+          <NewGameButton winningComponent={winningComponent} />
           <SwapDialog />
           <UndoDialog />
         </div>

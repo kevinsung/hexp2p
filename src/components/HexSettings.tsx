@@ -18,7 +18,7 @@ import { randomBytes } from 'crypto';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useHistory } from 'react-router-dom';
 import { gameStarted } from '../slices/gameSlice';
-import { startNetplay } from '../netplayClient';
+import { sendSettings, startNetplay } from '../netplayClient';
 import { colorChosen, selectNetplayState } from '../slices/netplaySlice';
 import { GameSettings } from '../types';
 import '../App.global.scss';
@@ -164,7 +164,7 @@ function ColorSelector(props: ColorSelectorProps) {
 export default function HexSettings() {
   const dispatch = useDispatch();
   const history = useHistory();
-  const { active: netplayActive } = useSelector(selectNetplayState);
+  const { active: netplayActive, connected } = useSelector(selectNetplayState);
 
   const [boardSize, setBoardSize] = useState(DEFAULT_BOARD_SIZE);
   const [useSwapRule, setUseSwapRule] = useState(true);
@@ -188,9 +188,13 @@ export default function HexSettings() {
           isBlack = randomBoolean();
       }
       dispatch(colorChosen(isBlack));
-      startNetplay();
+      if (connected) {
+        sendSettings();
+      } else {
+        startNetplay();
+      }
     }
-    history.push(netplayActive ? '/hostNetplay' : '/game');
+    history.push(netplayActive && !connected ? '/hostNetplay' : '/game');
   };
 
   return (

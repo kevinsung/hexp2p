@@ -368,3 +368,12 @@ export function sendAcceptUndo() {
     SOCKET.send(JSON.stringify(message));
   }
 }
+
+export function sendSettings() {
+  if (SOCKET) {
+    const { isBlack } = selectNetplayState(store.getState());
+    const { settings } = selectGameState(store.getState());
+    const settingsMessage = { settings, isBlack: !isBlack };
+    SOCKET.send(JSON.stringify(settingsMessage));
+  }
+}
