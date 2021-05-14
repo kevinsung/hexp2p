@@ -14,6 +14,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import React from 'react';
+import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
 import ConnectToPeer from './components/ConnectToPeer';
 import HexGame from './components/HexGame';
@@ -44,14 +45,16 @@ history.listen((location) => {
 
 export default function App() {
   return (
-    <Router history={history}>
-      <Switch>
-        <Route path="/game" component={HexGame} />
-        <Route path="/settings" component={HexSettings} />
-        <Route path="/hostNetplay" component={HostNetplay} />
-        <Route path="/connectToPeer" component={ConnectToPeer} />
-        <Route path="/" component={Home} />
-      </Switch>
-    </Router>
+    <Provider store={store}>
+      <Router history={history}>
+        <Switch>
+          <Route path="/game" component={HexGame} />
+          <Route path="/settings" component={HexSettings} />
+          <Route path="/hostNetplay" component={HostNetplay} />
+          <Route path="/connectToPeer" component={ConnectToPeer} />
+          <Route path="/" component={Home} />
+        </Switch>
+      </Router>
+    </Provider>
   );
 }
