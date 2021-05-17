@@ -73,6 +73,10 @@ interface WinnerAnnouncementProps {
   winningComponent: Array<Array<number>>;
 }
 
+interface PlayerNamesProps {
+  winningComponent: Array<Array<number>>;
+}
+
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 
 function NewGameButton(props: NewGameButtonProps) {
@@ -493,7 +497,8 @@ function ConnectionStatus() {
   );
 }
 
-function PlayerNames() {
+function PlayerNames(props: PlayerNamesProps) {
+  const { winningComponent } = props;
   const isBlackTurn = useSelector(selectIsBlackTurn);
   const { active: netplayActive, hosting, isBlack } = useSelector(
     selectNetplayState
@@ -505,7 +510,10 @@ function PlayerNames() {
         className={classnames(
           { black: playerOneIsBlack },
           { white: !playerOneIsBlack },
-          { partialOpacity: playerOneIsBlack !== isBlackTurn }
+          {
+            partialOpacity:
+              playerOneIsBlack !== isBlackTurn || winningComponent.length,
+          }
         )}
       >
         Player 1
@@ -514,7 +522,10 @@ function PlayerNames() {
         className={classnames(
           { black: !playerOneIsBlack },
           { white: playerOneIsBlack },
-          { partialOpacity: playerOneIsBlack === isBlackTurn }
+          {
+            partialOpacity:
+              playerOneIsBlack === isBlackTurn || winningComponent.length,
+          }
         )}
       >
         Player 2
@@ -557,7 +568,7 @@ export default function HexGame() {
           <SwapDialog />
           <UndoDialog />
         </div>
-        <PlayerNames />
+        <PlayerNames winningComponent={winningComponent} />
       </div>
       <HexBoard
         boardState={boardState}
