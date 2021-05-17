@@ -36,14 +36,14 @@
          d="M 104.99123,106.06564 78.605767,121.2993 52.220302,106.06564 V 75.598331 L 78.605768,60.364675 104.99123,75.598331 Z" />
       <text
          xml:space="preserve"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.9584px;line-height:1.25;font-family:FreeSans;-inkscape-font-specification:'FreeSans Bold';fill:#99ddff;fill-opacity:1;stroke:none;stroke-width:0.222168"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.9584px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'FreeSans Bold';fill:#99ddff;fill-opacity:1;stroke:none;stroke-width:0.222168"
          x="58.253948"
          y="97.742325"
          id="text839"><tspan
            id="tspan837"
            x="58.253948"
            y="97.742325"
-           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.9584px;font-family:FreeSans;-inkscape-font-specification:'FreeSans Bold';fill:#99ddff;fill-opacity:1;stroke-width:0.222168">HEX</tspan></text>
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.9584px;font-family:sans-serif;-inkscape-font-specification:'FreeSans Bold';fill:#99ddff;fill-opacity:1;stroke-width:0.222168">HEX</tspan></text>
     </g>
   </g>
 </svg>
