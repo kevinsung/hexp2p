@@ -25,7 +25,7 @@ interface ClientInfo {
 
 const LISTEN_PORT = 6363;
 
-const HOST_CODE_EXPIRATION_TIME = 600000;
+const HOST_CODE_EXPIRATION_TIME = 1800000;
 
 const HOSTS: Map<string, ClientInfo> = new Map();
 const HOST_CODES: Map<string, string> = new Map();
