@@ -4,6 +4,9 @@ Peer-to-peer client for playing Hex over the Internet, or locally.
 
 <img src=".erb/img/screenshot.png" width="75%" />
 
+Uses UDP hole punching to connect peers. See [traversal-server](https://github.com/kevinsung/traversal-server)
+for the source code of the traversal server.
+
 ## Installation
 
 ### GNU/Linux

@@ -1,7 +1,0 @@
-services:
-  traversal-server:
-    container_name: 'traversal-server'
-    build: .
-    ports:
-      - '6363:6363/udp'
-    restart: always
