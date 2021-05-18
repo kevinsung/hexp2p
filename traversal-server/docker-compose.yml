@@ -1,0 +1,5 @@
+services:
+  traversal-server:
+    build: .
+    ports:
+      - '6363:6363'
