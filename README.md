@@ -31,3 +31,9 @@ playing first. Under the swap rule, Black makes the first move, and then White c
 whether or not to swap pieces with Black. If White chooses to swap pieces, then Black's
 move is replaced with the equivalent White move, and then it is Black's turn. Play then
 continues as normal.
+
+## License
+
+Copyright (C) 2021 Kevin J. Sung.
+
+Licensed under the AGPLv3. See [LICENSE](./LICENSE).
