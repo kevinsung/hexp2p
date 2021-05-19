@@ -21,6 +21,36 @@ Download a .exe file from [Releases](https://github.com/kevinsung/hexp2p/release
 
 Download a .dmg file from [Releases](https://github.com/kevinsung/hexp2p/releases).
 
+### Compile from source
+
+#### Dependencies
+
+- [Node.js](https://nodejs.org) 14
+- [Yarn](https://classic.yarnpkg.com)
+
+#### Instructions
+
+1. Clone the repository.
+
+```
+git clone https://github.com/kevinsung/hexp2p.git
+cd hexp2p
+```
+
+2. Install dependencies.
+
+```
+yarn
+```
+
+3. Build the app.
+
+```
+yarn package
+```
+
+The packaged app will be inside the `release` directory.
+
 ## Rules of Hex
 
 The players (Black and White) take turns selecting a hexagon to fill with their color.
