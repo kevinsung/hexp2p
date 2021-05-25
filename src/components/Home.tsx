@@ -28,7 +28,7 @@ export default function Home() {
       <div>
         <img width="240px" alt="icon" src={icon} />
       </div>
-      <Link to="/settings">
+      <Link to="/settings" tabIndex={-1}>
         <button
           type="button"
           onClick={() => {
@@ -38,7 +38,7 @@ export default function Home() {
           Play local game
         </button>
       </Link>
-      <Link to="/settings">
+      <Link to="/settings" tabIndex={-1}>
         <button
           type="button"
           onClick={() => {
@@ -48,7 +48,7 @@ export default function Home() {
           Host netplay
         </button>
       </Link>
-      <Link to="/connectToPeer">
+      <Link to="/connectToPeer" tabIndex={-1}>
         <button
           type="button"
           onClick={() => {

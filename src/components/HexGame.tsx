@@ -490,11 +490,7 @@ function UndoButton() {
 function ConnectionStatus() {
   const { active: netplayActive, connected } = useSelector(selectNetplayState);
   const status = netplayActive && !connected ? 'DISCONNECTED' : '';
-  return (
-    <div className="ConnectionStatus">
-      <span>{status}</span>
-    </div>
-  );
+  return <div className="ConnectionStatus">{status}</div>;
 }
 
 function PlayerNames(props: PlayerNamesProps) {
@@ -556,7 +552,7 @@ export default function HexGame() {
   return (
     <div className="HexGame">
       <div className="HexGameTopPanel">
-        <Link to="/">
+        <Link to="/" tabIndex={-1}>
           <button type="button">Home</button>
         </Link>
         <div className="DialogPanel">

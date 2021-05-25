@@ -88,9 +88,12 @@ a:hover {
   margin: 24px;
 }
 
+.Home a {
+  margin: 12px;
+}
+
 .Home button {
   width: 240px;
-  margin: 12px;
 }
 
 // Hex settings
@@ -389,17 +392,11 @@ a:hover {
 .ConnectionStatus {
   flex: 1;
   display: flex;
-}
-
-.ConnectionStatus > span {
-  margin-right: auto;
+  justify-content: flex-start;
 }
 
 .UndoButton {
   flex: 1;
   display: flex;
-}
-
-.UndoButton > button {
-  margin-left: auto;
+  justify-content: flex-end;
 }

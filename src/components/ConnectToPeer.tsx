@@ -41,7 +41,7 @@ export default function ConnectToPeer() {
   return (
     <div className="ConnectToPeer">
       <div className="ConnectToPeerTopPanel">
-        <Link to="/">
+        <Link to="/" tabIndex={-1}>
           <button type="button">Home</button>
         </Link>
       </div>
