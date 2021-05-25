@@ -395,8 +395,12 @@ a:hover {
   justify-content: flex-start;
 }
 
-.UndoButton {
+.ActionButtons {
   flex: 1;
   display: flex;
   justify-content: flex-end;
+}
+
+.ActionButtons > button {
+  margin-left: 12px;
 }

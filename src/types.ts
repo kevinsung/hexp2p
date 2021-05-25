@@ -31,6 +31,7 @@ export interface GameState {
   swapped: boolean;
   swapPhaseComplete: boolean;
   selectedHexagon: Array<number>;
+  resignationState: HexagonState;
 }
 
 export interface NetplayState {

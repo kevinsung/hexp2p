@@ -21,6 +21,7 @@ import {
   hexagonSelected,
   moveMade,
   navigateMoveHistory,
+  playerResigned,
   selectBoardState,
   selectGameState,
   selectIsBlackTurn,
@@ -32,6 +33,7 @@ import {
   sendSwap,
   sendRequestUndo,
   sendAcceptUndo,
+  sendResign,
 } from '../netplayClient';
 import {
   selectNetplayState,
@@ -64,26 +66,34 @@ interface ComponentMarkerProps {
   component: Array<Array<number>>;
 }
 
-interface NewGameButtonProps {
-  winningComponent: Array<Array<number>>;
-}
-
 interface WinnerAnnouncementProps {
   boardState: Array<Array<number>>;
   winningComponent: Array<Array<number>>;
 }
 
 interface PlayerNamesProps {
-  winningComponent: Array<Array<number>>;
+  gameOver: boolean;
+}
+
+interface NewGameButtonProps {
+  disabled: boolean;
+}
+
+interface UndoButtonProps {
+  disabled: boolean;
+}
+
+interface ResignButtonProps {
+  disabled: boolean;
 }
 
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 
 function NewGameButton(props: NewGameButtonProps) {
-  const { winningComponent } = props;
+  const { disabled } = props;
   const { active: netplayActive, hosting } = useSelector(selectNetplayState);
 
-  if (!winningComponent.length) {
+  if (disabled) {
     return null;
   }
 
@@ -100,9 +110,18 @@ function NewGameButton(props: NewGameButtonProps) {
 
 function WinnerAnnouncement(props: WinnerAnnouncementProps) {
   const { boardState, winningComponent } = props;
+  const { resignationState } = useSelector(selectGameState);
 
-  if (!winningComponent.length) {
+  if (!winningComponent.length && !resignationState) {
     return null;
+  }
+
+  if (resignationState === HexagonState.BLACK) {
+    return <div className="WinnerAnnouncement">Black resigned, White wins</div>;
+  }
+
+  if (resignationState === HexagonState.WHITE) {
+    return <div className="WinnerAnnouncement">White resigned, Black wins</div>;
   }
 
   const [row, col] = winningComponent[0];
@@ -407,10 +426,7 @@ function HexBoard(props: HexBoardProps) {
   return (
     <div className="HexBoard">
       <svg className="HexBoard" viewBox={viewBox}>
-        <Hexagons
-          boardState={boardState}
-          disabled={winningComponent.length > 0 || disabled}
-        />
+        <Hexagons boardState={boardState} disabled={disabled} />
         <Borders />
         <CoordinateLabels />
         <ComponentMarker component={winningComponent} />
@@ -455,13 +471,15 @@ function MoveHistoryButtons() {
   );
 }
 
-function UndoButton() {
+function UndoButton(props: UndoButtonProps) {
+  let { disabled } = props;
   const dispatch = useDispatch();
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
   const { moveHistory, moveNumber } = useSelector(selectGameState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
 
-  const disabled =
+  disabled =
+    disabled ||
     // disable when no moves have been made
     !moveHistory.length ||
     // disable when board not set to latest position
@@ -479,11 +497,29 @@ function UndoButton() {
   };
 
   return (
-    <div className="UndoButton">
-      <button type="button" onClick={handleClick} disabled={disabled}>
-        Undo
-      </button>
-    </div>
+    <button type="button" onClick={handleClick} disabled={disabled}>
+      Undo
+    </button>
+  );
+}
+
+function ResignButton(props: ResignButtonProps) {
+  const { disabled } = props;
+  const dispatch = useDispatch();
+  const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
+  const isBlackTurn = useSelector(selectIsBlackTurn);
+
+  const handleClick = () => {
+    if (netplayActive) {
+      sendResign();
+    }
+    dispatch(playerResigned(netplayActive ? isBlack : isBlackTurn));
+  };
+
+  return (
+    <button type="button" onClick={handleClick} disabled={disabled}>
+      Resign
+    </button>
   );
 }
 
@@ -494,7 +530,7 @@ function ConnectionStatus() {
 }
 
 function PlayerNames(props: PlayerNamesProps) {
-  const { winningComponent } = props;
+  const { gameOver } = props;
   const isBlackTurn = useSelector(selectIsBlackTurn);
   const { active: netplayActive, hosting, isBlack } = useSelector(
     selectNetplayState
@@ -507,8 +543,7 @@ function PlayerNames(props: PlayerNamesProps) {
           { black: playerOneIsBlack },
           { white: !playerOneIsBlack },
           {
-            partialOpacity:
-              playerOneIsBlack !== isBlackTurn || winningComponent.length,
+            partialOpacity: playerOneIsBlack !== isBlackTurn || gameOver,
           }
         )}
       >
@@ -519,8 +554,7 @@ function PlayerNames(props: PlayerNamesProps) {
           { black: !playerOneIsBlack },
           { white: playerOneIsBlack },
           {
-            partialOpacity:
-              playerOneIsBlack === isBlackTurn || winningComponent.length,
+            partialOpacity: playerOneIsBlack === isBlackTurn || gameOver,
           }
         )}
       >
@@ -532,14 +566,19 @@ function PlayerNames(props: PlayerNamesProps) {
 
 export default function HexGame() {
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
-  const { moveHistory, moveNumber, settings, swapPhaseComplete } = useSelector(
-    selectGameState
-  );
+  const {
+    moveHistory,
+    moveNumber,
+    resignationState,
+    settings,
+    swapPhaseComplete,
+  } = useSelector(selectGameState);
   const boardState = useSelector(selectBoardState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
   const { useSwapRule } = settings;
 
   const winningComponent = getWinningConnectedComponent(boardState);
+  const gameOver = Boolean(resignationState) || winningComponent.length > 0;
 
   const disabled =
     // disable board during swap phase
@@ -547,7 +586,9 @@ export default function HexGame() {
     // disable board when it is not set to latest position
     moveNumber !== moveHistory.length ||
     // disable board during opponent's turn
-    (netplayActive && isBlack !== isBlackTurn);
+    (netplayActive && isBlack !== isBlackTurn) ||
+    // disable board when the game is over
+    gameOver;
 
   return (
     <div className="HexGame">
@@ -560,11 +601,11 @@ export default function HexGame() {
             boardState={boardState}
             winningComponent={winningComponent}
           />
-          <NewGameButton winningComponent={winningComponent} />
+          <NewGameButton disabled={!gameOver} />
           <SwapDialog />
           <UndoDialog />
         </div>
-        <PlayerNames winningComponent={winningComponent} />
+        <PlayerNames gameOver={gameOver} />
       </div>
       <HexBoard
         boardState={boardState}
@@ -574,7 +615,10 @@ export default function HexGame() {
       <div className="HexGameBottomPanel">
         <ConnectionStatus />
         <MoveHistoryButtons />
-        <UndoButton />
+        <div className="ActionButtons">
+          <UndoButton disabled={gameOver} />
+          <ResignButton disabled={gameOver} />
+        </div>
       </div>
     </div>
   );

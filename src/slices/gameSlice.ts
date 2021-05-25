@@ -25,6 +25,7 @@ const initialState: GameState = {
   swapped: false,
   swapPhaseComplete: false,
   selectedHexagon: [NaN, NaN],
+  resignationState: HexagonState.EMPTY,
 };
 
 const gameSlice = createSlice({
@@ -84,6 +85,10 @@ const gameSlice = createSlice({
       moveHistory.pop();
       state.moveNumber -= 1;
     },
+    playerResigned: (state, action) => {
+      const black = action.payload;
+      state.resignationState = black ? HexagonState.BLACK : HexagonState.WHITE;
+    },
   },
 });
 
@@ -95,6 +100,7 @@ export const {
   navigateMoveHistory,
   swapChosen,
   undoMove,
+  playerResigned,
 } = gameSlice.actions;
 
 export const selectGameState = (state: RootState) => state.game;

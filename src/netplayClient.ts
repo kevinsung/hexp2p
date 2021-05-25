@@ -18,6 +18,7 @@ import { history, store } from './store';
 import {
   gameStarted,
   moveMade,
+  playerResigned,
   selectGameState,
   swapChosen,
   undoMove,
@@ -40,6 +41,7 @@ interface MessageData {
   swap?: boolean;
   requestUndo?: boolean;
   acceptUndo?: boolean;
+  resign?: boolean;
 }
 
 const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
@@ -70,6 +72,7 @@ function handleMessage(messageData: MessageData) {
     swap,
     requestUndo,
     acceptUndo,
+    resign,
   } = messageData;
 
   if (settings) {
@@ -100,6 +103,11 @@ function handleMessage(messageData: MessageData) {
       store.dispatch(undoMove());
       store.dispatch(undoRequestFulfilled());
     }
+  }
+
+  if (resign) {
+    const { isBlack: amBlack } = selectNetplayState(store.getState());
+    store.dispatch(playerResigned(!amBlack));
   }
 }
 
@@ -373,5 +381,12 @@ export function sendSettings() {
     const { settings } = selectGameState(store.getState());
     const settingsMessage = { settings, isBlack: !isBlack };
     SOCKET.send(JSON.stringify(settingsMessage));
+  }
+}
+
+export function sendResign() {
+  if (SOCKET) {
+    const message = { resign: true };
+    SOCKET.send(JSON.stringify(message));
   }
 }
