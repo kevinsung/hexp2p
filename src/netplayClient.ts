@@ -221,8 +221,7 @@ function attemptTraversal(
     try {
       socket.send('traversal', port, address);
     } catch {
-      // socket has been closed already
-      clearTimeout(timer);
+      // socket might not have been bound yet
     }
   }, TRAVERSAL_PACKET_INTERVAL);
 }
@@ -331,8 +330,12 @@ export function startNetplay(hostCode?: string) {
       address: privateAddress,
       port: privatePort,
     } = TRAVERSAL_SERVER_SOCKET.address();
-    PEER_PUBLIC_SOCKET.bind(privatePort, privateAddress);
-    PEER_PRIVATE_SOCKET.bind(privatePort, privateAddress);
+    PEER_PUBLIC_SOCKET.bind(privatePort, () => {
+      PEER_PUBLIC_SOCKET.setMulticastInterface(privateAddress);
+    });
+    PEER_PRIVATE_SOCKET.bind(privatePort, () => {
+      PEER_PRIVATE_SOCKET.setMulticastInterface(privateAddress);
+    });
     const message = { privateAddress, privatePort, hostCode };
     TRAVERSAL_SERVER_SOCKET.send(JSON.stringify(message));
     clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
