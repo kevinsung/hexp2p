@@ -44,7 +44,7 @@ interface MessageData {
   resign?: boolean;
 }
 
-const TRAVERSAL_SERVER_ADDRESS = 'traversal.drybiscuit.org';
+const TRAVERSAL_SERVER_ADDRESS = 'example.com';
 const TRAVERSAL_SERVER_PORT = 6363;
 
 const TRAVERSAL_SERVER_KEEPALIVE_INTERVAL = 10000;
