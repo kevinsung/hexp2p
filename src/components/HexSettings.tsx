@@ -14,7 +14,6 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import React, { useState } from 'react';
-import { randomBytes } from 'crypto';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useHistory } from 'react-router-dom';
 import { gameStarted } from '../slices/gameSlice';
@@ -43,7 +42,7 @@ const MAX_BOARD_SIZE = 19;
 const DEFAULT_BOARD_SIZE = 13;
 
 function randomBoolean() {
-  return randomBytes(1).readUInt8() < 128;
+  return crypto.getRandomValues(new Uint8Array(1))[0] < 128;
 }
 
 function BoardSizeSelector(props: BoardSizeSelectorProps) {

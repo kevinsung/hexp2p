@@ -1,9 +1,8 @@
 import path from 'path';
-import fs from 'fs';
 import webpack from 'webpack';
-import chalk from 'chalk';
 import { merge } from 'webpack-merge';
-import { spawn, execSync } from 'child_process';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import Dotenv from 'dotenv-webpack';
 import baseConfig from './webpack.config.base';
 import CheckNodeEnv from '../scripts/CheckNodeEnv';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
@@ -15,31 +14,13 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const port = process.env.PORT || 1212;
-const publicPath = `http://localhost:${port}/dist`;
-const dllDir = path.join(__dirname, '../dll');
-const manifest = path.resolve(dllDir, 'renderer.json');
-const requiredByDLLConfig = module.parent.filename.includes(
-  'webpack.config.renderer.dev.dll'
-);
-
-/**
- * Warn if the DLL is not built
- */
-if (!requiredByDLLConfig && !(fs.existsSync(dllDir) && fs.existsSync(manifest))) {
-  console.log(
-    chalk.black.bgYellow.bold(
-      'The DLL files are missing. Sit back while we build them for you with "yarn build-dll"'
-    )
-  );
-  execSync('yarn postinstall');
-}
 
 export default merge(baseConfig, {
   devtool: 'inline-source-map',
 
   mode: 'development',
 
-  target: 'electron-renderer',
+  target: 'web',
 
   entry: [
     'core-js',
@@ -48,7 +29,7 @@ export default merge(baseConfig, {
   ],
 
   output: {
-    publicPath: `http://localhost:${port}/dist/`,
+    publicPath: '/',
     filename: 'renderer.dev.js',
   },
 
@@ -211,15 +192,6 @@ export default merge(baseConfig, {
     ],
   },
   plugins: [
-
-    requiredByDLLConfig
-      ? null
-      : new webpack.DllReferencePlugin({
-          context: path.join(__dirname, '../dll'),
-          manifest: require(manifest),
-          sourceType: 'var',
-        }),
-
     new webpack.NoEmitOnErrorsPlugin(),
 
     /**
@@ -243,6 +215,16 @@ export default merge(baseConfig, {
     }),
 
     new ReactRefreshWebpackPlugin(),
+
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, '../../src/index.html'),
+    }),
+
+    new Dotenv({
+      path: path.join(__dirname, '../../.env'),
+      systemvars: true,
+      silent: true,
+    }),
   ],
 
   node: {
@@ -252,33 +234,23 @@ export default merge(baseConfig, {
 
   devServer: {
     port,
-    publicPath,
     compress: true,
-    noInfo: false,
-    stats: 'errors-only',
-    inline: true,
-    lazy: false,
     hot: true,
+    static: {
+      directory: path.join(__dirname, '../../assets'),
+    },
     headers: { 'Access-Control-Allow-Origin': '*' },
-    contentBase: path.join(__dirname, 'dist'),
-    watchOptions: {
-      aggregateTimeout: 300,
-      ignored: /node_modules/,
-      poll: 100,
+    watchFiles: {
+      paths: ['src/**/*'],
+      options: {
+        aggregateTimeout: 300,
+        ignored: /node_modules/,
+        poll: 100,
+      },
     },
     historyApiFallback: {
       verbose: true,
       disableDotRule: false,
-    },
-    before() {
-      console.log('Starting Main Process...');
-        spawn('npm', ['run', 'start:main'], {
-          shell: true,
-          env: process.env,
-          stdio: 'inherit',
-        })
-          .on('close', (code) => process.exit(code))
-          .on('error', (spawnError) => console.error(spawnError));
     },
   },
 });

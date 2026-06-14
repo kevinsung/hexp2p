@@ -13,7 +13,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import { Socket, createSocket } from 'dgram';
+import { signInAnonymously } from 'firebase/auth';
+import {
+  child,
+  onChildAdded,
+  onDisconnect,
+  onValue,
+  push,
+  ref,
+  remove,
+  serverTimestamp,
+  set,
+  Unsubscribe,
+} from 'firebase/database';
+import { auth, database } from './firebase';
 import { history, store } from './store';
 import {
   gameStarted,
@@ -44,21 +57,10 @@ interface MessageData {
   resign?: boolean;
 }
 
-const TRAVERSAL_SERVER_ADDRESS = 'example.com';
-const TRAVERSAL_SERVER_PORT = 6363;
-
-const TRAVERSAL_SERVER_KEEPALIVE_INTERVAL = 10000;
-const TRAVERSAL_PACKET_INTERVAL = 100;
-const PEER_KEEPALIVE_INTERVAL = 1000;
-const DISCONNECT_TIMEOUT_INTERVAL = 10000;
-
-let TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT: NodeJS.Timeout;
-let PEER_TRAVERSAL_TIMEOUT: NodeJS.Timeout;
-let PEER_ESTABLISHMENT_TIMEOUT: NodeJS.Timeout;
-let PEER_KEEPALIVE_TIMEOUT: NodeJS.Timeout;
-let DISCONNECT_TIMEOUT: NodeJS.Timeout;
-
-let SOCKET: Socket;
+let roomCode: string | undefined;
+let uid: string | undefined;
+let unsubscribeMessages: Unsubscribe | undefined;
+let unsubscribePresence: Unsubscribe | undefined;
 
 function handleMessage(messageData: MessageData) {
   const {
@@ -107,223 +109,132 @@ function handleMessage(messageData: MessageData) {
   }
 }
 
-function initializeConnection() {
-  SOCKET.on('error', () => {
-    store.dispatch(disconnectedFromPeer());
-  });
-
-  SOCKET.on('message', (msg, rinfo) => {
-    console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${msg}`);
-
-    store.dispatch(connectedToPeer());
-
-    clearTimeout(DISCONNECT_TIMEOUT);
-    DISCONNECT_TIMEOUT = setTimeout(() => {
-      store.dispatch(disconnectedFromPeer());
-    }, DISCONNECT_TIMEOUT_INTERVAL);
-
-    const message = String(msg);
-
-    if (message === 'keepalive') {
-      return;
-    }
-
-    if (message === 'acknowledged') {
-      clearInterval(PEER_ESTABLISHMENT_TIMEOUT);
-    }
-
-    if (message === 'established') {
-      SOCKET.send('acknowledged');
-      // if hosting, send game settings and color
-      const { hosting, isBlack } = selectNetplayState(store.getState());
-      if (hosting) {
-        const { settings } = selectGameState(store.getState());
-        const settingsMessage = { settings, isBlack: !isBlack };
-        SOCKET.send(JSON.stringify(settingsMessage));
-      }
-      return;
-    }
-
-    try {
-      handleMessage(JSON.parse(message));
-    } catch (error) {
-      // ignore badly formed messages
-    }
-  });
-
-  // notify that connection has been established
-  clearInterval(PEER_ESTABLISHMENT_TIMEOUT);
-  PEER_ESTABLISHMENT_TIMEOUT = setInterval(() => {
-    try {
-      SOCKET.send('established');
-    } catch {
-      // socket has been closed
-      clearInterval(PEER_ESTABLISHMENT_TIMEOUT);
-    }
-  }, TRAVERSAL_PACKET_INTERVAL);
-
-  // start sending keepalive packets
-  clearInterval(PEER_KEEPALIVE_TIMEOUT);
-  PEER_KEEPALIVE_TIMEOUT = setInterval(() => {
-    try {
-      SOCKET.send('keepalive');
-    } catch {
-      // socket has been closed
-      clearInterval(PEER_KEEPALIVE_TIMEOUT);
-    }
-  }, PEER_KEEPALIVE_INTERVAL);
-}
-
-function attemptTraversal(
-  peerPublicPort: number,
-  peerPublicAddress: string,
-  peerPrivatePort: number,
-  peerPrivateAddress: string
-) {
-  // start sending packets to both public and private addresses
-  PEER_TRAVERSAL_TIMEOUT = setInterval(() => {
-    SOCKET.send('traversal', peerPublicPort, peerPublicAddress);
-    SOCKET.send('traversal', peerPrivatePort, peerPrivateAddress);
-  }, TRAVERSAL_PACKET_INTERVAL);
-
-  // connect to the first address that responds
-  SOCKET.on('message', (_msg, rinfo) => {
-    if (
-      (rinfo.address === peerPublicAddress && rinfo.port === peerPublicPort) ||
-      (rinfo.address === peerPrivateAddress && rinfo.port === peerPrivatePort)
-    ) {
-      clearInterval(PEER_TRAVERSAL_TIMEOUT);
-      clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
-      const { address, port } = SOCKET.address();
-      SOCKET.close();
-      SOCKET = createSocket({ type: 'udp4' });
-      SOCKET.bind(port, address, () => {
-        SOCKET.connect(rinfo.port, rinfo.address, () => {
-          initializeConnection();
-          store.dispatch(connectedToPeer());
-          history.push('/game');
-        });
-      });
-    }
-  });
+function generateHostCode(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(
+    ''
+  );
 }
 
 export function stopNetplay() {
-  clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
-  clearInterval(PEER_TRAVERSAL_TIMEOUT);
-  clearInterval(PEER_ESTABLISHMENT_TIMEOUT);
-  clearInterval(PEER_KEEPALIVE_TIMEOUT);
-  clearInterval(DISCONNECT_TIMEOUT);
-  try {
-    SOCKET.close();
-  } catch {
-    // socket hasn't been created or has already been closed
+  if (unsubscribeMessages) {
+    unsubscribeMessages();
+    unsubscribeMessages = undefined;
   }
+
+  if (unsubscribePresence) {
+    unsubscribePresence();
+    unsubscribePresence = undefined;
+  }
+
+  if (roomCode && uid) {
+    const presenceRef = child(ref(database, `rooms/${roomCode}/presence`), uid);
+    onDisconnect(presenceRef).cancel();
+    remove(presenceRef);
+  }
+
+  roomCode = undefined;
+  uid = undefined;
 }
 
-export function startNetplay(hostCode?: string) {
-  stopNetplay();
-
-  SOCKET = createSocket({ type: 'udp4' });
-
-  SOCKET.connect(TRAVERSAL_SERVER_PORT, TRAVERSAL_SERVER_ADDRESS, () => {
-    const { address: privateAddress, port: privatePort } = SOCKET.address();
-    SOCKET.close();
-    SOCKET = createSocket({ type: 'udp4' });
-
-    SOCKET.on('message', (msg, rinfo) => {
-      console.log(`Message from ${rinfo.address} port ${rinfo.port}: ${msg}`);
-
-      let parsedMessage;
-      try {
-        parsedMessage = JSON.parse(String(msg));
-      } catch {
-        // ignore badly formed messages
-        return;
-      }
-
-      const {
-        hostCode: receivedHostCode,
-        peerPublicAddress,
-        peerPublicPort,
-        peerPrivateAddress,
-        peerPrivatePort,
-      } = parsedMessage;
-
-      if (receivedHostCode) {
-        store.dispatch(hostCodeReceived(receivedHostCode));
-      }
-
-      if (
-        peerPublicAddress &&
-        peerPublicPort &&
-        peerPrivateAddress &&
-        peerPrivatePort
-      ) {
-        attemptTraversal(
-          peerPublicPort,
-          peerPublicAddress,
-          peerPrivatePort,
-          peerPrivateAddress
-        );
-      }
-    });
-
-    SOCKET.bind(privatePort, privateAddress, () => {
-      const message = { privateAddress, privatePort, hostCode };
-      SOCKET.send(
-        JSON.stringify(message),
-        TRAVERSAL_SERVER_PORT,
-        TRAVERSAL_SERVER_ADDRESS
-      );
-      clearInterval(TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT);
-      TRAVERSAL_SERVER_KEEPALIVE_TIMEOUT = setInterval(() => {
-        SOCKET.send(
-          'keepalive',
-          TRAVERSAL_SERVER_PORT,
-          TRAVERSAL_SERVER_ADDRESS
-        );
-      }, TRAVERSAL_SERVER_KEEPALIVE_INTERVAL);
-    });
-  });
-}
-
-function sendMessage(message: string) {
-  try {
-    SOCKET.send(message);
-  } catch {
-    // socket has been closed
+function sendMessage(data: MessageData) {
+  if (!roomCode || !uid) {
+    return;
   }
+  const messagesRef = ref(database, `rooms/${roomCode}/messages`);
+  push(messagesRef, { uid, data, ts: serverTimestamp() });
 }
 
 export function sendSwap(swap: boolean) {
-  const message = { swap };
-  sendMessage(JSON.stringify(message));
+  sendMessage({ swap });
 }
 
 export function sendMove(move: Array<number>) {
-  const message = { move };
-  sendMessage(JSON.stringify(message));
+  sendMessage({ move });
 }
 
 export function sendRequestUndo() {
-  const message = { requestUndo: true };
-  sendMessage(JSON.stringify(message));
+  sendMessage({ requestUndo: true });
 }
 
 export function sendAcceptUndo() {
-  const message = { acceptUndo: true };
-  sendMessage(JSON.stringify(message));
+  sendMessage({ acceptUndo: true });
 }
 
 export function sendSettings() {
   const { isBlack } = selectNetplayState(store.getState());
   const { settings } = selectGameState(store.getState());
-  const message = { settings, isBlack: !isBlack };
-  sendMessage(JSON.stringify(message));
+  sendMessage({ settings, isBlack: !isBlack });
 }
 
 export function sendResign() {
-  const message = { resign: true };
-  sendMessage(JSON.stringify(message));
+  sendMessage({ resign: true });
+}
+
+export async function startNetplay(hostCode?: string) {
+  stopNetplay();
+
+  const hosting = !hostCode;
+
+  const userCredential = await signInAnonymously(auth);
+  uid = userCredential.user.uid;
+
+  if (hosting) {
+    roomCode = generateHostCode();
+    store.dispatch(hostCodeReceived(roomCode));
+    // start from a clean slate in case this host code was used before
+    await set(ref(database, `rooms/${roomCode}`), null);
+  } else {
+    roomCode = hostCode;
+  }
+
+  const currentRoomCode = roomCode;
+  const myUid = uid;
+
+  // Subscribe to game messages before announcing our presence, so we never
+  // miss a message sent in response to our presence appearing.
+  const messagesRef = ref(database, `rooms/${currentRoomCode}/messages`);
+  unsubscribeMessages = onChildAdded(messagesRef, (snapshot) => {
+    const message = snapshot.val();
+    if (message && message.uid !== myUid) {
+      handleMessage(message.data);
+    }
+  });
+
+  // Subscribe to peer presence.
+  const knownPeerUids = new Set<string>();
+  const presenceRef = ref(database, `rooms/${currentRoomCode}/presence`);
+  unsubscribePresence = onValue(presenceRef, (snapshot) => {
+    const presence = snapshot.val() || {};
+    const peerUids = Object.keys(presence).filter((id) => id !== myUid);
+
+    const newPeer = peerUids.find((id) => !knownPeerUids.has(id));
+    if (newPeer) {
+      store.dispatch(connectedToPeer());
+      history.push('/game');
+      const { hosting: amHosting } = selectNetplayState(store.getState());
+      if (amHosting) {
+        sendSettings();
+      }
+    }
+
+    const goneUids = Array.from(knownPeerUids).filter(
+      (id) => !peerUids.includes(id)
+    );
+    if (goneUids.length > 0) {
+      store.dispatch(disconnectedFromPeer());
+    }
+
+    knownPeerUids.clear();
+    peerUids.forEach((id) => knownPeerUids.add(id));
+  });
+
+  // Announce our presence and remove it if we disconnect.
+  const myPresenceRef = child(
+    ref(database, `rooms/${currentRoomCode}/presence`),
+    myUid
+  );
+  await set(myPresenceRef, true);
+  onDisconnect(myPresenceRef).remove();
 }

@@ -1,10 +1,12 @@
 /**
- * Build config for electron renderer process
+ * Build config for the web renderer bundle
  */
 
 import path from 'path';
 import webpack from 'webpack';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import Dotenv from 'dotenv-webpack';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import { merge } from 'webpack-merge';
@@ -25,7 +27,7 @@ export default merge(baseConfig, {
 
   mode: 'production',
 
-  target: 'electron-renderer',
+  target: 'web',
 
   entry: [
     'core-js',
@@ -34,8 +36,8 @@ export default merge(baseConfig, {
   ],
 
   output: {
-    path: path.join(__dirname, '../../src/dist'),
-    publicPath: './dist/',
+    path: path.join(__dirname, '../../dist'),
+    publicPath: '/',
     filename: 'renderer.prod.js',
   },
 
@@ -44,13 +46,7 @@ export default merge(baseConfig, {
       {
         test: /.s?css$/,
         use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-            options: {
-              // `./dist` can't be inerhited for publicPath for styles. Otherwise generated paths will be ./dist/dist
-              publicPath: './',
-            },
-          },
+          MiniCssExtractPlugin.loader,
           'css-loader',
           'sass-loader'
         ],
@@ -151,6 +147,16 @@ export default merge(baseConfig, {
 
     new MiniCssExtractPlugin({
       filename: 'style.css',
+    }),
+
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, '../../src/index.html'),
+    }),
+
+    new Dotenv({
+      path: path.join(__dirname, '../../.env'),
+      systemvars: true,
+      silent: true,
     }),
 
     new BundleAnalyzerPlugin({
