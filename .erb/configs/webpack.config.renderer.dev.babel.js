@@ -96,6 +96,9 @@ export default merge(baseConfig, {
           },
           {
             loader: 'sass-loader',
+            options: {
+              api: 'modern',
+            },
           },
         ],
       },
@@ -121,6 +124,9 @@ export default merge(baseConfig, {
           },
           {
             loader: 'sass-loader',
+            options: {
+              api: 'modern',
+            },
           },
         ],
       },
