@@ -13,14 +13,14 @@ jobs:
       - name: Checkout git repo
         uses: actions/checkout@v1
 
-      - name: Install Node, NPM and Yarn
+      - name: Install Node and npm
         uses: actions/setup-node@v1
         with:
           node-version: 14
 
       - name: Install dependencies
         run: |
-          yarn install --frozen-lockfile --network-timeout 300000
+          npm ci
 
       - name: Build
         env:
@@ -32,7 +32,7 @@ jobs:
           FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
         run: |
-          yarn build
+          npm run build
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0

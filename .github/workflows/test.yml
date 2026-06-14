@@ -10,18 +10,18 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v1
 
-      - name: Install Node.js, NPM and Yarn
+      - name: Install Node.js and npm
         uses: actions/setup-node@v1
         with:
           node-version: 14
 
-      - name: yarn install
+      - name: npm install
         run: |
-          yarn install --frozen-lockfile --network-timeout 300000
+          npm ci
 
-      - name: yarn test
+      - name: npm test
         run: |
-          yarn build
-          yarn lint
-          yarn tsc
-          yarn test
+          npm run build
+          npm run lint
+          npm run tsc
+          npm test

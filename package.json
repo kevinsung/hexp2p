@@ -167,10 +167,9 @@
     "react-router-dom": "^5.2.0",
     "regenerator-runtime": "^0.13.5"
   },
-  "devEngines": {
-    "node": ">=10.x",
-    "npm": ">=6.x",
-    "yarn": ">=1.21.3"
+  "engines": {
+    "node": ">=14.x",
+    "npm": ">=6.x"
   },
   "browserslist": [],
   "prettier": {

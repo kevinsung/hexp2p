@@ -13,7 +13,7 @@ and exchange moves through it - there is no traversal/signaling server to run.
 #### Dependencies
 
 - [Node.js](https://nodejs.org) 14
-- [Yarn](https://classic.yarnpkg.com)
+- [npm](https://www.npmjs.com)
 
 #### Instructions
 
@@ -22,7 +22,7 @@ and exchange moves through it - there is no traversal/signaling server to run.
 ```
 git clone https://github.com/kevinsung/hexp2p.git
 cd hexp2p
-yarn
+npm install
 ```
 
 2. Set up Firebase (only needed for netplay; local play works without it).
@@ -40,7 +40,7 @@ yarn
 3. Start the dev server.
 
 ```
-yarn start
+npm start
 ```
 
 This serves the app at http://localhost:1212.
@@ -48,7 +48,7 @@ This serves the app at http://localhost:1212.
 ## Building for production
 
 ```
-yarn build
+npm run build
 ```
 
 The static site is emitted to `dist/`. Serve it with any static file host,
