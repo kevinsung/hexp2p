@@ -1,5 +1,6 @@
 module.exports = {
-  extends: 'erb',
+  extends: ['erb', 'airbnb-typescript', 'plugin:@typescript-eslint/recommended', 'prettier'],
+  ignorePatterns: ['.eslintrc.js'],
   rules: {
     // A temporary hack related to IDE not resolving correct package.json
     'import/no-extraneous-dependencies': 'off',
@@ -9,7 +10,6 @@ module.exports = {
     sourceType: 'module',
     project: './tsconfig.json',
     tsconfigRootDir: __dirname,
-    createDefaultProgram: true,
   },
   settings: {
     'import/resolver': {
