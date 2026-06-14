@@ -51,9 +51,10 @@ This serves the app at http://localhost:1212.
 npm run build
 ```
 
-The static site is emitted to `dist/`. Serve it with any static file host,
-or deploy it to Firebase Hosting with `firebase deploy --only hosting`
-(configured in `firebase.json`).
+The static site is emitted to `dist/`. Serve it with any static file host.
+Pushes to `master` are automatically built and deployed to
+[GitHub Pages](https://kevinsung.github.io/hexp2p/) by
+`.github/workflows/publish.yml`.
 
 ## Rules of Hex
 

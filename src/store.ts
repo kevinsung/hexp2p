@@ -14,13 +14,13 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import { configureStore } from '@reduxjs/toolkit';
-import { createBrowserHistory } from 'history';
+import { createHashHistory } from 'history';
 // eslint-disable-next-line import/no-cycle
 import netplayReducer from './slices/netplaySlice';
 // eslint-disable-next-line import/no-cycle
 import gameReducer from './slices/gameSlice';
 
-export const history = createBrowserHistory();
+export const history = createHashHistory();
 
 export const store = configureStore({
   reducer: {

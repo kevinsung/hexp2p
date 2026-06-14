@@ -37,7 +37,7 @@ export default merge(baseConfig, {
 
   output: {
     path: path.join(__dirname, '../../dist'),
-    publicPath: '/',
+    publicPath: './',
     filename: 'renderer.prod.js',
   },
 
