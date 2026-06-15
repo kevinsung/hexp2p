@@ -13,51 +13,80 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
 import icon from '../../assets/icon.svg';
+import { stopNetplay } from '../netplayClient';
+import { resetGameState } from '../slices/gameSlice';
 import { activateNetplay, deactivateNetplay } from '../slices/netplaySlice';
+import ConnectToPeer from './ConnectToPeer';
+import HexSettings from './HexSettings';
+import HostNetplay from './HostNetplay';
+import Modal from './Modal';
+import RulesButton from './RulesModal';
 import '../App.global.scss';
+
+type SetupModal = 'settings' | 'connect' | 'host' | null;
 
 export default function Home() {
   const dispatch = useDispatch();
+  const [modal, setModal] = useState<SetupModal>(null);
+
+  const closeSetup = () => {
+    stopNetplay();
+    dispatch(deactivateNetplay());
+    dispatch(resetGameState());
+    setModal(null);
+  };
 
   return (
     <div className="Home">
       <div>
         <img width="240px" alt="icon" src={icon} />
       </div>
-      <Link to="/settings" tabIndex={-1}>
-        <button
-          type="button"
-          onClick={() => {
-            dispatch(deactivateNetplay());
-          }}
-        >
-          Play local game
-        </button>
-      </Link>
-      <Link to="/settings" tabIndex={-1}>
-        <button
-          type="button"
-          onClick={() => {
-            dispatch(activateNetplay());
-          }}
-        >
-          Host netplay
-        </button>
-      </Link>
-      <Link to="/connectToPeer" tabIndex={-1}>
-        <button
-          type="button"
-          onClick={() => {
-            dispatch(activateNetplay());
-          }}
-        >
-          Connect to peer
-        </button>
-      </Link>
+      <button
+        type="button"
+        onClick={() => {
+          dispatch(deactivateNetplay());
+          setModal('settings');
+        }}
+      >
+        Play local game
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          dispatch(activateNetplay());
+          setModal('settings');
+        }}
+      >
+        Host netplay
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          dispatch(activateNetplay());
+          setModal('connect');
+        }}
+      >
+        Connect to peer
+      </button>
+      <RulesButton />
+      {modal === 'settings' && (
+        <Modal title="Settings" onClose={closeSetup}>
+          <HexSettings onStartHosting={() => setModal('host')} />
+        </Modal>
+      )}
+      {modal === 'connect' && (
+        <Modal title="Connect to peer" onClose={closeSetup}>
+          <ConnectToPeer />
+        </Modal>
+      )}
+      {modal === 'host' && (
+        <Modal title="Host netplay" onClose={closeSetup}>
+          <HostNetplay />
+        </Modal>
+      )}
     </div>
   );
 }

@@ -88,11 +88,8 @@ a:hover {
   margin: 24px;
 }
 
-.Home a {
-  margin: 12px;
-}
-
 .Home button {
+  margin: 12px;
   width: 240px;
 }
 
@@ -104,21 +101,13 @@ a:hover {
   justify-content: flex-start;
   align-items: center;
   font-size: 1.3rem;
-  width: calc(100vw - 24px);
-  height: calc(100vh - 24px);
 }
 
 .HexSettings h3 {
   margin: 12px 0px;
 }
 
-.HexSettings > div > form {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.HexSettings > div > form > div {
+.HexSettings > div {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -133,31 +122,6 @@ a:hover {
 .HexSettings input[type='radio'] {
   margin-right: 12px;
   vertical-align: top;
-}
-
-.HexSettingsTopPanel {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  width: 100%;
-}
-
-.HomeButton {
-  flex: 1;
-  display: flex;
-  margin-right: auto;
-}
-
-.HexSettingsTopPanel > h1 {
-  flex: 2;
-  display: flex;
-  justify-content: center;
-}
-
-.HexSettingsTopPanel > div {
-  flex: 1;
-  display: flex;
-  margin-left: auto;
 }
 
 .BoardSizeSelector {
@@ -193,20 +157,9 @@ a:hover {
   justify-content: flex-start;
   align-items: center;
   font-size: 1.3rem;
-  width: calc(100vw - 24px);
-  height: calc(100vh - 24px);
-}
-
-.HostNetplayTopPanel {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  width: 100%;
 }
 
 .HostCodeDisplay {
-  flex: 2;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -218,7 +171,6 @@ a:hover {
 }
 
 .HostNetplayBottomPanel {
-  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -245,27 +197,9 @@ a:hover {
   justify-content: flex-start;
   align-items: center;
   font-size: 1.3rem;
-  width: calc(100vw - 24px);
-  height: calc(100vh - 24px);
 }
 
-.ConnectToPeerTopPanel {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  width: 100%;
-}
-
-.ConnectToPeer form {
-  flex: 3;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-}
-
-.ConnectToPeer form label {
+.ConnectToPeer label {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -273,7 +207,7 @@ a:hover {
   width: 200px;
 }
 
-.ConnectToPeer form button {
+.ConnectToPeer button {
   margin-top: 36px;
 }
 
@@ -345,6 +279,11 @@ a:hover {
   width: 100%;
 }
 
+.TopPanelButtons {
+  display: flex;
+  gap: 12px;
+}
+
 .DialogPanel {
   display: flex;
   flex-direction: column;
@@ -403,4 +342,55 @@ a:hover {
 
 .ActionButtons > button {
   margin-left: 12px;
+}
+
+// Modal
+
+.ModalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Modal {
+  position: relative;
+  background: #404040;
+  color: white;
+  border: 2px solid #808080;
+  border-radius: 10px;
+  padding: 24px 32px;
+  max-width: 420px;
+  max-height: 80vh;
+  overflow-y: auto;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.ModalWide {
+  max-width: 600px;
+}
+
+.Modal h1 {
+  margin: 0 32px 16px;
+  text-align: center;
+}
+
+.Modal .ModalClose {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

@@ -16,11 +16,8 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
-import ConnectToPeer from './components/ConnectToPeer';
 import HexGame from './components/HexGame';
-import HexSettings from './components/HexSettings';
 import Home from './components/Home';
-import HostNetplay from './components/HostNetplay';
 import { stopNetplay } from './netplayClient';
 import { resetGameState } from './slices/gameSlice';
 import { deactivateNetplay } from './slices/netplaySlice';
@@ -49,9 +46,6 @@ export default function App() {
       <Router history={history}>
         <Switch>
           <Route path="/game" component={HexGame} />
-          <Route path="/settings" component={HexSettings} />
-          <Route path="/hostNetplay" component={HostNetplay} />
-          <Route path="/connectToPeer" component={ConnectToPeer} />
           <Route path="/" component={Home} />
         </Switch>
       </Router>

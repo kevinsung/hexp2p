@@ -15,7 +15,7 @@
 
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { gameStarted } from '../slices/gameSlice';
 import { sendSettings, startNetplay } from '../netplayClient';
 import { colorChosen, selectNetplayState } from '../slices/netplaySlice';
@@ -160,7 +160,12 @@ function ColorSelector(props: ColorSelectorProps) {
   );
 }
 
-export default function HexSettings() {
+interface HexSettingsProps {
+  onStartHosting: () => void;
+}
+
+export default function HexSettings(props: HexSettingsProps) {
+  const { onStartHosting } = props;
   const dispatch = useDispatch();
   const history = useHistory();
   const { active: netplayActive, connected } = useSelector(selectNetplayState);
@@ -193,29 +198,19 @@ export default function HexSettings() {
         startNetplay();
       }
     }
-    history.push(netplayActive && !connected ? '/hostNetplay' : '/game');
+    if (netplayActive && !connected) {
+      onStartHosting();
+    } else {
+      history.push('/game');
+    }
   };
 
   return (
-    <div className="HexSettings">
-      <div className="HexSettingsTopPanel">
-        <Link className="HomeButton" to="/" tabIndex={-1}>
-          <button type="button">Home</button>
-        </Link>
-        <h1>Settings</h1>
-        <div />
-      </div>
-      <div>
-        <form onSubmit={handleSubmit}>
-          <BoardSizeSelector size={boardSize} setBoardSize={setBoardSize} />
-          <SwapRuleToggle
-            enabled={useSwapRule}
-            setUseSwapRule={setUseSwapRule}
-          />
-          <ColorSelector value={color} setColor={setColor} />
-          <button type="submit">Submit</button>
-        </form>
-      </div>
-    </div>
+    <form className="HexSettings" onSubmit={handleSubmit}>
+      <BoardSizeSelector size={boardSize} setBoardSize={setBoardSize} />
+      <SwapRuleToggle enabled={useSwapRule} setUseSwapRule={setUseSwapRule} />
+      <ColorSelector value={color} setColor={setColor} />
+      <button type="submit">Submit</button>
+    </form>
   );
 }

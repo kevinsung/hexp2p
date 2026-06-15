@@ -42,6 +42,7 @@ import {
 } from '../slices/netplaySlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
+import RulesButton from './RulesModal';
 import '../App.global.scss';
 
 interface HexagonProps {
@@ -593,9 +594,12 @@ export default function HexGame() {
   return (
     <div className="HexGame">
       <div className="HexGameTopPanel">
-        <Link to="/" tabIndex={-1}>
-          <button type="button">Home</button>
-        </Link>
+        <div className="TopPanelButtons">
+          <Link to="/" tabIndex={-1}>
+            <button type="button">Home</button>
+          </Link>
+          <RulesButton />
+        </div>
         <div className="DialogPanel">
           <WinnerAnnouncement
             boardState={boardState}

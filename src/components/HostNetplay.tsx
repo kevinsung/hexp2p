@@ -15,7 +15,6 @@
 
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { selectNetplayState } from '../slices/netplaySlice';
 import '../App.global.scss';
 
@@ -46,11 +45,6 @@ function HostCodeDisplay() {
 export default function HostNetplay() {
   return (
     <div className="HostNetplay">
-      <div className="HostNetplayTopPanel">
-        <Link to="/">
-          <button type="button">Home</button>
-        </Link>
-      </div>
       <HostCodeDisplay />
       <div className="HostNetplayBottomPanel">Waiting for peer to join...</div>
     </div>
