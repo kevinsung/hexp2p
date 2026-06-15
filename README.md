@@ -1,12 +1,6 @@
 # Hex P2P
 
-A web app for playing Hex with a friend over the Internet, or locally.
-
-<img src=".erb/img/screenshot.png" width="75%" />
-
-Netplay messages are relayed through a [Firebase Realtime Database](https://firebase.google.com/docs/database).
-Two players who know the same host code join the same "room" in the database
-and exchange moves through it - there is no traversal/signaling server to run.
+A web app for playing Hex with a friend over the Internet, or locally. Try it at https://kevinsung.github.io/hexp2p/.
 
 ## Running locally
 
@@ -25,7 +19,7 @@ cd hexp2p
 npm install
 ```
 
-2. Set up Firebase (only needed for netplay; local play works without it).
+1. Set up Firebase (only needed for netplay; local play works without it).
 
    - Create a project at the [Firebase console](https://console.firebase.google.com/).
    - Enable **Anonymous** sign-in under Authentication > Sign-in method.
@@ -37,7 +31,7 @@ npm install
      names). This config is not secret - it is bundled into the client and
      access is controlled by the database rules above.
 
-3. Start the dev server.
+2. Start the dev server.
 
 ```
 npm start
