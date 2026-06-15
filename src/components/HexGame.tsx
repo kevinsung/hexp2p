@@ -139,9 +139,8 @@ function WinnerAnnouncement(props: WinnerAnnouncementProps) {
 function SwapDialog() {
   const dispatch = useDispatch();
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
-  const { moveNumber, settings, swapPhaseComplete } = useSelector(
-    selectGameState
-  );
+  const { moveNumber, settings, swapPhaseComplete } =
+    useSelector(selectGameState);
   const { useSwapRule } = settings;
 
   if (!useSwapRule || swapPhaseComplete || moveNumber !== 1) {
@@ -179,9 +178,8 @@ function SwapDialog() {
 
 function UndoDialog() {
   const dispatch = useDispatch();
-  const { undoRequestSent: undoRequested, undoRequestReceived } = useSelector(
-    selectNetplayState
-  );
+  const { undoRequestSent: undoRequested, undoRequestReceived } =
+    useSelector(selectNetplayState);
 
   if (undoRequested) {
     return <div>Undo request sent</div>;
@@ -215,9 +213,8 @@ function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
   const { active: netplayActive } = useSelector(selectNetplayState);
-  const { moveHistory, moveNumber, selectedHexagon } = useSelector(
-    selectGameState
-  );
+  const { moveHistory, moveNumber, selectedHexagon } =
+    useSelector(selectGameState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
   const [selectedRow, selectedCol] = selectedHexagon;
 
@@ -281,7 +278,7 @@ function Hexagon(props: HexagonProps) {
           { black: circleBlack },
           { white: !circleBlack },
           { partialOpacity: circlePartialOpacity },
-          { invisible: circleInvisible }
+          { invisible: circleInvisible },
         )}
         r="0.6"
         transform={transform}
@@ -314,7 +311,7 @@ function Hexagons(props: HexagonsProps) {
           row={row}
           col={col}
           disabled={disabled}
-        />
+        />,
       );
     }
   }
@@ -344,23 +341,23 @@ function Borders() {
     bottomBorderPoints.push(
       `${(2 * i + boardSize) * d},${1.5 * boardSize + 0.5} ${
         (2 * i + boardSize + 1) * d
-      },${1.5 * boardSize}`
+      },${1.5 * boardSize}`,
     );
     leftBorderPoints.push(
-      `${i * d},${1.5 * i + 0.5} ${i * d},${1.5 * i + 1.5}`
+      `${i * d},${1.5 * i + 0.5} ${i * d},${1.5 * i + 1.5}`,
     );
     rightBorderPoints.push(
       `${(i + 2 * boardSize) * d},${1.5 * i + 0.5} ${(i + 2 * boardSize) * d},${
         1.5 * i + 1.5
-      }`
+      }`,
     );
   }
   topBorderPoints.push(`${(2 * boardSize - 0.5) * d},0.25`);
   leftBorderPoints.push(
-    `${(boardSize - 0.5) * d},${1.5 * (boardSize - 1) + 1.75}`
+    `${(boardSize - 0.5) * d},${1.5 * (boardSize - 1) + 1.75}`,
   );
   bottomBorderPoints.push(
-    `${(3 * boardSize - 1) * d},${1.5 * boardSize - cornerOverlap}`
+    `${(3 * boardSize - 1) * d},${1.5 * boardSize - cornerOverlap}`,
   );
 
   return (
@@ -386,12 +383,12 @@ function CoordinateLabels() {
     coordinateLabels.push(
       <text key={topLabelKey} x={2 * i * d} y={-0.05}>
         {COORDINATE_LETTERS[i]}
-      </text>
+      </text>,
     );
     coordinateLabels.push(
       <text key={leftLabelKey} x={i * d - leftLabelOffset} y={1.5 * i + 1.2}>
         {i + 1}
-      </text>
+      </text>,
     );
   }
 
@@ -443,8 +440,8 @@ function MoveHistoryButtons() {
   const shiftMoveNumber = (offset: number) => {
     dispatch(
       navigateMoveHistory(
-        Math.max(0, Math.min(moveHistory.length, moveNumber + offset))
-      )
+        Math.max(0, Math.min(moveHistory.length, moveNumber + offset)),
+      ),
     );
   };
 
@@ -533,9 +530,11 @@ function ConnectionStatus() {
 function PlayerNames(props: PlayerNamesProps) {
   const { gameOver } = props;
   const isBlackTurn = useSelector(selectIsBlackTurn);
-  const { active: netplayActive, hosting, isBlack } = useSelector(
-    selectNetplayState
-  );
+  const {
+    active: netplayActive,
+    hosting,
+    isBlack,
+  } = useSelector(selectNetplayState);
   const playerOneIsBlack = !netplayActive || hosting === isBlack;
   return (
     <div className="PlayerNames">
@@ -545,7 +544,7 @@ function PlayerNames(props: PlayerNamesProps) {
           { white: !playerOneIsBlack },
           {
             partialOpacity: playerOneIsBlack !== isBlackTurn || gameOver,
-          }
+          },
         )}
       >
         Player 1
@@ -556,7 +555,7 @@ function PlayerNames(props: PlayerNamesProps) {
           { white: playerOneIsBlack },
           {
             partialOpacity: playerOneIsBlack === isBlackTurn || gameOver,
-          }
+          },
         )}
       >
         Player 2

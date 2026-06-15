@@ -24,7 +24,6 @@ import { deactivateNetplay } from './slices/netplaySlice';
 import { history, store } from './store';
 import './App.global.scss';
 
-// eslint-disable-next-line consistent-return
 history.block((_location, action) => {
   // disable "back" navigation
   if (action === 'POP') {

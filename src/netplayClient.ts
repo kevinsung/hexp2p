@@ -63,15 +63,8 @@ let unsubscribeMessages: Unsubscribe | undefined;
 let unsubscribePresence: Unsubscribe | undefined;
 
 function handleMessage(messageData: MessageData) {
-  const {
-    settings,
-    isBlack,
-    move,
-    swap,
-    requestUndo,
-    acceptUndo,
-    resign,
-  } = messageData;
+  const { settings, isBlack, move, swap, requestUndo, acceptUndo, resign } =
+    messageData;
 
   if (settings) {
     store.dispatch(gameStarted(settings));
@@ -113,7 +106,7 @@ function generateHostCode(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(
-    ''
+    '',
   );
 }
 
@@ -220,7 +213,7 @@ export async function startNetplay(hostCode?: string) {
     }
 
     const goneUids = Array.from(knownPeerUids).filter(
-      (id) => !peerUids.includes(id)
+      (id) => !peerUids.includes(id),
     );
     if (goneUids.length > 0) {
       store.dispatch(disconnectedFromPeer());
@@ -233,7 +226,7 @@ export async function startNetplay(hostCode?: string) {
   // Announce our presence and remove it if we disconnect.
   const myPresenceRef = child(
     ref(database, `rooms/${currentRoomCode}/presence`),
-    myUid
+    myUid,
   );
   await set(myPresenceRef, true);
   onDisconnect(myPresenceRef).remove();

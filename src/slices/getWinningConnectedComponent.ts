@@ -37,7 +37,7 @@ function getConnectedComponent(
   hexagonState: HexagonState,
   boardState: Array<Array<HexagonState>>,
   visited: Array<Array<boolean>>,
-  result: Array<Array<number>>
+  result: Array<Array<number>>,
 ) {
   const [row, col] = coordinates;
   const size = boardState.length;
@@ -59,7 +59,7 @@ function getConnectedComponent(
         hexagonState,
         boardState,
         visited,
-        result
+        result,
       );
     }
   });
@@ -87,7 +87,7 @@ function connectedComponents(boardState: Array<Array<HexagonState>>) {
           boardState[row][col],
           boardState,
           visited,
-          result
+          result,
         );
         components.push(result);
       }
@@ -98,7 +98,7 @@ function connectedComponents(boardState: Array<Array<HexagonState>>) {
 }
 
 export default function getWinningConnectedComponent(
-  boardState: Array<Array<HexagonState>>
+  boardState: Array<Array<HexagonState>>,
 ) {
   const size = boardState.length;
   const components = connectedComponents(boardState);
