@@ -1,6 +1,8 @@
 # Hex P2P
 
-A web app for playing Hex with a friend over the Internet, or locally. Try it at https://kevinsung.github.io/hexp2p/.
+A web app for playing Hex with a friend over the Internet, or locally.
+
+Try it at https://kevinsung.github.io/hexp2p/.
 
 ## Running locally
 
