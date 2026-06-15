@@ -18,16 +18,48 @@ import { useSelector } from 'react-redux';
 import { selectNetplayState } from '../slices/netplaySlice';
 import '../App.global.scss';
 
+// navigator.clipboard is only available in secure contexts (HTTPS or
+// localhost), so fall back to the older execCommand-based copy when serving
+// the dev build over plain HTTP to another device.
+function legacyCopy(text: string): boolean {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  let succeeded = false;
+  try {
+    succeeded = document.execCommand('copy');
+  } catch {
+    succeeded = false;
+  }
+  document.body.removeChild(textarea);
+  return succeeded;
+}
+
 function HostCodeDisplay() {
   const { hostCode } = useSelector(selectNetplayState);
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('Click to copy');
 
-  const copiedStatus = copied ? 'Copied!' : 'Click to copy';
-
-  const copyText = () => {
-    if (hostCode) {
-      navigator.clipboard.writeText(hostCode);
-      setCopied(true);
+  const copyText = async () => {
+    if (!hostCode) {
+      return;
+    }
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(hostCode);
+        setCopyStatus('Copied!');
+        return;
+      } catch {
+        // fall through to legacy copy
+      }
+    }
+    if (legacyCopy(hostCode)) {
+      setCopyStatus('Copied!');
+    } else {
+      setCopyStatus('Could not copy automatically - select the code above');
     }
   };
 
@@ -37,8 +69,18 @@ function HostCodeDisplay() {
       <button className="ClickToCopy" type="button" onClick={copyText}>
         {hostCode}
       </button>
-      <div>{copiedStatus}</div>
+      <div>{copyStatus}</div>
     </div>
+  );
+}
+
+function WaitingMessage() {
+  const { connectionStatus } = useSelector(selectNetplayState);
+  if (connectionStatus === 'reconnecting') {
+    return <div className="HostNetplayBottomPanel">Reconnecting…</div>;
+  }
+  return (
+    <div className="HostNetplayBottomPanel">Waiting for peer to join...</div>
   );
 }
 
@@ -46,7 +88,7 @@ export default function HostNetplay() {
   return (
     <div className="HostNetplay">
       <HostCodeDisplay />
-      <div className="HostNetplayBottomPanel">Waiting for peer to join...</div>
+      <WaitingMessage />
     </div>
   );
 }

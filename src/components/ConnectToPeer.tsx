@@ -14,26 +14,22 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { startNetplay } from '../netplayClient';
-import {
-  hostCodeSubmitted,
-  hostCodeSubmissionTimedOut,
-  selectNetplayState,
-} from '../slices/netplaySlice';
+import { selectNetplayState } from '../slices/netplaySlice';
 import '../App.global.scss';
 
 export default function ConnectToPeer() {
-  const dispatch = useDispatch();
-  const { hostCodeSubmitted: submitted } = useSelector(selectNetplayState);
+  const { connectionStatus, statusMessage } = useSelector(selectNetplayState);
   const [hostCode, setHostCode] = useState('');
+
+  const connecting =
+    connectionStatus === 'connecting' || connectionStatus === 'waiting';
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!submitted) {
-      dispatch(hostCodeSubmitted());
+    if (!connecting) {
       startNetplay(hostCode);
-      setTimeout(() => dispatch(hostCodeSubmissionTimedOut()), 2000);
     }
   };
 
@@ -50,9 +46,12 @@ export default function ConnectToPeer() {
           required
         />
       </label>
-      <button type="submit" disabled={!hostCode}>
-        Submit
+      <button type="submit" disabled={!hostCode || connecting}>
+        {connecting ? 'Joining…' : 'Submit'}
       </button>
+      {connectionStatus === 'error' && (
+        <div className="ConnectError">{statusMessage}</div>
+      )}
     </form>
   );
 }

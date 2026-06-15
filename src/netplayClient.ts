@@ -38,8 +38,8 @@ import {
 } from './slices/gameSlice';
 import {
   colorChosen,
-  connectedToPeer,
-  disconnectedFromPeer,
+  connectionError,
+  connectionStatusChanged,
   hostCodeReceived,
   selectNetplayState,
   undoRequestFulfilled,
@@ -57,10 +57,18 @@ interface MessageData {
   resign?: boolean;
 }
 
+// How long a joiner waits for a host's presence to appear before showing a
+// "no host found" hint. The subscription is left in place, so a host that
+// shows up later still triggers a normal connection.
+const JOIN_TIMEOUT_MS = 10000;
+
 let roomCode: string | undefined;
 let uid: string | undefined;
 let unsubscribeMessages: Unsubscribe | undefined;
 let unsubscribePresence: Unsubscribe | undefined;
+let unsubscribeConnectionInfo: Unsubscribe | undefined;
+let joinTimeout: ReturnType<typeof setTimeout> | undefined;
+let handshakeSent = false;
 
 function handleMessage(messageData: MessageData) {
   const { settings, isBlack, move, swap, requestUndo, acceptUndo, resign } =
@@ -121,6 +129,16 @@ export function stopNetplay() {
     unsubscribePresence = undefined;
   }
 
+  if (unsubscribeConnectionInfo) {
+    unsubscribeConnectionInfo();
+    unsubscribeConnectionInfo = undefined;
+  }
+
+  if (joinTimeout) {
+    clearTimeout(joinTimeout);
+    joinTimeout = undefined;
+  }
+
   if (roomCode && uid) {
     const presenceRef = child(ref(database, `rooms/${roomCode}/presence`), uid);
     onDisconnect(presenceRef).cancel();
@@ -129,6 +147,7 @@ export function stopNetplay() {
 
   roomCode = undefined;
   uid = undefined;
+  handshakeSent = false;
 }
 
 function sendMessage(data: MessageData) {
@@ -168,66 +187,115 @@ export function sendResign() {
 export async function startNetplay(hostCode?: string) {
   stopNetplay();
 
+  store.dispatch(connectionStatusChanged('connecting'));
+
   const hosting = !hostCode;
 
-  const userCredential = await signInAnonymously(auth);
-  uid = userCredential.user.uid;
+  try {
+    const userCredential = await signInAnonymously(auth);
+    uid = userCredential.user.uid;
 
-  if (hosting) {
-    roomCode = generateHostCode();
-    store.dispatch(hostCodeReceived(roomCode));
-    // start from a clean slate in case this host code was used before
-    await set(ref(database, `rooms/${roomCode}`), null);
-  } else {
-    roomCode = hostCode;
-  }
-
-  const currentRoomCode = roomCode;
-  const myUid = uid;
-
-  // Subscribe to game messages before announcing our presence, so we never
-  // miss a message sent in response to our presence appearing.
-  const messagesRef = ref(database, `rooms/${currentRoomCode}/messages`);
-  unsubscribeMessages = onChildAdded(messagesRef, (snapshot) => {
-    const message = snapshot.val();
-    if (message && message.uid !== myUid) {
-      handleMessage(message.data);
+    if (hosting) {
+      roomCode = generateHostCode();
+      store.dispatch(hostCodeReceived(roomCode));
+      // start from a clean slate in case this host code was used before
+      await set(ref(database, `rooms/${roomCode}`), null);
+    } else {
+      roomCode = hostCode;
     }
-  });
 
-  // Subscribe to peer presence.
-  const knownPeerUids = new Set<string>();
-  const presenceRef = ref(database, `rooms/${currentRoomCode}/presence`);
-  unsubscribePresence = onValue(presenceRef, (snapshot) => {
-    const presence = snapshot.val() || {};
-    const peerUids = Object.keys(presence).filter((id) => id !== myUid);
+    const currentRoomCode = roomCode;
+    const myUid = uid;
 
-    const newPeer = peerUids.find((id) => !knownPeerUids.has(id));
-    if (newPeer) {
-      store.dispatch(connectedToPeer());
-      history.push('/game');
-      const { hosting: amHosting } = selectNetplayState(store.getState());
-      if (amHosting) {
-        sendSettings();
+    // Subscribe to game messages before announcing our presence, so we never
+    // miss a message sent in response to our presence appearing.
+    const messagesRef = ref(database, `rooms/${currentRoomCode}/messages`);
+    unsubscribeMessages = onChildAdded(messagesRef, (snapshot) => {
+      const message = snapshot.val();
+      if (message && message.uid !== myUid) {
+        handleMessage(message.data);
       }
-    }
+    });
 
-    const goneUids = Array.from(knownPeerUids).filter(
-      (id) => !peerUids.includes(id),
+    // Subscribe to peer presence.
+    const knownPeerUids = new Set<string>();
+    let peerSeen = false;
+    const presenceRef = ref(database, `rooms/${currentRoomCode}/presence`);
+    unsubscribePresence = onValue(presenceRef, (snapshot) => {
+      const presence = snapshot.val() || {};
+      const peerUids = Object.keys(presence).filter((id) => id !== myUid);
+
+      const newPeer = peerUids.find((id) => !knownPeerUids.has(id));
+      if (newPeer) {
+        peerSeen = true;
+        if (joinTimeout) {
+          clearTimeout(joinTimeout);
+          joinTimeout = undefined;
+        }
+        store.dispatch(connectionStatusChanged('connected'));
+        history.push('/game');
+        const { hosting: amHosting } = selectNetplayState(store.getState());
+        if (amHosting && !handshakeSent) {
+          sendSettings();
+          handshakeSent = true;
+        }
+      }
+
+      const goneUids = Array.from(knownPeerUids).filter(
+        (id) => !peerUids.includes(id),
+      );
+      if (goneUids.length > 0 && peerUids.length === 0) {
+        peerSeen = false;
+        store.dispatch(connectionStatusChanged('peerLeft'));
+      }
+
+      knownPeerUids.clear();
+      peerUids.forEach((id) => knownPeerUids.add(id));
+    });
+
+    // Track our own connection to the relay, so a dropped socket on our end
+    // is distinguished from the peer leaving.
+    const connectionInfoRef = ref(database, '.info/connected');
+    unsubscribeConnectionInfo = onValue(connectionInfoRef, (snapshot) => {
+      if (snapshot.val() === false) {
+        store.dispatch(connectionStatusChanged('reconnecting'));
+      } else {
+        store.dispatch(
+          connectionStatusChanged(peerSeen ? 'connected' : 'waiting'),
+        );
+      }
+    });
+
+    // Announce our presence and remove it if we disconnect.
+    const myPresenceRef = child(
+      ref(database, `rooms/${currentRoomCode}/presence`),
+      myUid,
     );
-    if (goneUids.length > 0) {
-      store.dispatch(disconnectedFromPeer());
+    await set(myPresenceRef, true);
+    onDisconnect(myPresenceRef).remove();
+
+    if (!peerSeen) {
+      store.dispatch(connectionStatusChanged('waiting'));
     }
 
-    knownPeerUids.clear();
-    peerUids.forEach((id) => knownPeerUids.add(id));
-  });
-
-  // Announce our presence and remove it if we disconnect.
-  const myPresenceRef = child(
-    ref(database, `rooms/${currentRoomCode}/presence`),
-    myUid,
-  );
-  await set(myPresenceRef, true);
-  onDisconnect(myPresenceRef).remove();
+    // If joining and no host shows up in time, let the user know without
+    // tearing down the subscription - a late host will still connect.
+    if (!hosting) {
+      joinTimeout = setTimeout(() => {
+        joinTimeout = undefined;
+        if (!peerSeen) {
+          store.dispatch(
+            connectionError(
+              'No host found for that code yet. Make sure the host has started hosting and try again.',
+            ),
+          );
+        }
+      }, JOIN_TIMEOUT_MS);
+    }
+  } catch {
+    stopNetplay();
+    store.dispatch(
+      connectionError('Could not connect. Check your network and try again.'),
+    );
+  }
 }

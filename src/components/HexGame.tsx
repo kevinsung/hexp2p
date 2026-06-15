@@ -522,8 +522,31 @@ function ResignButton(props: ResignButtonProps) {
 }
 
 function ConnectionStatus() {
-  const { active: netplayActive, connected } = useSelector(selectNetplayState);
-  const status = netplayActive && !connected ? 'DISCONNECTED' : '';
+  const {
+    active: netplayActive,
+    connectionStatus,
+    statusMessage,
+  } = useSelector(selectNetplayState);
+
+  if (!netplayActive) {
+    return <div className="ConnectionStatus" />;
+  }
+
+  let status = '';
+  switch (connectionStatus) {
+    case 'reconnecting':
+      status = 'Reconnecting…';
+      break;
+    case 'peerLeft':
+      status = 'Opponent disconnected — waiting for them to return…';
+      break;
+    case 'error':
+      status = statusMessage || 'Connection error';
+      break;
+    default:
+      status = '';
+  }
+
   return <div className="ConnectionStatus">{status}</div>;
 }
 

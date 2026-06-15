@@ -83,7 +83,7 @@ export default function Home() {
         </Modal>
       )}
       {modal === 'host' && (
-        <Modal title="Host netplay" onClose={closeSetup}>
+        <Modal title="Host netplay" wide onClose={closeSetup}>
           <HostNetplay />
         </Modal>
       )}

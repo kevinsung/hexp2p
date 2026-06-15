@@ -18,7 +18,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 import { gameStarted } from '../slices/gameSlice';
 import { sendSettings, startNetplay } from '../netplayClient';
-import { colorChosen, selectNetplayState } from '../slices/netplaySlice';
+import {
+  colorChosen,
+  selectIsConnected,
+  selectNetplayState,
+} from '../slices/netplaySlice';
 import { GameSettings } from '../types';
 import '../App.global.scss';
 
@@ -168,7 +172,8 @@ export default function HexSettings(props: HexSettingsProps) {
   const { onStartHosting } = props;
   const dispatch = useDispatch();
   const history = useHistory();
-  const { active: netplayActive, connected } = useSelector(selectNetplayState);
+  const { active: netplayActive } = useSelector(selectNetplayState);
+  const connected = useSelector(selectIsConnected);
 
   const [boardSize, setBoardSize] = useState(DEFAULT_BOARD_SIZE);
   const [useSwapRule, setUseSwapRule] = useState(false);

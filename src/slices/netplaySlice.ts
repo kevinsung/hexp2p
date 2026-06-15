@@ -16,14 +16,14 @@
 import { createSlice } from '@reduxjs/toolkit';
 // eslint-disable-next-line import/no-cycle
 import { RootState } from '../store';
-import { NetplayState } from '../types';
+import { ConnectionStatus, NetplayState } from '../types';
 
 const initialState: NetplayState = {
   active: false,
-  connected: false,
+  connectionStatus: 'idle',
+  statusMessage: '',
   hosting: false,
   hostCode: '',
-  hostCodeSubmitted: false,
   isBlack: false,
   undoRequestSent: false,
   undoRequestReceived: false,
@@ -39,23 +39,18 @@ const netplaySlice = createSlice({
     deactivateNetplay: (state) => {
       Object.assign(state, initialState);
     },
-    connectedToPeer: (state) => {
-      state.connected = true;
+    connectionStatusChanged: (state, action: { payload: ConnectionStatus }) => {
+      state.connectionStatus = action.payload;
+      state.statusMessage = '';
     },
-    disconnectedFromPeer: (state) => {
-      state.connected = false;
+    connectionError: (state, action: { payload: string }) => {
+      state.connectionStatus = 'error';
+      state.statusMessage = action.payload;
     },
     hostCodeReceived: (state, action) => {
       const hostCode = action.payload;
       state.hostCode = hostCode;
       state.hosting = true;
-    },
-    hostCodeSubmitted: (state) => {
-      state.hostCodeSubmitted = true;
-      state.hosting = false;
-    },
-    hostCodeSubmissionTimedOut: (state) => {
-      state.hostCodeSubmitted = false;
     },
     colorChosen: (state, action) => {
       const isBlack = action.payload;
@@ -77,11 +72,9 @@ const netplaySlice = createSlice({
 export const {
   activateNetplay,
   deactivateNetplay,
-  connectedToPeer,
-  disconnectedFromPeer,
+  connectionStatusChanged,
+  connectionError,
   hostCodeReceived,
-  hostCodeSubmitted,
-  hostCodeSubmissionTimedOut,
   colorChosen,
   undoRequestSent,
   undoRequestReceived,
@@ -89,5 +82,8 @@ export const {
 } = netplaySlice.actions;
 
 export const selectNetplayState = (state: RootState) => state.netplay;
+
+export const selectIsConnected = (state: RootState) =>
+  state.netplay.connectionStatus === 'connected';
 
 export default netplaySlice.reducer;

@@ -34,12 +34,21 @@ export interface GameState {
   resignationState: HexagonState;
 }
 
+export type ConnectionStatus =
+  | 'idle'
+  | 'connecting'
+  | 'waiting'
+  | 'connected'
+  | 'reconnecting'
+  | 'peerLeft'
+  | 'error';
+
 export interface NetplayState {
   active: boolean;
-  connected: boolean;
+  connectionStatus: ConnectionStatus;
+  statusMessage: string;
   hosting: boolean;
   hostCode: string;
-  hostCodeSubmitted: boolean;
   isBlack: boolean;
   undoRequestSent: boolean;
   undoRequestReceived: boolean;
