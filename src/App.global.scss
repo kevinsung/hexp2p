@@ -390,6 +390,13 @@ a:hover {
   text-align: center;
 }
 
+.ResignDialogActions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
 .Modal .ModalClose {
   position: absolute;
   top: 8px;

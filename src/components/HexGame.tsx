@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -43,6 +43,7 @@ import {
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { HexagonState } from '../types';
 import RulesButton from './RulesModal';
+import Modal from './Modal';
 import '../App.global.scss';
 
 interface HexagonProps {
@@ -614,13 +615,18 @@ function ResignButton(props: ResignButtonProps) {
   const dispatch = useDispatch();
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const handleClick = useCallback(() => {
+  const handleResign = useCallback(() => {
     if (netplayActive) {
       sendResign();
     }
     dispatch(playerResigned(netplayActive ? isBlack : isBlackTurn));
   }, [dispatch, netplayActive, isBlack, isBlackTurn]);
+
+  const handleClick = useCallback(() => {
+    setConfirmOpen(true);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -637,9 +643,30 @@ function ResignButton(props: ResignButtonProps) {
   }, [disabled, handleClick]);
 
   return (
-    <button type="button" onClick={handleClick} disabled={disabled}>
-      Resign (R)
-    </button>
+    <>
+      <button type="button" onClick={handleClick} disabled={disabled}>
+        Resign (R)
+      </button>
+      {confirmOpen && (
+        <Modal title="Resign?" onClose={() => setConfirmOpen(false)}>
+          <p>Are you sure you want to resign?</p>
+          <div className="ResignDialogActions">
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmOpen(false);
+                handleResign();
+              }}
+            >
+              Resign
+            </button>
+            <button type="button" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }
 
