@@ -4,7 +4,7 @@ A web app for playing Hex with a friend over the Internet, or locally.
 
 Try it at https://kevinsung.github.io/hexp2p/.
 
-<img src="assets/screenshot.png" width="75%" />
+![Screenshot of Hex P2P in a web browser](assets/screenshot.png)
 
 ## Running locally
 
