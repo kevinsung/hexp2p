@@ -4,7 +4,7 @@ import { merge } from 'webpack-merge';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import Dotenv from 'dotenv-webpack';
 import baseConfig from './webpack.config.base';
-import CheckNodeEnv from '../scripts/CheckNodeEnv';
+import CheckNodeEnv from './scripts/CheckNodeEnv';
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin';
 
 // When an ESLint server is running, we can't set the NODE_ENV so we'll check if it's
@@ -25,12 +25,12 @@ export default merge(baseConfig, {
   entry: [
     'core-js',
     'regenerator-runtime/runtime',
-    require.resolve('../../src/index.tsx'),
+    require.resolve('../src/index.tsx'),
   ],
 
   output: {
     publicPath: '/',
-    filename: 'renderer.dev.js',
+    filename: 'bundle.dev.js',
   },
 
   module: {
@@ -221,11 +221,11 @@ export default merge(baseConfig, {
     new ReactRefreshWebpackPlugin(),
 
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, '../../src/index.html'),
+      template: path.join(__dirname, '../src/index.html'),
     }),
 
     new Dotenv({
-      path: path.join(__dirname, '../../.env'),
+      path: path.join(__dirname, '../.env'),
       systemvars: true,
       silent: true,
     }),
@@ -242,7 +242,7 @@ export default merge(baseConfig, {
     compress: true,
     hot: true,
     static: {
-      directory: path.join(__dirname, '../../assets'),
+      directory: path.join(__dirname, '../assets'),
     },
     headers: { 'Access-Control-Allow-Origin': '*' },
     watchFiles: {

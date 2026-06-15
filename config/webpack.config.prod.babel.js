@@ -1,5 +1,5 @@
 /**
- * Build config for the web renderer bundle
+ * Build config for the production web bundle
  */
 
 import path from 'path';
@@ -12,8 +12,8 @@ import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import { merge } from 'webpack-merge';
 import TerserPlugin from 'terser-webpack-plugin';
 import baseConfig from './webpack.config.base';
-import CheckNodeEnv from '../scripts/CheckNodeEnv';
-import DeleteSourceMaps from '../scripts/DeleteSourceMaps';
+import CheckNodeEnv from './scripts/CheckNodeEnv';
+import DeleteSourceMaps from './scripts/DeleteSourceMaps';
 
 CheckNodeEnv('production');
 DeleteSourceMaps();
@@ -35,13 +35,13 @@ export default merge(baseConfig, {
   entry: [
     'core-js',
     'regenerator-runtime/runtime',
-    path.join(__dirname, '../../src/index.tsx'),
+    path.join(__dirname, '../src/index.tsx'),
   ],
 
   output: {
-    path: path.join(__dirname, '../../dist'),
+    path: path.join(__dirname, '../dist'),
     publicPath: './',
-    filename: 'renderer.prod.js',
+    filename: 'bundle.prod.js',
   },
 
   module: {
@@ -157,11 +157,11 @@ export default merge(baseConfig, {
     }),
 
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, '../../src/index.html'),
+      template: path.join(__dirname, '../src/index.html'),
     }),
 
     new Dotenv({
-      path: path.join(__dirname, '../../.env'),
+      path: path.join(__dirname, '../.env'),
       systemvars: true,
       silent: true,
     }),
