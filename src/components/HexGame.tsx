@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import classnames from 'classnames';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -90,6 +90,22 @@ interface ResignButtonProps {
 
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 
+// Determines whether a keydown event should be treated as a hotkey: ignores
+// the event if a modifier key is held or the user is typing into a form field.
+function isHotkeyEvent(event: KeyboardEvent): boolean {
+  if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+    return false;
+  }
+  const { target } = event;
+  if (
+    target instanceof HTMLElement &&
+    (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
+  ) {
+    return false;
+  }
+  return true;
+}
+
 function NewGameButton(props: NewGameButtonProps) {
   const { disabled } = props;
   const { active: netplayActive, hosting } = useSelector(selectNetplayState);
@@ -143,7 +159,39 @@ function SwapDialog() {
     useSelector(selectGameState);
   const { useSwapRule } = settings;
 
-  if (!useSwapRule || swapPhaseComplete || moveNumber !== 1) {
+  const swapPhaseActive = useSwapRule && !swapPhaseComplete && moveNumber === 1;
+  const canRespond = swapPhaseActive && !(netplayActive && isBlack);
+
+  const handleSwap = useCallback(
+    (swap: boolean) => {
+      dispatch(swapChosen(swap));
+      if (netplayActive) {
+        sendSwap(swap);
+        dispatch(undoRequestFulfilled());
+      }
+    },
+    [dispatch, netplayActive],
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isHotkeyEvent(event) || !canRespond) {
+        return;
+      }
+      const key = event.key.toLowerCase();
+      if (key === 'y') {
+        event.preventDefault();
+        handleSwap(true);
+      } else if (key === 'n') {
+        event.preventDefault();
+        handleSwap(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [canRespond, handleSwap]);
+
+  if (!swapPhaseActive) {
     return null;
   }
 
@@ -155,22 +203,14 @@ function SwapDialog() {
     );
   }
 
-  const handleSwap = (swap: boolean) => {
-    dispatch(swapChosen(swap));
-    if (netplayActive) {
-      sendSwap(swap);
-      dispatch(undoRequestFulfilled());
-    }
-  };
-
   return (
     <div className="SwapDialog">
       SWAP PHASE: Do you want to swap pieces?
       <button type="button" onClick={() => handleSwap(true)}>
-        YES
+        YES (Y)
       </button>
       <button type="button" onClick={() => handleSwap(false)}>
-        NO
+        NO (N)
       </button>
     </div>
   );
@@ -181,15 +221,29 @@ function UndoDialog() {
   const { undoRequestSent: undoRequested, undoRequestReceived } =
     useSelector(selectNetplayState);
 
-  if (undoRequested) {
-    return <div>Undo request sent</div>;
-  }
-
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     sendAcceptUndo();
     dispatch(undoRequestFulfilled());
     dispatch(undoMove());
-  };
+  }, [dispatch]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isHotkeyEvent(event) || !undoRequestReceived) {
+        return;
+      }
+      if (event.key.toLowerCase() === 'a') {
+        event.preventDefault();
+        handleClick();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [undoRequestReceived, handleClick]);
+
+  if (undoRequested) {
+    return <div>Undo request sent</div>;
+  }
 
   if (undoRequestReceived) {
     return (
@@ -200,7 +254,7 @@ function UndoDialog() {
           type="button"
           onClick={handleClick}
         >
-          Accept
+          Accept (A)
         </button>
       </div>
     );
@@ -437,13 +491,53 @@ function MoveHistoryButtons() {
   const dispatch = useDispatch();
   const { moveHistory, moveNumber } = useSelector(selectGameState);
 
-  const shiftMoveNumber = (offset: number) => {
-    dispatch(
-      navigateMoveHistory(
-        Math.max(0, Math.min(moveHistory.length, moveNumber + offset)),
-      ),
-    );
-  };
+  const shiftMoveNumber = useCallback(
+    (offset: number) => {
+      dispatch(
+        navigateMoveHistory(
+          Math.max(0, Math.min(moveHistory.length, moveNumber + offset)),
+        ),
+      );
+    },
+    [dispatch, moveHistory.length, moveNumber],
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isHotkeyEvent(event)) {
+        return;
+      }
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault();
+          shiftMoveNumber(-1);
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          shiftMoveNumber(1);
+          break;
+        case 'PageUp':
+          event.preventDefault();
+          shiftMoveNumber(-6);
+          break;
+        case 'PageDown':
+          event.preventDefault();
+          shiftMoveNumber(6);
+          break;
+        case 'Home':
+          event.preventDefault();
+          shiftMoveNumber(-Infinity);
+          break;
+        case 'End':
+          event.preventDefault();
+          shiftMoveNumber(Infinity);
+          break;
+        // no default
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [shiftMoveNumber]);
 
   return (
     <div className="MoveHistoryButtons">
@@ -485,18 +579,32 @@ function UndoButton(props: UndoButtonProps) {
     // disable during own turn
     (netplayActive && isBlack === isBlackTurn);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (netplayActive) {
       sendRequestUndo();
       dispatch(undoRequestSent());
     } else {
       dispatch(undoMove());
     }
-  };
+  }, [dispatch, netplayActive]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isHotkeyEvent(event) || disabled) {
+        return;
+      }
+      if (event.key.toLowerCase() === 'u') {
+        event.preventDefault();
+        handleClick();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [disabled, handleClick]);
 
   return (
     <button type="button" onClick={handleClick} disabled={disabled}>
-      Undo
+      Undo (U)
     </button>
   );
 }
@@ -507,16 +615,30 @@ function ResignButton(props: ResignButtonProps) {
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (netplayActive) {
       sendResign();
     }
     dispatch(playerResigned(netplayActive ? isBlack : isBlackTurn));
-  };
+  }, [dispatch, netplayActive, isBlack, isBlackTurn]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isHotkeyEvent(event) || disabled) {
+        return;
+      }
+      if (event.key.toLowerCase() === 'r') {
+        event.preventDefault();
+        handleClick();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [disabled, handleClick]);
 
   return (
     <button type="button" onClick={handleClick} disabled={disabled}>
-      Resign
+      Resign (R)
     </button>
   );
 }
