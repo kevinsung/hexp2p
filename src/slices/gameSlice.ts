@@ -19,7 +19,7 @@ import { RootState } from '../store';
 import { GameState, HexagonState } from '../types';
 
 const initialState: GameState = {
-  settings: { boardSize: 14, useSwapRule: true },
+  settings: { boardSize: 14, useSwapRule: false },
   moveHistory: [],
   moveNumber: 0,
   swapped: false,
