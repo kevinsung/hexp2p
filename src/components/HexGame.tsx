@@ -208,10 +208,10 @@ function SwapDialog() {
     <div className="SwapDialog">
       SWAP PHASE: Do you want to swap pieces?
       <button type="button" onClick={() => handleSwap(true)}>
-        YES (Y)
+        Yes (Y)
       </button>
       <button type="button" onClick={() => handleSwap(false)}>
-        NO (N)
+        No (N)
       </button>
     </div>
   );
