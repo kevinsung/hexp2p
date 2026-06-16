@@ -91,6 +91,7 @@ interface ResignButtonProps {
 }
 
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
+const INVERSE_GOLDEN_RATIO = 0.618033988749895;
 
 // Determines whether a keydown event should be treated as a hotkey: ignores
 // the event if a modifier key is held or the user is typing into a form field.
@@ -347,14 +348,14 @@ function Hexagon(props: HexagonProps) {
           { partialOpacity: circlePartialOpacity },
           { invisible: circleInvisible },
         )}
-        r="0.6"
+        r={INVERSE_GOLDEN_RATIO}
         transform={transform}
       />
       <circle
         className={classnames('LastMoveMarker', 'gray', {
           invisible: markerInvisible,
         })}
-        r="0.3"
+        r={INVERSE_GOLDEN_RATIO ** 2}
         transform={transform}
       />
     </g>
@@ -472,7 +473,9 @@ function ComponentMarker(props: ComponentMarkerProps) {
     const translateY = 1 + 1.5 * row;
     const transform = `translate(${translateX} ${translateY})`;
     const key = `pieceMarker ${row} ${col}`;
-    markers.push(<circle key={key} r="0.2" transform={transform} />);
+    markers.push(
+      <circle key={key} r={INVERSE_GOLDEN_RATIO ** 3} transform={transform} />,
+    );
   }
   return <g className="PieceMarker gray">{markers}</g>;
 }
