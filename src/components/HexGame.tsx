@@ -44,6 +44,7 @@ import getWinningConnectedComponent from '../slices/getWinningConnectedComponent
 import { HexagonState } from '../types';
 import RulesButton from './RulesModal';
 import Modal from './Modal';
+import HexSettings from './HexSettings';
 import '../App.global.scss';
 
 interface HexagonProps {
@@ -110,6 +111,7 @@ function isHotkeyEvent(event: KeyboardEvent): boolean {
 function NewGameButton(props: NewGameButtonProps) {
   const { disabled } = props;
   const { active: netplayActive, hosting } = useSelector(selectNetplayState);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (disabled) {
     return null;
@@ -120,9 +122,19 @@ function NewGameButton(props: NewGameButtonProps) {
   }
 
   return (
-    <Link to="/settings">
-      <button type="button">New game</button>
-    </Link>
+    <>
+      <button type="button" onClick={() => setSettingsOpen(true)}>
+        New game
+      </button>
+      {settingsOpen && (
+        <Modal title="Settings" onClose={() => setSettingsOpen(false)}>
+          <HexSettings
+            onStartHosting={() => setSettingsOpen(false)}
+            onSubmitted={() => setSettingsOpen(false)}
+          />
+        </Modal>
+      )}
+    </>
   );
 }
 

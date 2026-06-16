@@ -166,10 +166,11 @@ function ColorSelector(props: ColorSelectorProps) {
 
 interface HexSettingsProps {
   onStartHosting: () => void;
+  onSubmitted?: () => void;
 }
 
 export default function HexSettings(props: HexSettingsProps) {
-  const { onStartHosting } = props;
+  const { onStartHosting, onSubmitted } = props;
   const dispatch = useDispatch();
   const history = useHistory();
   const { active: netplayActive } = useSelector(selectNetplayState);
@@ -208,6 +209,7 @@ export default function HexSettings(props: HexSettingsProps) {
     } else {
       history.push('/game');
     }
+    onSubmitted?.();
   };
 
   return (
