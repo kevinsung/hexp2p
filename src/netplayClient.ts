@@ -66,7 +66,6 @@ let roomCode: string | undefined;
 let uid: string | undefined;
 let unsubscribeMessages: Unsubscribe | undefined;
 let unsubscribePresence: Unsubscribe | undefined;
-let unsubscribeConnectionInfo: Unsubscribe | undefined;
 let joinTimeout: ReturnType<typeof setTimeout> | undefined;
 let handshakeSent = false;
 
@@ -127,11 +126,6 @@ export function stopNetplay() {
   if (unsubscribePresence) {
     unsubscribePresence();
     unsubscribePresence = undefined;
-  }
-
-  if (unsubscribeConnectionInfo) {
-    unsubscribeConnectionInfo();
-    unsubscribeConnectionInfo = undefined;
   }
 
   if (joinTimeout) {
@@ -245,25 +239,13 @@ export async function startNetplay(hostCode?: string) {
         (id) => !peerUids.includes(id),
       );
       if (goneUids.length > 0 && peerUids.length === 0) {
-        peerSeen = false;
-        store.dispatch(connectionStatusChanged('peerLeft'));
+        store.dispatch(connectionStatusChanged('disconnected'));
+        stopNetplay();
+        return;
       }
 
       knownPeerUids.clear();
       peerUids.forEach((id) => knownPeerUids.add(id));
-    });
-
-    // Track our own connection to the relay, so a dropped socket on our end
-    // is distinguished from the peer leaving.
-    const connectionInfoRef = ref(database, '.info/connected');
-    unsubscribeConnectionInfo = onValue(connectionInfoRef, (snapshot) => {
-      if (snapshot.val() === false) {
-        store.dispatch(connectionStatusChanged('reconnecting'));
-      } else {
-        store.dispatch(
-          connectionStatusChanged(peerSeen ? 'connected' : 'waiting'),
-        );
-      }
     });
 
     // Announce our presence and remove it if we disconnect.

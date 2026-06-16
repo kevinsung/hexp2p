@@ -39,8 +39,7 @@ export type ConnectionStatus =
   | 'connecting'
   | 'waiting'
   | 'connected'
-  | 'reconnecting'
-  | 'peerLeft'
+  | 'disconnected'
   | 'error';
 
 export interface NetplayState {

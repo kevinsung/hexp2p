@@ -36,6 +36,7 @@ import {
   sendResign,
 } from '../netplayClient';
 import {
+  deactivateNetplay,
   selectNetplayState,
   undoRequestFulfilled,
   undoRequestSent,
@@ -685,6 +686,34 @@ function ResignButton(props: ResignButtonProps) {
   );
 }
 
+function DisconnectDialog() {
+  const dispatch = useDispatch();
+  const { active: netplayActive, connectionStatus } =
+    useSelector(selectNetplayState);
+
+  if (!netplayActive || connectionStatus !== 'disconnected') {
+    return null;
+  }
+
+  const continueLocally = () => {
+    dispatch(deactivateNetplay());
+  };
+
+  return (
+    <Modal title="Opponent disconnected" onClose={continueLocally}>
+      <p>Your opponent has disconnected. The online game has ended.</p>
+      <div className="ResignDialogActions">
+        <Link to="/" tabIndex={-1}>
+          <button type="button">Return home</button>
+        </Link>
+        <button type="button" onClick={continueLocally}>
+          Continue locally
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 function ConnectionStatus() {
   const {
     active: netplayActive,
@@ -697,18 +726,8 @@ function ConnectionStatus() {
   }
 
   let status = '';
-  switch (connectionStatus) {
-    case 'reconnecting':
-      status = 'Reconnecting…';
-      break;
-    case 'peerLeft':
-      status = 'Opponent disconnected — waiting for them to return…';
-      break;
-    case 'error':
-      status = statusMessage || 'Connection error';
-      break;
-    default:
-      status = '';
+  if (connectionStatus === 'error') {
+    status = statusMessage || 'Connection error';
   }
 
   return <div className="ConnectionStatus">{status}</div>;
@@ -752,7 +771,11 @@ function PlayerNames(props: PlayerNamesProps) {
 }
 
 export default function HexGame() {
-  const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
+  const {
+    active: netplayActive,
+    connectionStatus,
+    isBlack,
+  } = useSelector(selectNetplayState);
   const {
     moveHistory,
     moveNumber,
@@ -775,7 +798,9 @@ export default function HexGame() {
     // disable board during opponent's turn
     (netplayActive && isBlack !== isBlackTurn) ||
     // disable board when the game is over
-    gameOver;
+    gameOver ||
+    // disable board when opponent has disconnected
+    (netplayActive && connectionStatus === 'disconnected');
 
   return (
     <div className="HexGame">
@@ -794,6 +819,7 @@ export default function HexGame() {
           <NewGameButton disabled={!gameOver} />
           <SwapDialog />
           <UndoDialog />
+          <DisconnectDialog />
         </div>
         <PlayerNames gameOver={gameOver} />
       </div>

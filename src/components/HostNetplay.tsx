@@ -75,10 +75,6 @@ function HostCodeDisplay() {
 }
 
 function WaitingMessage() {
-  const { connectionStatus } = useSelector(selectNetplayState);
-  if (connectionStatus === 'reconnecting') {
-    return <div className="HostNetplayBottomPanel">Reconnecting…</div>;
-  }
   return (
     <div className="HostNetplayBottomPanel">Waiting for peer to join...</div>
   );
