@@ -222,6 +222,7 @@ export default merge(baseConfig, {
 
     new HtmlWebpackPlugin({
       template: path.join(__dirname, '../src/index.html'),
+      favicon: path.join(__dirname, '../assets/icon.svg'),
     }),
 
     new Dotenv({
