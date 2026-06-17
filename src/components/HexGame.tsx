@@ -392,17 +392,51 @@ function Hexagons(props: HexagonsProps) {
   return <g onMouseLeave={onMouseLeave}>{hexagons}</g>;
 }
 
+type Point = [number, number];
+
+// Sutherland-Hodgman half-plane intersection: clips a convex polygon to the
+// region where sign * ((p - P) . n) >= 0.
+function clipHalfPlane(
+  poly: Point[],
+  P: Point,
+  n: Point,
+  sign: number,
+): Point[] {
+  const side = (p: Point) =>
+    sign * ((p[0] - P[0]) * n[0] + (p[1] - P[1]) * n[1]);
+  const out: Point[] = [];
+  for (let i = 0; i < poly.length; i += 1) {
+    const cur = poly[i];
+    const prev = poly[(i + poly.length - 1) % poly.length];
+    const dCur = side(cur);
+    const dPrev = side(prev);
+    if (dPrev >= 0 !== dCur >= 0) {
+      const t = dPrev / (dPrev - dCur);
+      out.push([
+        prev[0] + t * (cur[0] - prev[0]),
+        prev[1] + t * (cur[1] - prev[1]),
+      ]);
+    }
+    if (dCur >= 0) {
+      out.push(cur);
+    }
+  }
+  return out;
+}
+
+function pointsToString(points: Point[]): string {
+  return points.map(([x, y]) => `${x},${y}`).join(' ');
+}
+
 function Borders() {
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const d = 0.5 * Math.sqrt(3);
-  const cornerOverlap = 0.1;
 
   const topBorderPoints = [];
   const bottomBorderPoints = [];
   const leftBorderPoints = [];
   const rightBorderPoints = [];
-  topBorderPoints.push(`0,${0.5 + cornerOverlap}`);
   bottomBorderPoints.push(`${(boardSize - 0.5) * d},${1.5 * boardSize + 0.25}`);
   rightBorderPoints.push(`${(2 * boardSize - 0.5) * d},0.25`);
   for (let i = 0; i < boardSize; i += 1) {
@@ -425,16 +459,101 @@ function Borders() {
   leftBorderPoints.push(
     `${(boardSize - 0.5) * d},${1.5 * (boardSize - 1) + 1.75}`,
   );
-  bottomBorderPoints.push(
-    `${(3 * boardSize - 1) * d},${1.5 * boardSize - cornerOverlap}`,
+
+  // Corner points and clip normals used to trim each border's round end
+  // caps. At the top-left and bottom-right corners the two borders meet at a
+  // genuine angle, so the normal is the bisector of their two directions,
+  // splitting the round caps along a clean diagonal seam. At the top-right
+  // and bottom-left corners the borders are actually collinear (the path
+  // runs straight through), so the normal is that shared line direction
+  // instead, which trims the round-cap bulge back to a flush cut rather than
+  // introducing a diagonal split that wasn't there before.
+  const topLeft: Point = [0, 0.5];
+  const topRight: Point = [(2 * boardSize - 0.5) * d, 0.25];
+  const bottomLeft: Point = [(boardSize - 0.5) * d, 1.5 * boardSize + 0.25];
+  const bottomRight: Point = [(3 * boardSize - 1) * d, 1.5 * boardSize];
+  const nTopLeft: Point = [0.5, -d];
+  const nTopRight: Point = [-d, -0.5];
+  const nBottomLeft: Point = [d, 0.5];
+  const nBottomRight: Point = [-0.5, d];
+
+  const margin = 10;
+  const boundingBox: Point[] = [
+    [-margin, -margin],
+    [(3 * boardSize - 1) * d + margin, -margin],
+    [(3 * boardSize - 1) * d + margin, 1.5 * boardSize + 0.5 + margin],
+    [-margin, 1.5 * boardSize + 0.5 + margin],
+  ];
+
+  const clipBorder = (
+    corner1: Point,
+    n1: Point,
+    corner2: Point,
+    n2: Point,
+    sign: number,
+  ) =>
+    pointsToString(
+      clipHalfPlane(
+        clipHalfPlane(boundingBox, corner1, n1, sign),
+        corner2,
+        n2,
+        sign,
+      ),
+    );
+
+  const topClip = clipBorder(topLeft, nTopLeft, topRight, nTopRight, 1);
+  const bottomClip = clipBorder(
+    bottomLeft,
+    nBottomLeft,
+    bottomRight,
+    nBottomRight,
+    1,
+  );
+  const leftClip = clipBorder(topLeft, nTopLeft, bottomLeft, nBottomLeft, -1);
+  const rightClip = clipBorder(
+    topRight,
+    nTopRight,
+    bottomRight,
+    nBottomRight,
+    -1,
   );
 
   return (
     <g className="Border">
-      <polyline points={leftBorderPoints.join(' ')} stroke="white" />
-      <polyline points={rightBorderPoints.join(' ')} stroke="white" />
-      <polyline points={topBorderPoints.join(' ')} stroke="black" />
-      <polyline points={bottomBorderPoints.join(' ')} stroke="black" />
+      <defs>
+        <clipPath id="borderClipTop">
+          <polygon points={topClip} />
+        </clipPath>
+        <clipPath id="borderClipBottom">
+          <polygon points={bottomClip} />
+        </clipPath>
+        <clipPath id="borderClipLeft">
+          <polygon points={leftClip} />
+        </clipPath>
+        <clipPath id="borderClipRight">
+          <polygon points={rightClip} />
+        </clipPath>
+      </defs>
+      <polyline
+        points={leftBorderPoints.join(' ')}
+        stroke="white"
+        clipPath="url(#borderClipLeft)"
+      />
+      <polyline
+        points={rightBorderPoints.join(' ')}
+        stroke="white"
+        clipPath="url(#borderClipRight)"
+      />
+      <polyline
+        points={topBorderPoints.join(' ')}
+        stroke="black"
+        clipPath="url(#borderClipTop)"
+      />
+      <polyline
+        points={bottomBorderPoints.join(' ')}
+        stroke="black"
+        clipPath="url(#borderClipBottom)"
+      />
     </g>
   );
 }
