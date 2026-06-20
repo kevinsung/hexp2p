@@ -79,10 +79,6 @@ interface PlayerNamesProps {
   gameOver: boolean;
 }
 
-interface NewGameButtonProps {
-  disabled: boolean;
-}
-
 interface UndoButtonProps {
   disabled: boolean;
 }
@@ -115,14 +111,9 @@ function isHotkeyEvent(event: KeyboardEvent): boolean {
   return true;
 }
 
-function NewGameButton(props: NewGameButtonProps) {
-  const { disabled } = props;
+function NewGameButton() {
   const { active: netplayActive, hosting } = useSelector(selectNetplayState);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
-  if (disabled) {
-    return null;
-  }
 
   if (netplayActive && !hosting) {
     return null;
@@ -1099,13 +1090,13 @@ export default function HexGame() {
             <button type="button">Home</button>
           </Link>
           <RulesButton />
+          <NewGameButton />
         </div>
         <div className="DialogPanel">
           <WinnerAnnouncement
             boardState={boardState}
             winningComponent={winningComponent}
           />
-          <NewGameButton disabled={!gameOver} />
           <UndoDialog />
           <DisconnectDialog />
         </div>
