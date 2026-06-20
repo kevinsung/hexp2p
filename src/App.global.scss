@@ -300,12 +300,11 @@ a:hover {
   padding-bottom: 6px;
 }
 
-.SwapDialog {
-  padding-bottom: 6px;
-}
-
-.SwapDialog > button {
-  margin-left: 12px;
+.SwapMarker {
+  font-size: 0.06rem;
+  font-weight: bold;
+  stroke: none;
+  pointer-events: none;
 }
 
 .UndoDialogButton {

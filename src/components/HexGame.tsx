@@ -167,70 +167,6 @@ function WinnerAnnouncement(props: WinnerAnnouncementProps) {
   }
 }
 
-function SwapDialog() {
-  const dispatch = useDispatch();
-  const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
-  const { moveNumber, settings, swapPhaseComplete } =
-    useSelector(selectGameState);
-  const { useSwapRule } = settings;
-
-  const swapPhaseActive = useSwapRule && !swapPhaseComplete && moveNumber === 1;
-  const canRespond = swapPhaseActive && !(netplayActive && isBlack);
-
-  const handleSwap = useCallback(
-    (swap: boolean) => {
-      dispatch(swapChosen(swap));
-      if (netplayActive) {
-        sendSwap(swap);
-        dispatch(undoRequestFulfilled());
-      }
-    },
-    [dispatch, netplayActive],
-  );
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isHotkeyEvent(event) || !canRespond) {
-        return;
-      }
-      const key = event.key.toLowerCase();
-      if (key === 'y') {
-        event.preventDefault();
-        handleSwap(true);
-      } else if (key === 'n') {
-        event.preventDefault();
-        handleSwap(false);
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [canRespond, handleSwap]);
-
-  if (!swapPhaseActive) {
-    return null;
-  }
-
-  if (netplayActive && isBlack) {
-    return (
-      <div className="SwapDialog">
-        SWAP PHASE: Opponent is choosing whether to swap...
-      </div>
-    );
-  }
-
-  return (
-    <div className="SwapDialog">
-      SWAP PHASE: Do you want to swap pieces?
-      <button type="button" onClick={() => handleSwap(true)}>
-        Yes (Y)
-      </button>
-      <button type="button" onClick={() => handleSwap(false)}>
-        No (N)
-      </button>
-    </div>
-  );
-}
-
 function UndoDialog() {
   const dispatch = useDispatch();
   const { undoRequestSent: undoRequested, undoRequestReceived } =
@@ -282,10 +218,16 @@ function Hexagon(props: HexagonProps) {
   const { boardState, row, col, disabled } = props;
   const dispatch = useDispatch();
   const { active: netplayActive } = useSelector(selectNetplayState);
-  const { moveHistory, moveNumber, selectedHexagon } =
-    useSelector(selectGameState);
+  const {
+    moveHistory,
+    moveNumber,
+    selectedHexagon,
+    settings,
+    swapPhaseComplete,
+  } = useSelector(selectGameState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
   const [selectedRow, selectedCol] = selectedHexagon;
+  const { useSwapRule } = settings;
 
   const d = 0.5 * Math.sqrt(3);
   const translateX = (row + 1 + 2 * col) * d;
@@ -294,6 +236,14 @@ function Hexagon(props: HexagonProps) {
   const points = `0,1 ${d},0.5 ${d},-0.5 0,-1 ${-d},-0.5 ${-d},0.5`;
   const markerScale = INVERSE_GOLDEN_RATIO;
   const markerPoints = `0,${markerScale} ${d * markerScale},${0.5 * markerScale} ${d * markerScale},${-0.5 * markerScale} 0,${-markerScale} ${-d * markerScale},${-0.5 * markerScale} ${-d * markerScale},${0.5 * markerScale}`;
+
+  const lastMove = moveNumber > 0 ? moveHistory[moveNumber - 1] : [NaN, NaN];
+  const [lrow, lcol] = lastMove;
+  const markerInvisible = lrow !== row || lcol !== col;
+
+  const swapPhaseActive = useSwapRule && !swapPhaseComplete && moveNumber === 1;
+  const isSwappablePiece = !disabled && swapPhaseActive && !markerInvisible;
+  const isHovered = row === selectedRow && col === selectedCol;
 
   // hexagon fill properties
   let hexBlack;
@@ -307,7 +257,7 @@ function Hexagon(props: HexagonProps) {
       hexBlack = false;
       break;
     case HexagonState.EMPTY:
-      if (row === selectedRow && col === selectedCol) {
+      if (isHovered) {
         hexBlack = isBlackTurn;
         hexPartialOpacity = true;
       } else {
@@ -317,9 +267,10 @@ function Hexagon(props: HexagonProps) {
     // no default
   }
 
-  const lastMove = moveNumber > 0 ? moveHistory[moveNumber - 1] : [NaN, NaN];
-  const [lrow, lcol] = lastMove;
-  const markerInvisible = lrow !== row || lcol !== col;
+  if (isSwappablePiece && isHovered) {
+    hexBlack = !hexBlack;
+    hexPartialOpacity = true;
+  }
 
   const onMouseEnter = () => {
     if (!disabled) {
@@ -328,8 +279,25 @@ function Hexagon(props: HexagonProps) {
   };
 
   const onClick = () => {
-    if (!disabled && !boardState[row][col]) {
+    if (disabled) {
+      return;
+    }
+    if (isSwappablePiece) {
+      dispatch(swapChosen(true));
+      if (netplayActive) {
+        sendSwap(true);
+        dispatch(undoRequestFulfilled());
+      }
+      return;
+    }
+    if (!boardState[row][col]) {
       const move = [row, col];
+      if (swapPhaseActive) {
+        dispatch(swapChosen(false));
+        if (netplayActive) {
+          sendSwap(false);
+        }
+      }
       dispatch(moveMade(move));
       if (netplayActive) {
         sendMove(move);
@@ -357,6 +325,19 @@ function Hexagon(props: HexagonProps) {
         points={markerPoints}
         transform={transform}
       />
+      {isSwappablePiece && (
+        <text
+          className={classnames('SwapMarker', {
+            white: hexBlack,
+            black: !hexBlack,
+          })}
+          transform={transform}
+          textAnchor="middle"
+          dominantBaseline="central"
+        >
+          S
+        </text>
+      )}
     </g>
   );
 }
@@ -893,23 +874,15 @@ export default function HexGame() {
     connectionStatus,
     isBlack,
   } = useSelector(selectNetplayState);
-  const {
-    moveHistory,
-    moveNumber,
-    resignationState,
-    settings,
-    swapPhaseComplete,
-  } = useSelector(selectGameState);
+  const { moveHistory, moveNumber, resignationState } =
+    useSelector(selectGameState);
   const boardState = useSelector(selectBoardState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
-  const { useSwapRule } = settings;
 
   const winningComponent = getWinningConnectedComponent(boardState);
   const gameOver = Boolean(resignationState) || winningComponent.length > 0;
 
   const disabled =
-    // disable board during swap phase
-    (useSwapRule && !swapPhaseComplete && moveNumber === 1) ||
     // disable board when it is not set to latest position
     moveNumber !== moveHistory.length ||
     // disable board during opponent's turn
@@ -934,7 +907,6 @@ export default function HexGame() {
             winningComponent={winningComponent}
           />
           <NewGameButton disabled={!gameOver} />
-          <SwapDialog />
           <UndoDialog />
           <DisconnectDialog />
         </div>

@@ -177,7 +177,7 @@ export default function HexSettings(props: HexSettingsProps) {
   const connected = useSelector(selectIsConnected);
 
   const [boardSize, setBoardSize] = useState(DEFAULT_BOARD_SIZE);
-  const [useSwapRule, setUseSwapRule] = useState(false);
+  const [useSwapRule, setUseSwapRule] = useState(true);
   const [color, setColor] = useState('random');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
