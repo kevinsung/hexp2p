@@ -321,7 +321,7 @@ function Hexagon(props: HexagonProps) {
       />
       <polygon
         className={classnames('LastMoveMarker', 'gray', {
-          invisible: markerInvisible,
+          invisible: markerInvisible || isSwappablePiece,
         })}
         points={markerPoints}
         transform={transform}
