@@ -93,6 +93,11 @@ interface ResignButtonProps {
 
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
 const INVERSE_GOLDEN_RATIO = 0.618033988749895;
+// Half the border stroke-width (.Border, 0.2) plus half the hexagon
+// stroke-width (.Hexagon, 0.05): pushes the border outward so its inner
+// edge lands exactly where the hexagon's own gray stroke ends, leaving
+// hexagon edges fully visible with no overlap.
+const BORDER_OFFSET = 0.125;
 
 // Determines whether a keydown event should be treated as a hotkey: ignores
 // the event if a modifier key is held or the user is typing into a form field.
@@ -408,37 +413,157 @@ function pointsToString(points: Point[]): string {
   return points.map(([x, y]) => `${x},${y}`).join(' ');
 }
 
+// Unit normal of the edge p1->p2 that points away from `center`. Determined
+// by checking which of the two perpendicular candidates faces away from the
+// edge's midpoint-to-center direction.
+function outwardNormal(p1: Point, p2: Point, center: Point): Point {
+  const dx = p2[0] - p1[0];
+  const dy = p2[1] - p1[1];
+  const length = Math.hypot(dx, dy);
+  const candidate: Point = [-dy / length, dx / length];
+  const midpoint: Point = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+  const towardCenter: Point = [
+    center[0] - midpoint[0],
+    center[1] - midpoint[1],
+  ];
+  const candidatePointsTowardCenter =
+    candidate[0] * towardCenter[0] + candidate[1] * towardCenter[1] > 0;
+  return candidatePointsTowardCenter
+    ? [-candidate[0], -candidate[1]]
+    : candidate;
+}
+
+// Intersection of two lines, each given as a point plus a direction vector.
+function lineIntersection(p1: Point, d1: Point, p2: Point, d2: Point): Point {
+  const denom = d1[0] * d2[1] - d1[1] * d2[0];
+  const t = ((p2[0] - p1[0]) * d2[1] - (p2[1] - p1[1]) * d2[0]) / denom;
+  return [p1[0] + t * d1[0], p1[1] + t * d1[1]];
+}
+
+// Offsets a polyline outward (away from `center`) by `distance`, producing
+// the parallel curve used to keep the border clear of the hexagon edges it
+// used to run directly along. Each edge shifts along its own outward
+// normal; interior vertices are rejoined via line intersection (a miter
+// join). Collinear neighbors fall back to a plain shift since their offset
+// lines don't meet at a single point.
+function offsetPolyline(
+  points: Point[],
+  distance: number,
+  center: Point,
+): Point[] {
+  const edgeCount = points.length - 1;
+  const normals: Point[] = [];
+  for (let i = 0; i < edgeCount; i += 1) {
+    normals.push(outwardNormal(points[i], points[i + 1], center));
+  }
+  const shift = (point: Point, normal: Point): Point => [
+    point[0] + normal[0] * distance,
+    point[1] + normal[1] * distance,
+  ];
+
+  const result: Point[] = [];
+  for (let i = 0; i < points.length; i += 1) {
+    if (i === 0) {
+      result.push(shift(points[0], normals[0]));
+    } else if (i === edgeCount) {
+      result.push(shift(points[i], normals[i - 1]));
+    } else {
+      const dPrev: Point = [
+        points[i][0] - points[i - 1][0],
+        points[i][1] - points[i - 1][1],
+      ];
+      const dNext: Point = [
+        points[i + 1][0] - points[i][0],
+        points[i + 1][1] - points[i][1],
+      ];
+      const cross = dPrev[0] * dNext[1] - dPrev[1] * dNext[0];
+      if (Math.abs(cross) < 1e-9) {
+        result.push(shift(points[i], normals[i - 1]));
+      } else {
+        result.push(
+          lineIntersection(
+            shift(points[i - 1], normals[i - 1]),
+            dPrev,
+            shift(points[i], normals[i]),
+            dNext,
+          ),
+        );
+      }
+    }
+  }
+  return result;
+}
+
+function pointsClose(p1: Point, p2: Point): boolean {
+  return Math.hypot(p1[0] - p2[0], p1[1] - p2[1]) < 1e-9;
+}
+
+// Outward-offset corner where two borders' edges meet: intersects their
+// individually-offset lines. When the two edges are collinear there's no
+// unique intersection, so instead shift the point the edges actually share
+// (the corner hexagon's edge midpoint, where the original, pre-offset
+// border paths handed off from one color to the other) along the shared
+// normal -- this keeps the black/white split centered on that edge rather
+// than drifting toward whichever edge's far endpoint happened to be used.
+function cornerIntersection(
+  edgeA: [Point, Point],
+  edgeB: [Point, Point],
+  distance: number,
+  center: Point,
+): Point {
+  const nA = outwardNormal(edgeA[0], edgeA[1], center);
+  const nB = outwardNormal(edgeB[0], edgeB[1], center);
+  const dA: Point = [edgeA[1][0] - edgeA[0][0], edgeA[1][1] - edgeA[0][1]];
+  const dB: Point = [edgeB[1][0] - edgeB[0][0], edgeB[1][1] - edgeB[0][1]];
+  const cross = dA[0] * dB[1] - dA[1] * dB[0];
+  if (Math.abs(cross) < 1e-9) {
+    const shared =
+      pointsClose(edgeA[0], edgeB[0]) || pointsClose(edgeA[0], edgeB[1])
+        ? edgeA[0]
+        : edgeA[1];
+    return [shared[0] + nA[0] * distance, shared[1] + nA[1] * distance];
+  }
+  const pA: Point = [
+    edgeA[0][0] + nA[0] * distance,
+    edgeA[0][1] + nA[1] * distance,
+  ];
+  const pB: Point = [
+    edgeB[0][0] + nB[0] * distance,
+    edgeB[0][1] + nB[1] * distance,
+  ];
+  return lineIntersection(pA, dA, pB, dB);
+}
+
 function Borders() {
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const d = 0.5 * Math.sqrt(3);
 
-  const topBorderPoints = [];
-  const bottomBorderPoints = [];
-  const leftBorderPoints = [];
-  const rightBorderPoints = [];
-  bottomBorderPoints.push(`${(boardSize - 0.5) * d},${1.5 * boardSize + 0.25}`);
-  rightBorderPoints.push(`${(2 * boardSize - 0.5) * d},0.25`);
+  const topBorderPoints: Point[] = [];
+  const bottomBorderPoints: Point[] = [];
+  const leftBorderPoints: Point[] = [];
+  const rightBorderPoints: Point[] = [];
+  bottomBorderPoints.push([(boardSize - 0.5) * d, 1.5 * boardSize + 0.25]);
+  rightBorderPoints.push([(2 * boardSize - 0.5) * d, 0.25]);
   for (let i = 0; i < boardSize; i += 1) {
-    topBorderPoints.push(`${2 * i * d},0.5 ${(2 * i + 1) * d},0`);
+    topBorderPoints.push([2 * i * d, 0.5], [(2 * i + 1) * d, 0]);
     bottomBorderPoints.push(
-      `${(2 * i + boardSize) * d},${1.5 * boardSize + 0.5} ${
-        (2 * i + boardSize + 1) * d
-      },${1.5 * boardSize}`,
+      [(2 * i + boardSize) * d, 1.5 * boardSize + 0.5],
+      [(2 * i + boardSize + 1) * d, 1.5 * boardSize],
     );
-    leftBorderPoints.push(
-      `${i * d},${1.5 * i + 0.5} ${i * d},${1.5 * i + 1.5}`,
-    );
+    leftBorderPoints.push([i * d, 1.5 * i + 0.5], [i * d, 1.5 * i + 1.5]);
     rightBorderPoints.push(
-      `${(i + 2 * boardSize) * d},${1.5 * i + 0.5} ${(i + 2 * boardSize) * d},${
-        1.5 * i + 1.5
-      }`,
+      [(i + 2 * boardSize) * d, 1.5 * i + 0.5],
+      [(i + 2 * boardSize) * d, 1.5 * i + 1.5],
     );
   }
-  topBorderPoints.push(`${(2 * boardSize - 0.5) * d},0.25`);
-  leftBorderPoints.push(
-    `${(boardSize - 0.5) * d},${1.5 * (boardSize - 1) + 1.75}`,
-  );
+  topBorderPoints.push([(2 * boardSize - 0.5) * d, 0.25]);
+  leftBorderPoints.push([(boardSize - 0.5) * d, 1.5 * (boardSize - 1) + 1.75]);
+
+  const boardCenter: Point = [
+    ((3 * boardSize - 1) * d) / 2,
+    (1.5 * boardSize + 0.5) / 2,
+  ];
 
   // Corner points and clip normals used to trim each border's round end
   // caps. At the top-left and bottom-right corners the two borders meet at a
@@ -447,15 +572,88 @@ function Borders() {
   // and bottom-left corners the borders are actually collinear (the path
   // runs straight through), so the normal is that shared line direction
   // instead, which trims the round-cap bulge back to a flush cut rather than
-  // introducing a diagonal split that wasn't there before.
-  const topLeft: Point = [0, 0.5];
-  const topRight: Point = [(2 * boardSize - 0.5) * d, 0.25];
-  const bottomLeft: Point = [(boardSize - 0.5) * d, 1.5 * boardSize + 0.25];
-  const bottomRight: Point = [(3 * boardSize - 1) * d, 1.5 * boardSize];
+  // introducing a diagonal split that wasn't there before. The corner points
+  // themselves are computed as the outward-offset intersection of the two
+  // borders' edges, so the clip plane moves outward in step with the
+  // borders rather than staying pinned to the old, overlapping geometry.
+  const topLeft = cornerIntersection(
+    [topBorderPoints[0], topBorderPoints[1]],
+    [leftBorderPoints[0], leftBorderPoints[1]],
+    BORDER_OFFSET,
+    boardCenter,
+  );
+  const topRight = cornerIntersection(
+    [
+      topBorderPoints[topBorderPoints.length - 2],
+      topBorderPoints[topBorderPoints.length - 1],
+    ],
+    [rightBorderPoints[0], rightBorderPoints[1]],
+    BORDER_OFFSET,
+    boardCenter,
+  );
+  const bottomLeft = cornerIntersection(
+    [
+      leftBorderPoints[leftBorderPoints.length - 2],
+      leftBorderPoints[leftBorderPoints.length - 1],
+    ],
+    [bottomBorderPoints[0], bottomBorderPoints[1]],
+    BORDER_OFFSET,
+    boardCenter,
+  );
+  const bottomRight = cornerIntersection(
+    [
+      rightBorderPoints[rightBorderPoints.length - 2],
+      rightBorderPoints[rightBorderPoints.length - 1],
+    ],
+    [
+      bottomBorderPoints[bottomBorderPoints.length - 2],
+      bottomBorderPoints[bottomBorderPoints.length - 1],
+    ],
+    BORDER_OFFSET,
+    boardCenter,
+  );
   const nTopLeft: Point = [0.5, -d];
   const nTopRight: Point = [-d, -0.5];
   const nBottomLeft: Point = [d, 0.5];
   const nBottomRight: Point = [-0.5, d];
+
+  // Offset each border's interior points outward, then pin its two open
+  // ends to the corner points above (rather than the single-edge-normal
+  // shift offsetPolyline would otherwise use there). This keeps each
+  // border's drawn endpoint exactly on the clip plane used to trim its
+  // round cap, so the corner clipping doesn't cut the line back short of
+  // where it now needs to reach.
+  const offsetTopBorderPoints = offsetPolyline(
+    topBorderPoints,
+    BORDER_OFFSET,
+    boardCenter,
+  );
+  offsetTopBorderPoints[0] = topLeft;
+  offsetTopBorderPoints[offsetTopBorderPoints.length - 1] = topRight;
+
+  const offsetBottomBorderPoints = offsetPolyline(
+    bottomBorderPoints,
+    BORDER_OFFSET,
+    boardCenter,
+  );
+  offsetBottomBorderPoints[0] = bottomLeft;
+  offsetBottomBorderPoints[offsetBottomBorderPoints.length - 1] = bottomRight;
+
+  const offsetLeftBorderPoints = offsetPolyline(
+    leftBorderPoints,
+    BORDER_OFFSET,
+    boardCenter,
+  );
+  offsetLeftBorderPoints[0] = topLeft;
+  offsetLeftBorderPoints[offsetLeftBorderPoints.length - 1] = bottomLeft;
+
+  const offsetRightBorderPoints = offsetPolyline(
+    rightBorderPoints,
+    BORDER_OFFSET,
+    boardCenter,
+  );
+  offsetRightBorderPoints[0] = topRight;
+  offsetRightBorderPoints[offsetRightBorderPoints.length - 1] = bottomRight;
 
   const margin = 10;
   const boundingBox: Point[] = [
@@ -515,22 +713,22 @@ function Borders() {
         </clipPath>
       </defs>
       <polyline
-        points={leftBorderPoints.join(' ')}
+        points={pointsToString(offsetLeftBorderPoints)}
         stroke="white"
         clipPath="url(#borderClipLeft)"
       />
       <polyline
-        points={rightBorderPoints.join(' ')}
+        points={pointsToString(offsetRightBorderPoints)}
         stroke="white"
         clipPath="url(#borderClipRight)"
       />
       <polyline
-        points={topBorderPoints.join(' ')}
+        points={pointsToString(offsetTopBorderPoints)}
         stroke="black"
         clipPath="url(#borderClipTop)"
       />
       <polyline
-        points={bottomBorderPoints.join(' ')}
+        points={pointsToString(offsetBottomBorderPoints)}
         stroke="black"
         clipPath="url(#borderClipBottom)"
       />
