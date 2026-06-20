@@ -308,12 +308,13 @@ function Hexagon(props: HexagonProps) {
 
   return (
     <g onMouseEnter={onMouseEnter} onClick={onClick}>
+      <polygon className="Hexagon gray" points={points} transform={transform} />
       <polygon
         className={classnames('Hexagon', {
-          gray: hexGray,
           black: !hexGray && hexBlack,
           white: !hexGray && !hexBlack,
           partialOpacity: hexPartialOpacity,
+          invisible: hexGray,
         })}
         points={points}
         transform={transform}
