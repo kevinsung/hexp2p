@@ -292,26 +292,26 @@ function Hexagon(props: HexagonProps) {
   const translateY = 1 + 1.5 * row;
   const transform = `translate(${translateX} ${translateY})`;
   const points = `0,1 ${d},0.5 ${d},-0.5 0,-1 ${-d},-0.5 ${-d},0.5`;
+  const markerScale = INVERSE_GOLDEN_RATIO;
+  const markerPoints = `0,${markerScale} ${d * markerScale},${0.5 * markerScale} ${d * markerScale},${-0.5 * markerScale} 0,${-markerScale} ${-d * markerScale},${-0.5 * markerScale} ${-d * markerScale},${0.5 * markerScale}`;
 
-  // circle properties
-  let circleBlack;
-  let circlePartialOpacity;
-  let circleInvisible = false;
+  // hexagon fill properties
+  let hexBlack;
+  let hexGray = false;
+  let hexPartialOpacity = false;
   switch (boardState[row][col]) {
     case HexagonState.BLACK:
-      circleBlack = true;
-      circlePartialOpacity = false;
+      hexBlack = true;
       break;
     case HexagonState.WHITE:
-      circleBlack = false;
-      circlePartialOpacity = false;
+      hexBlack = false;
       break;
     case HexagonState.EMPTY:
       if (row === selectedRow && col === selectedCol) {
-        circleBlack = isBlackTurn;
-        circlePartialOpacity = true;
+        hexBlack = isBlackTurn;
+        hexPartialOpacity = true;
       } else {
-        circleInvisible = true;
+        hexGray = true;
       }
       break;
     // no default
@@ -340,23 +340,21 @@ function Hexagon(props: HexagonProps) {
 
   return (
     <g onMouseEnter={onMouseEnter} onClick={onClick}>
-      <polygon className="Hexagon gray" points={points} transform={transform} />
-      <circle
-        className={classnames(
-          'Circle',
-          { black: circleBlack },
-          { white: !circleBlack },
-          { partialOpacity: circlePartialOpacity },
-          { invisible: circleInvisible },
-        )}
-        r={INVERSE_GOLDEN_RATIO}
+      <polygon
+        className={classnames('Hexagon', {
+          gray: hexGray,
+          black: !hexGray && hexBlack,
+          white: !hexGray && !hexBlack,
+          partialOpacity: hexPartialOpacity,
+        })}
+        points={points}
         transform={transform}
       />
-      <circle
+      <polygon
         className={classnames('LastMoveMarker', 'gray', {
           invisible: markerInvisible,
         })}
-        r={INVERSE_GOLDEN_RATIO ** 2}
+        points={markerPoints}
         transform={transform}
       />
     </g>
@@ -586,6 +584,8 @@ function CoordinateLabels() {
 function ComponentMarker(props: ComponentMarkerProps) {
   const { component } = props;
   const d = 0.5 * Math.sqrt(3);
+  const scale = INVERSE_GOLDEN_RATIO ** 2;
+  const points = `0,${scale} ${d * scale},${0.5 * scale} ${d * scale},${-0.5 * scale} 0,${-scale} ${-d * scale},${-0.5 * scale} ${-d * scale},${0.5 * scale}`;
   const markers = [];
   for (let i = 0; i < component.length; i += 1) {
     const [row, col] = component[i];
@@ -593,9 +593,7 @@ function ComponentMarker(props: ComponentMarkerProps) {
     const translateY = 1 + 1.5 * row;
     const transform = `translate(${translateX} ${translateY})`;
     const key = `pieceMarker ${row} ${col}`;
-    markers.push(
-      <circle key={key} r={INVERSE_GOLDEN_RATIO ** 3} transform={transform} />,
-    );
+    markers.push(<polygon key={key} points={points} transform={transform} />);
   }
   return <g className="PieceMarker gray">{markers}</g>;
 }
