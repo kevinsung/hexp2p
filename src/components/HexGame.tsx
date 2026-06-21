@@ -189,12 +189,12 @@ function UndoDialog() {
   }, [undoRequestReceived, handleClick]);
 
   if (undoRequested) {
-    return <div>Undo request sent</div>;
+    return <div className="UndoDialogMessage">Undo request sent</div>;
   }
 
   if (undoRequestReceived) {
     return (
-      <div>
+      <div className="UndoDialogMessage">
         Opponent requested undo
         <button
           className="UndoDialogButton"
