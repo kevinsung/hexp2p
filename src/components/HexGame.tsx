@@ -1092,6 +1092,16 @@ function ConnectionStatus() {
   return <div className="ConnectionStatus">{status}</div>;
 }
 
+function PlayerHexagonIcon() {
+  const d = 0.5 * Math.sqrt(3);
+  const points = `0,1 ${d},0.5 ${d},-0.5 0,-1 ${-d},-0.5 ${-d},0.5`;
+  return (
+    <svg viewBox="-1 -1 2 2">
+      <polygon points={points} />
+    </svg>
+  );
+}
+
 function PlayerNames(props: PlayerNamesProps) {
   const { gameOver } = props;
   const isBlackTurn = useSelector(selectIsBlackTurn);
@@ -1104,6 +1114,7 @@ function PlayerNames(props: PlayerNamesProps) {
   return (
     <div className="PlayerNames">
       <div
+        aria-label={playerOneIsBlack ? 'Black' : 'White'}
         className={classnames(
           { black: playerOneIsBlack },
           { white: !playerOneIsBlack },
@@ -1112,9 +1123,10 @@ function PlayerNames(props: PlayerNamesProps) {
           },
         )}
       >
-        Player 1
+        <PlayerHexagonIcon />
       </div>
       <div
+        aria-label={playerOneIsBlack ? 'White' : 'Black'}
         className={classnames(
           { black: !playerOneIsBlack },
           { white: playerOneIsBlack },
@@ -1123,7 +1135,7 @@ function PlayerNames(props: PlayerNamesProps) {
           },
         )}
       >
-        Player 2
+        <PlayerHexagonIcon />
       </div>
     </div>
   );

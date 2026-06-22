@@ -286,14 +286,27 @@ a:hover {
 }
 
 .PlayerNames {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
   background-color: #808080;
   padding: 6px 6px;
   border-radius: 10px;
-  font-size: 1.8rem;
 }
 
 .PlayerNames > div {
   padding: 4px;
+}
+
+.PlayerNames svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+.PlayerNames svg polygon {
+  stroke: none;
 }
 
 // Hex game: top panel
@@ -456,7 +469,6 @@ a:hover {
     font-size: 1.1rem;
   }
 
-  .PlayerNames,
   .WinnerAnnouncement,
   .UndoDialogMessage {
     font-size: 1.4rem;
