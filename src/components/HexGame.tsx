@@ -762,17 +762,29 @@ function CoordinateLabels(props: CoordinateLabelsProps) {
 
     const colX = 2 * i * d;
     const colY = -0.05;
-    const rowX = i * d - leftLabelOffset;
-    const rowY = 1.5 * i + 1.2;
+    // rowPosition/rowPerp are the row's raw axis positions (matching
+    // Hexagon's translateY and the slant-following left edge); rowBaselineNudge
+    // and leftLabelOffset are rendering-specific compensations (default SVG
+    // baseline, and anchor="start" digit width) that only apply when a value
+    // is used as a y coordinate or with anchor="start", respectively.
+    const rowPosition = 1.5 * i + 1;
+    const rowPerp = i * d;
+    const rowBaselineNudge = 0.2;
+    const rowMargin = 0.7;
+    const rowX = rowPerp - leftLabelOffset;
+    const rowY = rowPosition + rowBaselineNudge;
 
     // Rotating the board 90 degrees maps model-space point (x, y) to
     // (y, contentWidth - x); labels are repositioned with this same
-    // transform but rendered unrotated so the glyphs stay upright.
+    // transform but rendered unrotated so the glyphs stay upright. The row
+    // label uses textAnchor="middle" when rotated, so it needs neither the
+    // baseline nudge (only relevant to y coordinates) nor the digit-width
+    // compensation (only relevant to anchor="start").
     const [colLabelX, colLabelY] = rotated
       ? [colY, contentWidth - colX]
       : [colX, colY];
     const [rowLabelX, rowLabelY] = rotated
-      ? [rowY, contentWidth - rowX]
+      ? [rowPosition, contentWidth - rowPerp + rowMargin]
       : [rowX, rowY];
 
     coordinateLabels.push(
