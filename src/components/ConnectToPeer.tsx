@@ -40,7 +40,6 @@ export default function ConnectToPeer() {
         <input
           type="text"
           id="hostCode"
-          size={32}
           value={hostCode}
           onChange={(event) => setHostCode(event.target.value)}
           required

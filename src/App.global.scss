@@ -86,11 +86,13 @@ a:hover {
 
 .Home img {
   margin: 24px;
+  width: min(240px, 60vw);
+  height: auto;
 }
 
 .Home button {
   margin: 12px;
-  width: 240px;
+  width: min(240px, 80vw);
 }
 
 // Hex settings
@@ -207,7 +209,13 @@ a:hover {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  width: 200px;
+  width: 100%;
+  max-width: 200px;
+}
+
+.ConnectToPeer input {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ConnectToPeer button {
@@ -225,17 +233,30 @@ a:hover {
 .HexGame {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
   width: calc(100vw - 24px);
   height: calc(100vh - 24px);
   font-size: 1.3rem;
 }
 
-// subtract margins, top panel, and bottom panel
+.HexGameTopPanel,
+.HexGameBottomPanel {
+  flex: 0 0 auto;
+}
+
+.HexBoardContainer {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .HexBoard {
-  height: calc(100vh - 24px - 98px - 45px);
-  max-width: calc(100vw - 24px);
+  width: 100%;
+  height: 100%;
 }
 
 .Hexagon {
@@ -280,13 +301,17 @@ a:hover {
 .HexGameTopPanel {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: flex-start;
+  gap: 12px;
   width: 100%;
 }
 
 .TopPanelButtons {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
 }
 
@@ -322,20 +347,26 @@ a:hover {
 .HexGameBottomPanel {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: flex-end;
+  gap: 8px;
   width: 100%;
 }
 
 .MoveHistoryButtons {
   flex: 2;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
 }
 
 .MoveHistoryButtons > button {
-  margin-left: 6px;
-  margin-right: 6px;
-  width: 72px;
+  flex: 1 1 48px;
+  min-width: 0;
+  margin-left: 4px;
+  margin-right: 4px;
+  padding: 10px 8px;
 }
 
 .ConnectionStatus {
@@ -374,9 +405,12 @@ a:hover {
   color: white;
   border: 2px solid #808080;
   border-radius: 10px;
-  padding: 24px 32px;
+  padding: 24px 16px;
+  box-sizing: border-box;
+  width: calc(100vw - 32px);
   max-width: 420px;
   max-height: 80vh;
+  overflow-x: hidden;
   overflow-y: auto;
   font-size: 1.1rem;
   line-height: 1.5;
@@ -393,6 +427,7 @@ a:hover {
 
 .ResignDialogActions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 16px;
   margin-top: 16px;
@@ -412,4 +447,26 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+// Small phones: shrink the values that genuinely don't fit at desktop sizes
+@media (max-width: 400px) {
+  body,
+  button {
+    font-size: 1.1rem;
+  }
+
+  .PlayerNames,
+  .WinnerAnnouncement,
+  .UndoDialogMessage {
+    font-size: 1.4rem;
+  }
+
+  .Modal {
+    padding: 16px 12px;
+  }
+
+  .Modal h1 {
+    margin: 0 8px 12px;
+  }
 }

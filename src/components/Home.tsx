@@ -42,7 +42,7 @@ export default function Home() {
   return (
     <div className="Home">
       <div>
-        <img width="240px" alt="icon" src={icon} />
+        <img alt="icon" src={icon} />
       </div>
       <button
         type="button"

@@ -836,7 +836,7 @@ function HexBoard(props: HexBoardProps) {
     : undefined;
 
   return (
-    <div className="HexBoard">
+    <div className="HexBoardContainer">
       <svg className="HexBoard" viewBox={viewBox}>
         <g transform={gridTransform}>
           <Hexagons boardState={boardState} disabled={disabled} />
