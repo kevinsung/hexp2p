@@ -70,6 +70,10 @@ interface ComponentMarkerProps {
   component: Array<Array<number>>;
 }
 
+interface CoordinateLabelsProps {
+  rotated: boolean;
+}
+
 interface WinnerAnnouncementProps {
   boardState: Array<Array<number>>;
   winningComponent: Array<Array<number>>;
@@ -109,6 +113,22 @@ function isHotkeyEvent(event: KeyboardEvent): boolean {
     return false;
   }
   return true;
+}
+
+// Tracks whether the viewport is taller than it is wide, so the board can be
+// rotated 90 degrees to make better use of the available space.
+function useIsPortraitViewport(): boolean {
+  const [isPortrait, setIsPortrait] = useState(
+    () => window.innerHeight > window.innerWidth,
+  );
+  useEffect(() => {
+    const onResize = () => {
+      setIsPortrait(window.innerHeight > window.innerWidth);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return isPortrait;
 }
 
 function NewGameButton() {
@@ -727,23 +747,52 @@ function Borders() {
   );
 }
 
-function CoordinateLabels() {
+function CoordinateLabels(props: CoordinateLabelsProps) {
+  const { rotated } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const d = 0.5 * Math.sqrt(3);
+  const contentWidth = (3 * boardSize - 1) * d;
 
   const coordinateLabels = [];
   for (let i = 0; i < boardSize; i += 1) {
     const topLabelKey = `coordinateLabel ${COORDINATE_LETTERS[i]}`;
     const leftLabelKey = `coordinateLabel ${i}`;
     const leftLabelOffset = i + 1 < 10 ? 0.7 : 0.95;
+
+    const colX = 2 * i * d;
+    const colY = -0.05;
+    const rowX = i * d - leftLabelOffset;
+    const rowY = 1.5 * i + 1.2;
+
+    // Rotating the board 90 degrees maps model-space point (x, y) to
+    // (y, contentWidth - x); labels are repositioned with this same
+    // transform but rendered unrotated so the glyphs stay upright.
+    const [colLabelX, colLabelY] = rotated
+      ? [colY, contentWidth - colX]
+      : [colX, colY];
+    const [rowLabelX, rowLabelY] = rotated
+      ? [rowY, contentWidth - rowX]
+      : [rowX, rowY];
+
     coordinateLabels.push(
-      <text key={topLabelKey} x={2 * i * d} y={-0.05}>
+      <text
+        key={topLabelKey}
+        x={colLabelX}
+        y={colLabelY}
+        textAnchor={rotated ? 'end' : undefined}
+        dominantBaseline={rotated ? 'central' : undefined}
+      >
         {COORDINATE_LETTERS[i]}
       </text>,
     );
     coordinateLabels.push(
-      <text key={leftLabelKey} x={i * d - leftLabelOffset} y={1.5 * i + 1.2}>
+      <text
+        key={leftLabelKey}
+        x={rowLabelX}
+        y={rowLabelY}
+        textAnchor={rotated ? 'middle' : undefined}
+      >
         {i + 1}
       </text>,
     );
@@ -773,20 +822,30 @@ function HexBoard(props: HexBoardProps) {
   const { boardState, winningComponent, disabled } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
+  const rotated = useIsPortraitViewport();
 
   const d = 0.5 * Math.sqrt(3);
   const margin = 1;
-  const width = (3 * boardSize - 1) * d + 2 * margin;
-  const height = 1.5 * boardSize + 0.5 + 2 * margin;
+  const contentWidth = (3 * boardSize - 1) * d;
+  const contentHeight = 1.5 * boardSize + 0.5;
+  const width = (rotated ? contentHeight : contentWidth) + 2 * margin;
+  const height = (rotated ? contentWidth : contentHeight) + 2 * margin;
   const viewBox = `${-margin} ${-margin} ${width} ${height}`;
+  const gridTransform = rotated
+    ? `matrix(0,-1,1,0,0,${contentWidth})`
+    : undefined;
 
   return (
     <div className="HexBoard">
       <svg className="HexBoard" viewBox={viewBox}>
-        <Hexagons boardState={boardState} disabled={disabled} />
-        <Borders />
-        <CoordinateLabels />
-        <ComponentMarker component={winningComponent} />
+        <g transform={gridTransform}>
+          <Hexagons boardState={boardState} disabled={disabled} />
+          <Borders />
+        </g>
+        <CoordinateLabels rotated={rotated} />
+        <g transform={gridTransform}>
+          <ComponentMarker component={winningComponent} />
+        </g>
       </svg>
     </div>
   );
