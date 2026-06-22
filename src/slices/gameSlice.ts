@@ -84,6 +84,12 @@ const gameSlice = createSlice({
       const { moveHistory } = state;
       moveHistory.pop();
       state.moveNumber -= 1;
+      // Undoing back through the opening move should also re-open the swap
+      // decision, rather than leaving it permanently locked in.
+      if (moveHistory.length === 0) {
+        state.swapPhaseComplete = false;
+        state.swapped = false;
+      }
     },
     playerResigned: (state, action) => {
       const black = action.payload;

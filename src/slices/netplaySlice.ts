@@ -56,11 +56,11 @@ const netplaySlice = createSlice({
       const isBlack = action.payload;
       state.isBlack = isBlack;
     },
-    undoRequestSent: (state) => {
-      state.undoRequestSent = true;
+    undoRequestSent: (state, action: { payload: number }) => {
+      state.undoRequestSent = action.payload;
     },
-    undoRequestReceived: (state) => {
-      state.undoRequestReceived = true;
+    undoRequestReceived: (state, action: { payload: number }) => {
+      state.undoRequestReceived = action.payload;
     },
     undoRequestFulfilled: (state) => {
       state.undoRequestSent = false;

@@ -49,6 +49,8 @@ export interface NetplayState {
   hosting: boolean;
   hostCode: string;
   isBlack: boolean;
-  undoRequestSent: boolean;
-  undoRequestReceived: boolean;
+  // false when no request is pending; otherwise the moveHistory.length the
+  // request/acceptance applies to, so stale messages can be detected.
+  undoRequestSent: number | false;
+  undoRequestReceived: number | false;
 }

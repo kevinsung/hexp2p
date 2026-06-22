@@ -187,12 +187,17 @@ function UndoDialog() {
   const dispatch = useDispatch();
   const { undoRequestSent: undoRequested, undoRequestReceived } =
     useSelector(selectNetplayState);
+  const { moveHistory } = useSelector(selectGameState);
 
   const handleClick = useCallback(() => {
-    sendAcceptUndo();
     dispatch(undoRequestFulfilled());
-    dispatch(undoMove());
-  }, [dispatch]);
+    // Re-check that our state hasn't moved on since the request arrived (e.g.
+    // we made our own move while the dialog was showing) before accepting.
+    if (undoRequestReceived === moveHistory.length) {
+      sendAcceptUndo(undoRequestReceived);
+      dispatch(undoMove());
+    }
+  }, [dispatch, undoRequestReceived, moveHistory.length]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -957,12 +962,12 @@ function UndoButton(props: UndoButtonProps) {
 
   const handleClick = useCallback(() => {
     if (netplayActive) {
-      sendRequestUndo();
-      dispatch(undoRequestSent());
+      sendRequestUndo(moveHistory.length);
+      dispatch(undoRequestSent(moveHistory.length));
     } else {
       dispatch(undoMove());
     }
-  }, [dispatch, netplayActive]);
+  }, [dispatch, netplayActive, moveHistory.length]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

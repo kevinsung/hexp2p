@@ -52,8 +52,11 @@ interface MessageData {
   isBlack?: boolean;
   move?: Array<number>;
   swap?: boolean;
-  requestUndo?: boolean;
-  acceptUndo?: boolean;
+  // The moveHistory.length the request/acceptance applies to, so a message
+  // that crosses with a move in transit can be detected as stale and ignored
+  // rather than applied against the wrong game state.
+  requestUndo?: number;
+  acceptUndo?: number;
   resign?: boolean;
 }
 
@@ -91,14 +94,26 @@ function handleMessage(messageData: MessageData) {
     store.dispatch(undoRequestFulfilled());
   }
 
-  if (requestUndo) {
-    store.dispatch(undoRequestReceived());
+  if (typeof requestUndo === 'number') {
+    // Ignore a request that no longer applies to the current game state (it
+    // crossed in transit with a move). The requester's own pending flag will
+    // self-clear when that move reaches them, via the `move`/`swap` handling
+    // above.
+    const { moveHistory } = selectGameState(store.getState());
+    if (requestUndo === moveHistory.length) {
+      store.dispatch(undoRequestReceived(requestUndo));
+    }
   }
 
-  if (acceptUndo) {
+  if (typeof acceptUndo === 'number') {
     const { undoRequestSent } = selectNetplayState(store.getState());
-    if (undoRequestSent) {
-      store.dispatch(undoMove());
+    if (undoRequestSent === acceptUndo) {
+      const { moveHistory } = selectGameState(store.getState());
+      // Only apply the undo if our state hasn't moved on since the request
+      // was sent; otherwise just clear the pending flag without undoing.
+      if (acceptUndo === moveHistory.length) {
+        store.dispatch(undoMove());
+      }
       store.dispatch(undoRequestFulfilled());
     }
   }
@@ -149,7 +164,13 @@ function sendMessage(data: MessageData) {
     return;
   }
   const messagesRef = ref(database, `rooms/${roomCode}/messages`);
-  push(messagesRef, { uid, data, ts: serverTimestamp() });
+  push(messagesRef, { uid, data, ts: serverTimestamp() }).catch(() => {
+    store.dispatch(
+      connectionError(
+        'Failed to send to your opponent. Check your network connection.',
+      ),
+    );
+  });
 }
 
 export function sendSwap(swap: boolean) {
@@ -160,12 +181,12 @@ export function sendMove(move: Array<number>) {
   sendMessage({ move });
 }
 
-export function sendRequestUndo() {
-  sendMessage({ requestUndo: true });
+export function sendRequestUndo(atMoveCount: number) {
+  sendMessage({ requestUndo: atMoveCount });
 }
 
-export function sendAcceptUndo() {
-  sendMessage({ acceptUndo: true });
+export function sendAcceptUndo(atMoveCount: number) {
+  sendMessage({ acceptUndo: atMoveCount });
 }
 
 export function sendSettings() {
