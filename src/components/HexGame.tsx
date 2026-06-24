@@ -79,7 +79,7 @@ interface WinnerAnnouncementProps {
   winningComponent: Array<Array<number>>;
 }
 
-interface PlayerNamesProps {
+interface TurnIndicatorProps {
   gameOver: boolean;
 }
 
@@ -1107,37 +1107,17 @@ function PlayerHexagonIcon() {
   );
 }
 
-function PlayerNames(props: PlayerNamesProps) {
+function TurnIndicator(props: TurnIndicatorProps) {
   const { gameOver } = props;
   const isBlackTurn = useSelector(selectIsBlackTurn);
-  const {
-    active: netplayActive,
-    hosting,
-    isBlack,
-  } = useSelector(selectNetplayState);
-  const playerOneIsBlack = !netplayActive || hosting === isBlack;
   return (
-    <div className="PlayerNames">
+    <div className="TurnIndicator">
       <div
-        aria-label={playerOneIsBlack ? 'Black' : 'White'}
+        aria-label={isBlackTurn ? 'Black' : 'White'}
         className={classnames(
-          { black: playerOneIsBlack },
-          { white: !playerOneIsBlack },
-          {
-            partialOpacity: playerOneIsBlack !== isBlackTurn || gameOver,
-          },
-        )}
-      >
-        <PlayerHexagonIcon />
-      </div>
-      <div
-        aria-label={playerOneIsBlack ? 'White' : 'Black'}
-        className={classnames(
-          { black: !playerOneIsBlack },
-          { white: playerOneIsBlack },
-          {
-            partialOpacity: playerOneIsBlack === isBlackTurn || gameOver,
-          },
+          { black: isBlackTurn },
+          { white: !isBlackTurn },
+          { partialOpacity: gameOver },
         )}
       >
         <PlayerHexagonIcon />
@@ -1188,7 +1168,7 @@ export default function HexGame() {
           <UndoDialog />
           <DisconnectDialog />
         </div>
-        <PlayerNames gameOver={gameOver} />
+        <TurnIndicator gameOver={gameOver} />
       </div>
       <HexBoard
         boardState={boardState}

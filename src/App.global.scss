@@ -285,27 +285,25 @@ a:hover {
   stroke-width: 0.08;
 }
 
-.PlayerNames {
+.TurnIndicator {
   display: flex;
-  flex-direction: row;
   justify-content: center;
-  gap: 12px;
   background-color: #808080;
   padding: 6px 6px;
   border-radius: 10px;
 }
 
-.PlayerNames > div {
+.TurnIndicator > div {
   padding: 4px;
 }
 
-.PlayerNames svg {
+.TurnIndicator svg {
   display: block;
   width: 28px;
   height: 28px;
 }
 
-.PlayerNames svg polygon {
+.TurnIndicator svg polygon {
   stroke: none;
 }
 
