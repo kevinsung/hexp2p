@@ -459,3 +459,53 @@ a:hover {
     margin: 0 8px 12px;
   }
 }
+
+// Small screens: move the move-history nav buttons beside the board instead
+// of letting them wrap below it, which used to squeeze the board vertically.
+@media (max-width: 700px) {
+  .HexGame {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto 1fr auto auto;
+    grid-template-areas:
+      'top top'
+      'board moveHistory'
+      'connectionStatus .'
+      'actionButtons .';
+    align-items: stretch;
+  }
+
+  .HexGameTopPanel {
+    grid-area: top;
+  }
+
+  .HexBoardContainer {
+    grid-area: board;
+  }
+
+  .HexGameBottomPanel {
+    display: contents;
+  }
+
+  .MoveHistoryButtons {
+    grid-area: moveHistory;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    flex: none;
+    gap: 6px;
+  }
+
+  .MoveHistoryButtons > button {
+    flex: none;
+    width: 100%;
+    margin: 0;
+  }
+
+  .ConnectionStatus {
+    grid-area: connectionStatus;
+  }
+
+  .ActionButtons {
+    grid-area: actionButtons;
+  }
+}
