@@ -59,6 +59,9 @@ interface HexagonProps {
   pendingMove: Move | null;
   onRequestMove: (move: Move) => void;
   onCommitMove: (move: Move) => void;
+  pendingSwap: boolean;
+  onRequestSwap: () => void;
+  onCommitSwap: () => void;
 }
 
 interface HexagonsProps {
@@ -68,6 +71,9 @@ interface HexagonsProps {
   pendingMove: Move | null;
   onRequestMove: (move: Move) => void;
   onCommitMove: (move: Move) => void;
+  pendingSwap: boolean;
+  onRequestSwap: () => void;
+  onCommitSwap: () => void;
 }
 
 interface HexBoardProps {
@@ -78,6 +84,9 @@ interface HexBoardProps {
   pendingMove: Move | null;
   onRequestMove: (move: Move) => void;
   onCommitMove: (move: Move) => void;
+  pendingSwap: boolean;
+  onRequestSwap: () => void;
+  onCommitSwap: () => void;
 }
 
 interface ComponentMarkerProps {
@@ -107,6 +116,12 @@ interface ResignButtonProps {
 
 interface ConfirmMoveDialogProps {
   pendingMove: Move | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+interface ConfirmSwapDialogProps {
+  pendingSwap: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -183,6 +198,21 @@ function useCommitMove(): (move: Move) => void {
     },
     [dispatch, netplayActive, swapPhaseActive],
   );
+}
+
+// Commits a swap: handles the netplay messaging that applies regardless of
+// whether the swap was made directly or via the confirm-move dialog.
+function useCommitSwap(): () => void {
+  const dispatch = useDispatch();
+  const { active: netplayActive } = useSelector(selectNetplayState);
+
+  return useCallback(() => {
+    dispatch(swapChosen(true));
+    if (netplayActive) {
+      sendSwap(true);
+      dispatch(undoRequestFulfilled());
+    }
+  }, [dispatch, netplayActive]);
 }
 
 function NewGameButton() {
@@ -324,9 +354,11 @@ function Hexagon(props: HexagonProps) {
     pendingMove,
     onRequestMove,
     onCommitMove,
+    pendingSwap,
+    onRequestSwap,
+    onCommitSwap,
   } = props;
   const dispatch = useDispatch();
-  const { active: netplayActive } = useSelector(selectNetplayState);
   const {
     moveHistory,
     moveNumber,
@@ -379,9 +411,10 @@ function Hexagon(props: HexagonProps) {
     // no default
   }
 
-  if (isSwappablePiece && isHovered) {
+  const isPendingSwap = isSwappablePiece && pendingSwap;
+  if (isSwappablePiece && (isHovered || isPendingSwap)) {
     hexBlack = !hexBlack;
-    hexPartialOpacity = true;
+    hexPartialOpacity = !isPendingSwap;
   }
 
   const onMouseEnter = () => {
@@ -395,10 +428,10 @@ function Hexagon(props: HexagonProps) {
       return;
     }
     if (isSwappablePiece) {
-      dispatch(swapChosen(true));
-      if (netplayActive) {
-        sendSwap(true);
-        dispatch(undoRequestFulfilled());
+      if (confirmMoves) {
+        onRequestSwap();
+      } else {
+        onCommitSwap();
       }
       return;
     }
@@ -457,6 +490,9 @@ function Hexagons(props: HexagonsProps) {
     pendingMove,
     onRequestMove,
     onCommitMove,
+    pendingSwap,
+    onRequestSwap,
+    onCommitSwap,
   } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
@@ -477,6 +513,9 @@ function Hexagons(props: HexagonsProps) {
           pendingMove={pendingMove}
           onRequestMove={onRequestMove}
           onCommitMove={onCommitMove}
+          pendingSwap={pendingSwap}
+          onRequestSwap={onRequestSwap}
+          onCommitSwap={onCommitSwap}
         />,
       );
     }
@@ -940,6 +979,9 @@ function HexBoard(props: HexBoardProps) {
     pendingMove,
     onRequestMove,
     onCommitMove,
+    pendingSwap,
+    onRequestSwap,
+    onCommitSwap,
   } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
@@ -967,6 +1009,9 @@ function HexBoard(props: HexBoardProps) {
             pendingMove={pendingMove}
             onRequestMove={onRequestMove}
             onCommitMove={onCommitMove}
+            pendingSwap={pendingSwap}
+            onRequestSwap={onRequestSwap}
+            onCommitSwap={onCommitSwap}
           />
           <Borders />
         </g>
@@ -1214,6 +1259,28 @@ function ConfirmMoveDialog(props: ConfirmMoveDialogProps) {
   );
 }
 
+function ConfirmSwapDialog(props: ConfirmSwapDialogProps) {
+  const { pendingSwap, onConfirm, onCancel } = props;
+
+  if (!pendingSwap) {
+    return null;
+  }
+
+  return (
+    <Modal title="Confirm swap" onClose={onCancel}>
+      <p>Swap sides?</p>
+      <div className="ResignDialogActions">
+        <button type="button" onClick={onConfirm}>
+          Confirm
+        </button>
+        <button type="button" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 function ConnectionStatus() {
   const {
     active: netplayActive,
@@ -1288,8 +1355,10 @@ export default function HexGame() {
   const boardState = useSelector(selectBoardState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
   const commitMove = useCommitMove();
+  const commitSwap = useCommitSwap();
   const [confirmMoves, setConfirmMoves] = useState(false);
   const [pendingMove, setPendingMove] = useState<Move | null>(null);
+  const [pendingSwap, setPendingSwap] = useState(false);
 
   const winningComponent = getWinningConnectedComponent(boardState);
   const gameOver = Boolean(resignationState) || winningComponent.length > 0;
@@ -1310,6 +1379,7 @@ export default function HexGame() {
   useEffect(() => {
     if (disabled) {
       setPendingMove(null);
+      setPendingSwap(false);
     }
   }, [disabled]);
 
@@ -1320,6 +1390,11 @@ export default function HexGame() {
     },
     [commitMove],
   );
+
+  const onCommitSwap = useCallback(() => {
+    commitSwap();
+    setPendingSwap(false);
+  }, [commitSwap]);
 
   return (
     <div className="HexGame">
@@ -1345,6 +1420,11 @@ export default function HexGame() {
         onConfirm={() => pendingMove && onCommitMove(pendingMove)}
         onCancel={() => setPendingMove(null)}
       />
+      <ConfirmSwapDialog
+        pendingSwap={pendingSwap}
+        onConfirm={onCommitSwap}
+        onCancel={() => setPendingSwap(false)}
+      />
       <HexBoard
         boardState={boardState}
         winningComponent={winningComponent}
@@ -1353,6 +1433,9 @@ export default function HexGame() {
         pendingMove={pendingMove}
         onRequestMove={setPendingMove}
         onCommitMove={onCommitMove}
+        pendingSwap={pendingSwap}
+        onRequestSwap={() => setPendingSwap(true)}
+        onCommitSwap={onCommitSwap}
       />
       <div className="HexGameBottomPanel">
         <ConnectionStatus />
