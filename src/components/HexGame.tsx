@@ -1185,8 +1185,8 @@ export default function HexGame() {
           <RulesButton />
           <NewGameButton />
         </div>
-        <TurnIndicator gameOver={gameOver} />
       </div>
+      <TurnIndicator gameOver={gameOver} />
       <WinnerAnnouncement
         boardState={boardState}
         winningComponent={winningComponent}
