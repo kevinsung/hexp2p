@@ -17,7 +17,12 @@ import React, { useState } from 'react';
 import Modal from './Modal';
 import '../App.global.scss';
 
-export default function RulesButton() {
+interface RulesButtonProps {
+  transparent?: boolean;
+}
+
+export default function RulesButton(props: RulesButtonProps) {
+  const { transparent = false } = props;
   const [open, setOpen] = useState(false);
 
   return (
@@ -26,7 +31,12 @@ export default function RulesButton() {
         Rules
       </button>
       {open && (
-        <Modal title="How to Play Hex" wide onClose={() => setOpen(false)}>
+        <Modal
+          title="How to Play Hex"
+          wide
+          transparent={transparent}
+          onClose={() => setOpen(false)}
+        >
           <p>
             <strong>Goal:</strong> Be the first to link your two sides of the
             board with an unbroken chain of your stones.
@@ -54,3 +64,7 @@ export default function RulesButton() {
     </>
   );
 }
+
+RulesButton.defaultProps = {
+  transparent: false,
+};

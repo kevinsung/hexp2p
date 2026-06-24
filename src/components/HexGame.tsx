@@ -229,7 +229,11 @@ function NewGameButton() {
         New game
       </button>
       {settingsOpen && (
-        <Modal title="Settings" onClose={() => setSettingsOpen(false)}>
+        <Modal
+          title="Settings"
+          transparent
+          onClose={() => setSettingsOpen(false)}
+        >
           <HexSettings
             onStartHosting={() => setSettingsOpen(false)}
             onSubmitted={() => setSettingsOpen(false)}
@@ -275,7 +279,7 @@ function WinnerAnnouncement(props: WinnerAnnouncementProps) {
   }
 
   return (
-    <Modal title="Game over" onClose={() => setDismissed(true)}>
+    <Modal title="Game over" transparent onClose={() => setDismissed(true)}>
       <p>{message}</p>
     </Modal>
   );
@@ -322,7 +326,11 @@ function UndoDialog() {
 
   if (undoRequested) {
     return (
-      <Modal title="Undo request" onClose={() => setDismissed(true)}>
+      <Modal
+        title="Undo request"
+        transparent
+        onClose={() => setDismissed(true)}
+      >
         <p>Undo request sent</p>
       </Modal>
     );
@@ -330,7 +338,11 @@ function UndoDialog() {
 
   if (undoRequestReceived) {
     return (
-      <Modal title="Undo request" onClose={() => setDismissed(true)}>
+      <Modal
+        title="Undo request"
+        transparent
+        onClose={() => setDismissed(true)}
+      >
         <p>Opponent requested undo</p>
         <div className="ResignDialogActions">
           <button type="button" onClick={handleClick}>
@@ -1184,7 +1196,11 @@ function ResignButton(props: ResignButtonProps) {
         Resign (R)
       </button>
       {confirmOpen && (
-        <Modal title="Resign?" onClose={() => setConfirmOpen(false)}>
+        <Modal
+          title="Resign?"
+          transparent
+          onClose={() => setConfirmOpen(false)}
+        >
           <p>Are you sure you want to resign?</p>
           <div className="ResignDialogActions">
             <button
@@ -1220,7 +1236,7 @@ function DisconnectDialog() {
   };
 
   return (
-    <Modal title="Opponent disconnected" onClose={continueLocally}>
+    <Modal title="Opponent disconnected" transparent onClose={continueLocally}>
       <p>Your opponent has disconnected. The online game has ended.</p>
       <div className="ResignDialogActions">
         <Link to="/" tabIndex={-1}>
@@ -1245,7 +1261,7 @@ function ConfirmMoveDialog(props: ConfirmMoveDialogProps) {
   const label = `${COORDINATE_LETTERS[col]}${row + 1}`;
 
   return (
-    <Modal title="Confirm move" onClose={onCancel}>
+    <Modal title="Confirm move" transparent onClose={onCancel}>
       <p>Move at {label}?</p>
       <div className="ResignDialogActions">
         <button type="button" onClick={onConfirm}>
@@ -1267,7 +1283,7 @@ function ConfirmSwapDialog(props: ConfirmSwapDialogProps) {
   }
 
   return (
-    <Modal title="Confirm swap" onClose={onCancel}>
+    <Modal title="Confirm swap" transparent onClose={onCancel}>
       <p>Swap sides?</p>
       <div className="ResignDialogActions">
         <button type="button" onClick={onConfirm}>
@@ -1403,7 +1419,7 @@ export default function HexGame() {
           <Link to="/" tabIndex={-1}>
             <button type="button">Home</button>
           </Link>
-          <RulesButton />
+          <RulesButton transparent />
           <NewGameButton />
         </div>
       </div>

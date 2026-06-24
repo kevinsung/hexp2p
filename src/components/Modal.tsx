@@ -20,12 +20,13 @@ import '../App.global.scss';
 interface ModalProps {
   title: string;
   wide?: boolean;
+  transparent?: boolean;
   onClose: () => void;
   children: React.ReactNode;
 }
 
 export default function Modal(props: ModalProps) {
-  const { title, wide = false, onClose, children } = props;
+  const { title, wide = false, transparent = false, onClose, children } = props;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -47,7 +48,12 @@ export default function Modal(props: ModalProps) {
         }
       }}
     >
-      <div className={classnames('Modal', { ModalWide: wide })}>
+      <div
+        className={classnames('Modal', {
+          ModalWide: wide,
+          ModalTransparent: transparent,
+        })}
+      >
         <button
           type="button"
           className="ModalClose"
@@ -65,4 +71,5 @@ export default function Modal(props: ModalProps) {
 
 Modal.defaultProps = {
   wide: false,
+  transparent: false,
 };
