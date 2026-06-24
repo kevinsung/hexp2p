@@ -48,22 +48,36 @@ import Modal from './Modal';
 import HexSettings from './HexSettings';
 import '../App.global.scss';
 
+type Move = [number, number];
+
 interface HexagonProps {
   boardState: Array<Array<number>>;
   row: number;
   col: number;
   disabled: boolean;
+  confirmMoves: boolean;
+  pendingMove: Move | null;
+  onRequestMove: (move: Move) => void;
+  onCommitMove: (move: Move) => void;
 }
 
 interface HexagonsProps {
   boardState: Array<Array<number>>;
   disabled: boolean;
+  confirmMoves: boolean;
+  pendingMove: Move | null;
+  onRequestMove: (move: Move) => void;
+  onCommitMove: (move: Move) => void;
 }
 
 interface HexBoardProps {
   boardState: Array<Array<number>>;
   winningComponent: Array<Array<number>>;
   disabled: boolean;
+  confirmMoves: boolean;
+  pendingMove: Move | null;
+  onRequestMove: (move: Move) => void;
+  onCommitMove: (move: Move) => void;
 }
 
 interface ComponentMarkerProps {
@@ -89,6 +103,17 @@ interface UndoButtonProps {
 
 interface ResignButtonProps {
   disabled: boolean;
+}
+
+interface ConfirmMoveDialogProps {
+  pendingMove: Move | null;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+interface ConfirmMoveToggleProps {
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
 }
 
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
@@ -129,6 +154,35 @@ function useIsPortraitViewport(): boolean {
     return () => window.removeEventListener('resize', onResize);
   }, []);
   return isPortrait;
+}
+
+// Commits a move: handles the swap-phase bookkeeping and netplay messaging
+// that apply regardless of whether the move was made directly or via the
+// confirm-move dialog.
+function useCommitMove(): (move: Move) => void {
+  const dispatch = useDispatch();
+  const { active: netplayActive } = useSelector(selectNetplayState);
+  const { moveNumber, settings, swapPhaseComplete } =
+    useSelector(selectGameState);
+  const { useSwapRule } = settings;
+  const swapPhaseActive = useSwapRule && !swapPhaseComplete && moveNumber === 1;
+
+  return useCallback(
+    (move: Move) => {
+      if (swapPhaseActive) {
+        dispatch(swapChosen(false));
+        if (netplayActive) {
+          sendSwap(false);
+        }
+      }
+      dispatch(moveMade(move));
+      if (netplayActive) {
+        sendMove(move);
+        dispatch(undoRequestFulfilled());
+      }
+    },
+    [dispatch, netplayActive, swapPhaseActive],
+  );
 }
 
 function NewGameButton() {
@@ -261,7 +315,16 @@ function UndoDialog() {
 }
 
 function Hexagon(props: HexagonProps) {
-  const { boardState, row, col, disabled } = props;
+  const {
+    boardState,
+    row,
+    col,
+    disabled,
+    confirmMoves,
+    pendingMove,
+    onRequestMove,
+    onCommitMove,
+  } = props;
   const dispatch = useDispatch();
   const { active: netplayActive } = useSelector(selectNetplayState);
   const {
@@ -290,6 +353,9 @@ function Hexagon(props: HexagonProps) {
   const swapPhaseActive = useSwapRule && !swapPhaseComplete && moveNumber === 1;
   const isSwappablePiece = !disabled && swapPhaseActive && !markerInvisible;
   const isHovered = row === selectedRow && col === selectedCol;
+  const isPending = Boolean(
+    pendingMove && row === pendingMove[0] && col === pendingMove[1],
+  );
 
   // hexagon fill properties
   let hexBlack;
@@ -303,9 +369,9 @@ function Hexagon(props: HexagonProps) {
       hexBlack = false;
       break;
     case HexagonState.EMPTY:
-      if (isHovered) {
+      if (isHovered || isPending) {
         hexBlack = isBlackTurn;
-        hexPartialOpacity = true;
+        hexPartialOpacity = !isPending;
       } else {
         hexGray = true;
       }
@@ -337,17 +403,11 @@ function Hexagon(props: HexagonProps) {
       return;
     }
     if (!boardState[row][col]) {
-      const move = [row, col];
-      if (swapPhaseActive) {
-        dispatch(swapChosen(false));
-        if (netplayActive) {
-          sendSwap(false);
-        }
-      }
-      dispatch(moveMade(move));
-      if (netplayActive) {
-        sendMove(move);
-        dispatch(undoRequestFulfilled());
+      const move: Move = [row, col];
+      if (confirmMoves) {
+        onRequestMove(move);
+      } else {
+        onCommitMove(move);
       }
     }
   };
@@ -390,7 +450,14 @@ function Hexagon(props: HexagonProps) {
 }
 
 function Hexagons(props: HexagonsProps) {
-  const { boardState, disabled } = props;
+  const {
+    boardState,
+    disabled,
+    confirmMoves,
+    pendingMove,
+    onRequestMove,
+    onCommitMove,
+  } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const dispatch = useDispatch();
@@ -406,6 +473,10 @@ function Hexagons(props: HexagonsProps) {
           row={row}
           col={col}
           disabled={disabled}
+          confirmMoves={confirmMoves}
+          pendingMove={pendingMove}
+          onRequestMove={onRequestMove}
+          onCommitMove={onCommitMove}
         />,
       );
     }
@@ -861,7 +932,15 @@ function ComponentMarker(props: ComponentMarkerProps) {
 }
 
 function HexBoard(props: HexBoardProps) {
-  const { boardState, winningComponent, disabled } = props;
+  const {
+    boardState,
+    winningComponent,
+    disabled,
+    confirmMoves,
+    pendingMove,
+    onRequestMove,
+    onCommitMove,
+  } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
   const rotated = useIsPortraitViewport();
@@ -881,7 +960,14 @@ function HexBoard(props: HexBoardProps) {
     <div className="HexBoardContainer">
       <svg className="HexBoard" viewBox={viewBox}>
         <g transform={gridTransform}>
-          <Hexagons boardState={boardState} disabled={disabled} />
+          <Hexagons
+            boardState={boardState}
+            disabled={disabled}
+            confirmMoves={confirmMoves}
+            pendingMove={pendingMove}
+            onRequestMove={onRequestMove}
+            onCommitMove={onCommitMove}
+          />
           <Borders />
         </g>
         <CoordinateLabels rotated={rotated} />
@@ -1103,6 +1189,31 @@ function DisconnectDialog() {
   );
 }
 
+function ConfirmMoveDialog(props: ConfirmMoveDialogProps) {
+  const { pendingMove, onConfirm, onCancel } = props;
+
+  if (!pendingMove) {
+    return null;
+  }
+
+  const [row, col] = pendingMove;
+  const label = `${COORDINATE_LETTERS[col]}${row + 1}`;
+
+  return (
+    <Modal title="Confirm move" onClose={onCancel}>
+      <p>Move at {label}?</p>
+      <div className="ResignDialogActions">
+        <button type="button" onClick={onConfirm}>
+          Confirm
+        </button>
+        <button type="button" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 function ConnectionStatus() {
   const {
     active: netplayActive,
@@ -1151,6 +1262,21 @@ function TurnIndicator(props: TurnIndicatorProps) {
   );
 }
 
+function ConfirmMoveToggle(props: ConfirmMoveToggleProps) {
+  const { enabled, onChange } = props;
+  return (
+    <label className="ConfirmMoveToggle" htmlFor="confirmMoves">
+      Confirm moves
+      <input
+        type="checkbox"
+        id="confirmMoves"
+        checked={enabled}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+    </label>
+  );
+}
+
 export default function HexGame() {
   const {
     active: netplayActive,
@@ -1161,6 +1287,9 @@ export default function HexGame() {
     useSelector(selectGameState);
   const boardState = useSelector(selectBoardState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
+  const commitMove = useCommitMove();
+  const [confirmMoves, setConfirmMoves] = useState(false);
+  const [pendingMove, setPendingMove] = useState<Move | null>(null);
 
   const winningComponent = getWinningConnectedComponent(boardState);
   const gameOver = Boolean(resignationState) || winningComponent.length > 0;
@@ -1175,6 +1304,23 @@ export default function HexGame() {
     // disable board when opponent has disconnected
     (netplayActive && connectionStatus === 'disconnected');
 
+  // Clear a stale confirmation if the board becomes unclickable while it's
+  // pending (e.g. the turn changes, the game ends, or the opponent
+  // disconnects).
+  useEffect(() => {
+    if (disabled) {
+      setPendingMove(null);
+    }
+  }, [disabled]);
+
+  const onCommitMove = useCallback(
+    (move: Move) => {
+      commitMove(move);
+      setPendingMove(null);
+    },
+    [commitMove],
+  );
+
   return (
     <div className="HexGame">
       <div className="HexGameTopPanel">
@@ -1186,6 +1332,7 @@ export default function HexGame() {
           <NewGameButton />
         </div>
       </div>
+      <ConfirmMoveToggle enabled={confirmMoves} onChange={setConfirmMoves} />
       <TurnIndicator gameOver={gameOver} />
       <WinnerAnnouncement
         boardState={boardState}
@@ -1193,10 +1340,19 @@ export default function HexGame() {
       />
       <UndoDialog />
       <DisconnectDialog />
+      <ConfirmMoveDialog
+        pendingMove={pendingMove}
+        onConfirm={() => pendingMove && onCommitMove(pendingMove)}
+        onCancel={() => setPendingMove(null)}
+      />
       <HexBoard
         boardState={boardState}
         winningComponent={winningComponent}
         disabled={disabled}
+        confirmMoves={confirmMoves}
+        pendingMove={pendingMove}
+        onRequestMove={setPendingMove}
+        onCommitMove={onCommitMove}
       />
       <div className="HexGameBottomPanel">
         <ConnectionStatus />
