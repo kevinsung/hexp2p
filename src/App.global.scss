@@ -326,31 +326,11 @@ a:hover {
   gap: 12px;
 }
 
-.DialogPanel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.WinnerAnnouncement {
-  padding-bottom: 6px;
-  font-size: 1.8rem;
-}
-
-.UndoDialogMessage {
-  padding-bottom: 6px;
-  font-size: 1.8rem;
-}
-
 .SwapMarker {
   font-size: 0.06rem;
   font-weight: bold;
   stroke: none;
   pointer-events: none;
-}
-
-.UndoDialogButton {
-  margin-left: 12px;
 }
 
 // Hex game: bottom panel
@@ -465,11 +445,6 @@ a:hover {
   body,
   button {
     font-size: 1.1rem;
-  }
-
-  .WinnerAnnouncement,
-  .UndoDialogMessage {
-    font-size: 1.4rem;
   }
 
   .Modal {

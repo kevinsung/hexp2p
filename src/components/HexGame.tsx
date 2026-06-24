@@ -159,28 +159,42 @@ function NewGameButton() {
 function WinnerAnnouncement(props: WinnerAnnouncementProps) {
   const { boardState, winningComponent } = props;
   const { resignationState } = useSelector(selectGameState);
+  const [dismissed, setDismissed] = useState(false);
 
-  if (!winningComponent.length && !resignationState) {
+  const message = (() => {
+    if (resignationState === HexagonState.BLACK) {
+      return 'Black resigned, White wins';
+    }
+    if (resignationState === HexagonState.WHITE) {
+      return 'White resigned, Black wins';
+    }
+    if (!winningComponent.length) {
+      return null;
+    }
+    const [row, col] = winningComponent[0];
+    switch (boardState[row][col]) {
+      case HexagonState.BLACK:
+        return 'Black wins';
+      case HexagonState.WHITE:
+        return 'White wins';
+      default:
+        return null;
+    }
+  })();
+
+  useEffect(() => {
+    setDismissed(false);
+  }, [message]);
+
+  if (dismissed || !message) {
     return null;
   }
 
-  if (resignationState === HexagonState.BLACK) {
-    return <div className="WinnerAnnouncement">Black resigned, White wins</div>;
-  }
-
-  if (resignationState === HexagonState.WHITE) {
-    return <div className="WinnerAnnouncement">White resigned, Black wins</div>;
-  }
-
-  const [row, col] = winningComponent[0];
-  switch (boardState[row][col]) {
-    case HexagonState.BLACK:
-      return <div className="WinnerAnnouncement">Black wins</div>;
-    case HexagonState.WHITE:
-      return <div className="WinnerAnnouncement">White wins</div>;
-    default:
-      return null;
-  }
+  return (
+    <Modal title="Game over" onClose={() => setDismissed(true)}>
+      <p>{message}</p>
+    </Modal>
+  );
 }
 
 function UndoDialog() {
@@ -188,6 +202,7 @@ function UndoDialog() {
   const { undoRequestSent: undoRequested, undoRequestReceived } =
     useSelector(selectNetplayState);
   const { moveHistory } = useSelector(selectGameState);
+  const [dismissed, setDismissed] = useState(false);
 
   const handleClick = useCallback(() => {
     dispatch(undoRequestFulfilled());
@@ -213,22 +228,32 @@ function UndoDialog() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [undoRequestReceived, handleClick]);
 
+  useEffect(() => {
+    setDismissed(false);
+  }, [undoRequested, undoRequestReceived]);
+
+  if (dismissed) {
+    return null;
+  }
+
   if (undoRequested) {
-    return <div className="UndoDialogMessage">Undo request sent</div>;
+    return (
+      <Modal title="Undo request" onClose={() => setDismissed(true)}>
+        <p>Undo request sent</p>
+      </Modal>
+    );
   }
 
   if (undoRequestReceived) {
     return (
-      <div className="UndoDialogMessage">
-        Opponent requested undo
-        <button
-          className="UndoDialogButton"
-          type="button"
-          onClick={handleClick}
-        >
-          Accept (A)
-        </button>
-      </div>
+      <Modal title="Undo request" onClose={() => setDismissed(true)}>
+        <p>Opponent requested undo</p>
+        <div className="ResignDialogActions">
+          <button type="button" onClick={handleClick}>
+            Accept (A)
+          </button>
+        </div>
+      </Modal>
     );
   }
 
@@ -1160,16 +1185,14 @@ export default function HexGame() {
           <RulesButton />
           <NewGameButton />
         </div>
-        <div className="DialogPanel">
-          <WinnerAnnouncement
-            boardState={boardState}
-            winningComponent={winningComponent}
-          />
-          <UndoDialog />
-          <DisconnectDialog />
-        </div>
         <TurnIndicator gameOver={gameOver} />
       </div>
+      <WinnerAnnouncement
+        boardState={boardState}
+        winningComponent={winningComponent}
+      />
+      <UndoDialog />
+      <DisconnectDialog />
       <HexBoard
         boardState={boardState}
         winningComponent={winningComponent}
