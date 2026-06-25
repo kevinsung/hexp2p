@@ -62,6 +62,7 @@ interface HexagonProps {
   pendingSwap: boolean;
   onRequestSwap: () => void;
   onCommitSwap: () => void;
+  rotated: boolean;
 }
 
 interface HexagonsProps {
@@ -74,6 +75,7 @@ interface HexagonsProps {
   pendingSwap: boolean;
   onRequestSwap: () => void;
   onCommitSwap: () => void;
+  rotated: boolean;
 }
 
 interface HexBoardProps {
@@ -369,6 +371,7 @@ function Hexagon(props: HexagonProps) {
     pendingSwap,
     onRequestSwap,
     onCommitSwap,
+    rotated,
   } = props;
   const dispatch = useDispatch();
   const {
@@ -483,7 +486,7 @@ function Hexagon(props: HexagonProps) {
             white: hexBlack,
             black: !hexBlack,
           })}
-          transform={transform}
+          transform={rotated ? `${transform} rotate(90)` : transform}
           textAnchor="middle"
           dominantBaseline="central"
         >
@@ -505,6 +508,7 @@ function Hexagons(props: HexagonsProps) {
     pendingSwap,
     onRequestSwap,
     onCommitSwap,
+    rotated,
   } = props;
   const { settings } = useSelector(selectGameState);
   const { boardSize } = settings;
@@ -528,6 +532,7 @@ function Hexagons(props: HexagonsProps) {
           pendingSwap={pendingSwap}
           onRequestSwap={onRequestSwap}
           onCommitSwap={onCommitSwap}
+          rotated={rotated}
         />,
       );
     }
@@ -1024,6 +1029,7 @@ function HexBoard(props: HexBoardProps) {
             pendingSwap={pendingSwap}
             onRequestSwap={onRequestSwap}
             onCommitSwap={onCommitSwap}
+            rotated={rotated}
           />
           <Borders />
         </g>
