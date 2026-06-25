@@ -6,6 +6,7 @@ body {
   position: relative;
   color: white;
   height: 100vh;
+  height: 100dvh;
   background: #404040;
   font-family: sans-serif;
   overflow-y: hidden;
@@ -236,6 +237,7 @@ a:hover {
   align-items: center;
   width: calc(100vw - 24px);
   height: calc(100vh - 24px);
+  height: calc(100dvh - 24px);
   font-size: 1.3rem;
 }
 
@@ -530,5 +532,9 @@ a:hover {
 
   .ActionButtons {
     grid-area: actionButtons;
+  }
+
+  .ConfirmMoveToggle {
+    position: static;
   }
 }

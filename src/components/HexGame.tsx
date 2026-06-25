@@ -1421,9 +1421,12 @@ export default function HexGame() {
           </Link>
           <RulesButton transparent />
           <NewGameButton />
+          <ConfirmMoveToggle
+            enabled={confirmMoves}
+            onChange={setConfirmMoves}
+          />
         </div>
       </div>
-      <ConfirmMoveToggle enabled={confirmMoves} onChange={setConfirmMoves} />
       <TurnIndicator gameOver={gameOver} />
       <WinnerAnnouncement
         boardState={boardState}
