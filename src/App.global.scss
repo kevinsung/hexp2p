@@ -71,6 +71,20 @@ a:hover {
   opacity: 0.3;
 }
 
+@keyframes pulsate {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.pulsate {
+  animation: pulsate 2s ease-in-out infinite;
+}
+
 .invisible {
   visibility: hidden;
 }

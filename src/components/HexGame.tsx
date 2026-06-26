@@ -1297,6 +1297,10 @@ function PlayerHexagonIcon() {
 function TurnIndicator(props: TurnIndicatorProps) {
   const { gameOver } = props;
   const isBlackTurn = useSelector(selectIsBlackTurn);
+  const { active: aiActive, thinking: aiThinking } = useSelector(selectAiState);
+  const { active: netplayActive, isBlack: netplayIsBlack } =
+    useSelector(selectNetplayState);
+  const waitingForOpponent = netplayActive && netplayIsBlack !== isBlackTurn;
   return (
     <div className="TurnIndicator">
       <div
@@ -1305,6 +1309,10 @@ function TurnIndicator(props: TurnIndicatorProps) {
           { black: isBlackTurn },
           { white: !isBlackTurn },
           { partialOpacity: gameOver },
+          {
+            pulsate:
+              ((aiActive && aiThinking) || waitingForOpponent) && !gameOver,
+          },
         )}
       >
         <PlayerHexagonIcon />
