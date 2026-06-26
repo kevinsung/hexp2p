@@ -21,6 +21,7 @@ import Home from './components/Home';
 import { stopNetplay } from './netplayClient';
 import { resetGameState } from './slices/gameSlice';
 import { deactivateNetplay } from './slices/netplaySlice';
+import { deactivateAi } from './slices/aiSlice';
 import { history, store } from './store';
 import './App.global.scss';
 
@@ -35,6 +36,9 @@ history.listen((location) => {
   if (location.pathname === '/') {
     stopNetplay();
     store.dispatch(deactivateNetplay());
+    // Tears down useAiOpponent's worker too, since it terminates whenever
+    // ai.active goes false.
+    store.dispatch(deactivateAi());
     store.dispatch(resetGameState());
   }
 });

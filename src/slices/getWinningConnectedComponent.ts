@@ -13,24 +13,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import { hasCoordinates, neighbors } from '../hexAdjacency';
 import { HexagonState } from '../types';
-
-function hasCoordinates(coordinates: Array<number>, boardSize: number) {
-  const [row, col] = coordinates;
-  return row >= 0 && row < boardSize && col >= 0 && col < boardSize;
-}
-
-function neighbors(coordinates: Array<number>) {
-  const [row, col] = coordinates;
-  return [
-    [row - 1, col],
-    [row - 1, col + 1],
-    [row, col - 1],
-    [row, col + 1],
-    [row + 1, col - 1],
-    [row + 1, col],
-  ];
-}
 
 function getConnectedComponent(
   coordinates: Array<number>,

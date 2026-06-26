@@ -19,6 +19,8 @@ import { createMemoryHistory } from 'history';
 import netplayReducer from './slices/netplaySlice';
 // eslint-disable-next-line import/no-cycle
 import gameReducer from './slices/gameSlice';
+// eslint-disable-next-line import/no-cycle
+import aiReducer from './slices/aiSlice';
 
 export const history = createMemoryHistory();
 
@@ -26,6 +28,7 @@ export const store = configureStore({
   reducer: {
     game: gameReducer,
     netplay: netplayReducer,
+    ai: aiReducer,
   },
 });
 

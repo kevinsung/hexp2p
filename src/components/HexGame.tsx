@@ -19,22 +19,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
   hexagonSelected,
-  moveMade,
   navigateMoveHistory,
   playerResigned,
   selectBoardState,
   selectGameState,
   selectIsBlackTurn,
-  swapChosen,
   undoMove,
 } from '../slices/gameSlice';
-import {
-  sendMove,
-  sendSwap,
-  sendRequestUndo,
-  sendAcceptUndo,
-  sendResign,
-} from '../netplayClient';
+import { sendRequestUndo, sendAcceptUndo, sendResign } from '../netplayClient';
 import {
   deactivateNetplay,
   selectNetplayState,
@@ -42,13 +34,14 @@ import {
   undoRequestSent,
 } from '../slices/netplaySlice';
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
+import { Move, useCommitMove, useCommitSwap } from '../hooks/useGameCommit';
+import useAiOpponent from '../ai/useAiOpponent';
+import { selectAiState } from '../slices/aiSlice';
 import { HexagonState } from '../types';
 import RulesButton from './RulesModal';
 import Modal from './Modal';
 import HexSettings from './HexSettings';
 import '../App.global.scss';
-
-type Move = [number, number];
 
 interface HexagonProps {
   boardState: Array<Array<number>>;
@@ -171,50 +164,6 @@ function useIsPortraitViewport(): boolean {
     return () => window.removeEventListener('resize', onResize);
   }, []);
   return isPortrait;
-}
-
-// Commits a move: handles the swap-phase bookkeeping and netplay messaging
-// that apply regardless of whether the move was made directly or via the
-// confirm-move dialog.
-function useCommitMove(): (move: Move) => void {
-  const dispatch = useDispatch();
-  const { active: netplayActive } = useSelector(selectNetplayState);
-  const { moveNumber, settings, swapPhaseComplete } =
-    useSelector(selectGameState);
-  const { useSwapRule } = settings;
-  const swapPhaseActive = useSwapRule && !swapPhaseComplete && moveNumber === 1;
-
-  return useCallback(
-    (move: Move) => {
-      if (swapPhaseActive) {
-        dispatch(swapChosen(false));
-        if (netplayActive) {
-          sendSwap(false);
-        }
-      }
-      dispatch(moveMade(move));
-      if (netplayActive) {
-        sendMove(move);
-        dispatch(undoRequestFulfilled());
-      }
-    },
-    [dispatch, netplayActive, swapPhaseActive],
-  );
-}
-
-// Commits a swap: handles the netplay messaging that applies regardless of
-// whether the swap was made directly or via the confirm-move dialog.
-function useCommitSwap(): () => void {
-  const dispatch = useDispatch();
-  const { active: netplayActive } = useSelector(selectNetplayState);
-
-  return useCallback(() => {
-    dispatch(swapChosen(true));
-    if (netplayActive) {
-      sendSwap(true);
-      dispatch(undoRequestFulfilled());
-    }
-  }, [dispatch, netplayActive]);
 }
 
 function NewGameButton() {
@@ -1372,6 +1321,11 @@ export default function HexGame() {
     connectionStatus,
     isBlack,
   } = useSelector(selectNetplayState);
+  const {
+    active: aiActive,
+    aiPlaysBlack,
+    thinking: aiThinking,
+  } = useSelector(selectAiState);
   const { moveHistory, moveNumber, resignationState } =
     useSelector(selectGameState);
   const boardState = useSelector(selectBoardState);
@@ -1385,11 +1339,16 @@ export default function HexGame() {
   const winningComponent = getWinningConnectedComponent(boardState);
   const gameOver = Boolean(resignationState) || winningComponent.length > 0;
 
+  useAiOpponent(gameOver);
+
   const disabled =
     // disable board when it is not set to latest position
     moveNumber !== moveHistory.length ||
     // disable board during opponent's turn
     (netplayActive && isBlack !== isBlackTurn) ||
+    // disable board during the computer's turn (including while it's
+    // "thinking", since its reply for this turn may still be in flight)
+    (aiActive && (aiPlaysBlack === isBlackTurn || aiThinking)) ||
     // disable board when the game is over
     gameOver ||
     // disable board when opponent has disconnected

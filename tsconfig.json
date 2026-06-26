@@ -1,7 +1,12 @@
 {
   "compilerOptions": {
     "target": "ES2018",
-    "module": "CommonJS",
+    // ESNext (rather than CommonJS) so that `import.meta.url`, used by the
+    // computer-AI worker's webpack 5 `new Worker(new URL(...))` bundling
+    // idiom, type-checks. This only affects `tsc --noEmit` type-checking;
+    // actual module output is still produced by babel-loader/babel-jest per
+    // their own config, unaffected by this setting.
+    "module": "ESNext",
     "lib": ["dom", "esnext"],
     "declaration": true,
     "declarationMap": true,
@@ -22,8 +27,5 @@
     "allowJs": true,
     "skipLibCheck": true
   },
-  "exclude": [
-    "test",
-    "dist"
-  ]
+  "exclude": ["test", "dist"]
 }

@@ -55,7 +55,8 @@
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/config/mocks/fileMock.js",
       "\\.(css|less|sass|scss)$": "identity-obj-proxy",
-      "^\\./firebase$": "<rootDir>/src/__mocks__/firebase.ts"
+      "^\\./firebase$": "<rootDir>/src/__mocks__/firebase.ts",
+      "^\\.\\./ai/useAiOpponent$": "<rootDir>/src/ai/__mocks__/useAiOpponent.ts"
     },
     "moduleFileExtensions": [
       "js",

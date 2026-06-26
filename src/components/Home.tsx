@@ -19,6 +19,7 @@ import icon from '../../assets/icon.svg';
 import { stopNetplay } from '../netplayClient';
 import { resetGameState } from '../slices/gameSlice';
 import { activateNetplay, deactivateNetplay } from '../slices/netplaySlice';
+import { activateAi, deactivateAi } from '../slices/aiSlice';
 import ConnectToPeer from './ConnectToPeer';
 import HexSettings from './HexSettings';
 import HostNetplay from './HostNetplay';
@@ -35,6 +36,7 @@ export default function Home() {
   const closeSetup = () => {
     stopNetplay();
     dispatch(deactivateNetplay());
+    dispatch(deactivateAi());
     dispatch(resetGameState());
     setModal(null);
   };
@@ -48,6 +50,7 @@ export default function Home() {
         type="button"
         onClick={() => {
           dispatch(deactivateNetplay());
+          dispatch(deactivateAi());
           setModal('settings');
         }}
       >
@@ -57,6 +60,7 @@ export default function Home() {
         type="button"
         onClick={() => {
           dispatch(activateNetplay());
+          dispatch(deactivateAi());
           setModal('settings');
         }}
       >
@@ -66,10 +70,21 @@ export default function Home() {
         type="button"
         onClick={() => {
           dispatch(activateNetplay());
+          dispatch(deactivateAi());
           setModal('connect');
         }}
       >
         Connect to peer
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          dispatch(deactivateNetplay());
+          dispatch(activateAi());
+          setModal('settings');
+        }}
+      >
+        Play vs computer
       </button>
       <RulesButton />
       {modal === 'settings' && (

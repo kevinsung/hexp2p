@@ -54,3 +54,11 @@ export interface NetplayState {
   undoRequestSent: number | false;
   undoRequestReceived: number | false;
 }
+
+export interface AiState {
+  active: boolean;
+  aiPlaysBlack: boolean;
+  // Whether a request to the AI worker is currently outstanding, so the UI
+  // can show a "thinking" indicator and keep the board locked.
+  thinking: boolean;
+}

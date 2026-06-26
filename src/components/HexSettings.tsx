@@ -23,6 +23,7 @@ import {
   selectIsConnected,
   selectNetplayState,
 } from '../slices/netplaySlice';
+import { aiColorChosen, selectAiState } from '../slices/aiSlice';
 import { GameSettings } from '../types';
 import '../App.global.scss';
 
@@ -47,6 +48,20 @@ const DEFAULT_BOARD_SIZE = 13;
 
 function randomBoolean() {
   return crypto.getRandomValues(new Uint8Array(1))[0] < 128;
+}
+
+// Resolves the 'random' | 'black' | 'white' radio selection shared by
+// netplay's and the AI's color pickers into a concrete isBlack boolean.
+function resolveIsBlack(color: string): boolean {
+  switch (color) {
+    case 'black':
+      return true;
+    case 'white':
+      return false;
+    default:
+      // TODO use Boolean(randomInt(2)) when it becomes available
+      return randomBoolean();
+  }
 }
 
 function BoardSizeSelector(props: BoardSizeSelectorProps) {
@@ -105,8 +120,9 @@ function SwapRuleToggle(props: SwapRuleToggleProps) {
 
 function ColorSelector(props: ColorSelectorProps) {
   const { active: netplayActive } = useSelector(selectNetplayState);
+  const { active: aiActive } = useSelector(selectAiState);
 
-  if (!netplayActive) {
+  if (!netplayActive && !aiActive) {
     return null;
   }
 
@@ -174,6 +190,7 @@ export default function HexSettings(props: HexSettingsProps) {
   const dispatch = useDispatch();
   const history = useHistory();
   const { active: netplayActive } = useSelector(selectNetplayState);
+  const { active: aiActive } = useSelector(selectAiState);
   const connected = useSelector(selectIsConnected);
 
   const [boardSize, setBoardSize] = useState(DEFAULT_BOARD_SIZE);
@@ -185,24 +202,18 @@ export default function HexSettings(props: HexSettingsProps) {
     const settings: GameSettings = { boardSize, useSwapRule };
     dispatch(gameStarted(settings));
     if (netplayActive) {
-      let isBlack;
-      switch (color) {
-        case 'black':
-          isBlack = true;
-          break;
-        case 'white':
-          isBlack = false;
-          break;
-        default:
-          // TODO use Boolean(randomInt(2)) when it becomes available
-          isBlack = randomBoolean();
-      }
+      const isBlack = resolveIsBlack(color);
       dispatch(colorChosen(isBlack));
       if (connected) {
         sendSettings();
       } else {
         startNetplay();
       }
+    } else if (aiActive) {
+      // The picker reads as "your color", same as in netplay, so the
+      // computer takes whichever color the human didn't choose.
+      const isBlack = resolveIsBlack(color);
+      dispatch(aiColorChosen(!isBlack));
     }
     if (netplayActive && !connected) {
       onStartHosting();
