@@ -20,14 +20,28 @@
 // netplayClient.ts's incoming messages are stateless dispatches.
 
 import { buildHexBoard, colorToMoveAfter, toIndex, toRowCol } from './hexBoard';
-import { chooseBalancedOpening, decideSwap, search } from './mcts';
+import { Node, chooseBalancedOpening, decideSwap, search } from './mcts';
 import {
   EngineRequest,
   EngineResponse,
+  Move,
   MoveRequest,
   OpeningRequest,
   SwapRequest,
 } from './protocol';
+
+// Subtree cached after each AI move for reuse on the next turn. Stores the
+// node representing the position immediately after the AI played, plus
+// the move history through that move, so the next handleMove can locate
+// the opponent's reply in the tree and skip rebuilding from scratch.
+interface CachedTree {
+  boardSize: number;
+  moveHistory: Array<Move>; // all moves through the AI's last move
+  swapped: boolean;
+  node: Node;
+}
+
+let cachedTree: CachedTree | null = null;
 
 // Cast to the DOM `Worker` interface purely for its postMessage/onmessage
 // shape, which is identical from inside a worker to a main-thread Worker
@@ -50,11 +64,55 @@ function handleMove(request: MoveRequest): EngineResponse {
     ? toIndex(lastMove[0], lastMove[1], boardSize)
     : null;
 
-  const { move } = search(board, colorToMove, { budgetMs }, priorMove);
-  return { type: 'move', requestId, move: toRowCol(move, boardSize) };
+  // Tree reuse: if this position is the cached post-AI-move subtree descended
+  // by exactly one move (the opponent's reply), resume from there rather than
+  // building a fresh tree, getting "free" extra simulations from prior work.
+  let existingRoot: Node | undefined;
+  if (
+    cachedTree !== null &&
+    cachedTree.boardSize === boardSize &&
+    cachedTree.swapped === swapped &&
+    moveHistory.length === cachedTree.moveHistory.length + 1
+  ) {
+    const allMatch = cachedTree.moveHistory.every(
+      (m, i) => m[0] === moveHistory[i][0] && m[1] === moveHistory[i][1],
+    );
+    if (allMatch) {
+      const reply = moveHistory[moveHistory.length - 1];
+      const replyIndex = toIndex(reply[0], reply[1], boardSize);
+      const candidate = cachedTree.node.children.get(replyIndex);
+      if (candidate !== undefined) {
+        candidate.parent = null; // detach to allow GC of the rest of the old tree
+        existingRoot = candidate;
+      }
+    }
+  }
+
+  const result = search(
+    board,
+    colorToMove,
+    { budgetMs },
+    priorMove,
+    existingRoot,
+  );
+
+  const aiMoveRowCol = toRowCol(result.move, boardSize);
+  const postMoveChild = result.root.children.get(result.move);
+  cachedTree =
+    postMoveChild !== undefined
+      ? {
+          boardSize,
+          moveHistory: [...moveHistory, aiMoveRowCol],
+          swapped,
+          node: postMoveChild,
+        }
+      : null;
+
+  return { type: 'move', requestId, move: aiMoveRowCol };
 }
 
 function handleSwap(request: SwapRequest): EngineResponse {
+  cachedTree = null;
   const { requestId, boardSize, moveHistory, budgetMs } = request;
   // Swap is decided immediately after the (unswapped) opening move, so the
   // mover is always determined the same way selectIsBlackTurn would compute
@@ -72,6 +130,7 @@ function handleSwap(request: SwapRequest): EngineResponse {
 }
 
 function handleOpening(request: OpeningRequest): EngineResponse {
+  cachedTree = null;
   const { requestId, boardSize } = request;
   const move = chooseBalancedOpening(boardSize);
   return { type: 'opening', requestId, move: toRowCol(move, boardSize) };
