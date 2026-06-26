@@ -1071,6 +1071,11 @@ function UndoButton(props: UndoButtonProps) {
   let { disabled } = props;
   const dispatch = useDispatch();
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
+  const {
+    active: aiActive,
+    aiPlaysBlack,
+    thinking: aiThinking,
+  } = useSelector(selectAiState);
   const { moveHistory, moveNumber } = useSelector(selectGameState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
 
@@ -1081,7 +1086,11 @@ function UndoButton(props: UndoButtonProps) {
     // disable when board not set to latest position
     moveNumber !== moveHistory.length ||
     // disable during own turn
-    (netplayActive && isBlack === isBlackTurn);
+    (netplayActive && isBlack === isBlackTurn) ||
+    // disable while AI is computing (prevents racing the in-flight request)
+    (aiActive && aiThinking) ||
+    // when AI goes first, disable until human has made their first move
+    (aiActive && aiPlaysBlack && moveHistory.length <= 1);
 
   const handleClick = useCallback(() => {
     if (netplayActive) {
@@ -1089,8 +1098,12 @@ function UndoButton(props: UndoButtonProps) {
       dispatch(undoRequestSent(moveHistory.length));
     } else {
       dispatch(undoMove());
+      // In AI mode, also undo the AI's preceding move so the human steps
+      // back to their own last turn rather than triggering an immediate
+      // AI re-reply.
+      if (aiActive) dispatch(undoMove());
     }
-  }, [dispatch, netplayActive, moveHistory.length]);
+  }, [dispatch, netplayActive, moveHistory.length, aiActive]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
