@@ -8,6 +8,7 @@
     "tsc": "tsc --noEmit",
     "start": "cross-env NODE_ENV=development webpack serve --config ./config/webpack.config.dev.babel.js",
     "test": "jest",
+    "selfplay": "cross-env NODE_ENV=test node scripts/run-selfplay.js",
     "prepare": "husky"
   },
   "lint-staged": {
