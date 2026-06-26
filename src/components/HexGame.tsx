@@ -412,36 +412,38 @@ function Hexagon(props: HexagonProps) {
   return (
     <g onMouseEnter={onMouseEnter} onClick={onClick}>
       <polygon className="Hexagon gray" points={points} transform={transform} />
-      <polygon
-        className={classnames('Hexagon', {
-          black: !hexGray && hexBlack,
-          white: !hexGray && !hexBlack,
-          partialOpacity: hexPartialOpacity,
-          invisible: hexGray,
-        })}
-        points={points}
-        transform={transform}
-      />
-      <polygon
-        className={classnames('LastMoveMarker', 'gray', {
-          invisible: markerInvisible || isSwappablePiece,
-        })}
-        points={markerPoints}
-        transform={transform}
-      />
-      {isSwappablePiece && (
-        <text
-          className={classnames('SwapMarker', {
-            white: hexBlack,
-            black: !hexBlack,
+      <g className={isSwappablePiece ? 'pulsate' : undefined}>
+        <polygon
+          className={classnames('Hexagon', {
+            black: !hexGray && hexBlack,
+            white: !hexGray && !hexBlack,
+            partialOpacity: hexPartialOpacity,
+            invisible: hexGray,
           })}
-          transform={rotated ? `${transform} rotate(90)` : transform}
-          textAnchor="middle"
-          dominantBaseline="central"
-        >
-          S
-        </text>
-      )}
+          points={points}
+          transform={transform}
+        />
+        <polygon
+          className={classnames('LastMoveMarker', 'gray', {
+            invisible: markerInvisible || isSwappablePiece,
+          })}
+          points={markerPoints}
+          transform={transform}
+        />
+        {isSwappablePiece && (
+          <text
+            className={classnames('SwapMarker', {
+              white: hexBlack,
+              black: !hexBlack,
+            })}
+            transform={rotated ? `${transform} rotate(90)` : transform}
+            textAnchor="middle"
+            dominantBaseline="central"
+          >
+            S
+          </text>
+        )}
+      </g>
     </g>
   );
 }
