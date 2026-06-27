@@ -84,9 +84,21 @@ const gameSlice = createSlice({
       const { moveHistory } = state;
       moveHistory.pop();
       state.moveNumber -= 1;
-      // Undoing back through the opening move should also re-open the swap
-      // decision, rather than leaving it permanently locked in.
       if (moveHistory.length === 0) {
+        state.swapPhaseComplete = false;
+        state.swapped = false;
+      } else if (
+        state.settings.useSwapRule &&
+        state.moveNumber === 1 &&
+        state.swapPhaseComplete
+      ) {
+        // Arrived back at the swap-decision point — re-open the swap offer.
+        // If the swap was accepted the opening coords were transposed; reverse
+        // that so the original first move is shown at its actual position.
+        if (state.swapped) {
+          const move = state.moveHistory[0];
+          state.moveHistory[0] = [move[1], move[0]];
+        }
         state.swapPhaseComplete = false;
         state.swapped = false;
       }

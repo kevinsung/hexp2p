@@ -1078,8 +1078,20 @@ function UndoButton(props: UndoButtonProps) {
     aiPlaysBlack,
     thinking: aiThinking,
   } = useSelector(selectAiState);
-  const { moveHistory, moveNumber } = useSelector(selectGameState);
+  const { moveHistory, moveNumber, swapPhaseComplete, settings } =
+    useSelector(selectGameState);
+  const { useSwapRule } = settings;
   const isBlackTurn = useSelector(selectIsBlackTurn);
+
+  // True when we're exactly one undo away from the swap-decision point
+  // (AI opened first, human just completed the swap phase). Stop at
+  // moveNumber=1 so the human can reconsider the swap for the same opening.
+  const atSwapBoundary =
+    aiActive &&
+    aiPlaysBlack &&
+    useSwapRule &&
+    swapPhaseComplete &&
+    moveNumber === 2;
 
   disabled =
     disabled ||
@@ -1100,12 +1112,21 @@ function UndoButton(props: UndoButtonProps) {
       dispatch(undoRequestSent(moveHistory.length));
     } else {
       dispatch(undoMove());
-      // In AI mode, also undo the AI's preceding move so the human steps
-      // back to their own last turn rather than triggering an immediate
-      // AI re-reply.
-      if (aiActive) dispatch(undoMove());
+      // Also undo the AI's preceding move so the human steps back to their
+      // own last turn rather than triggering an immediate AI re-reply —
+      // except when moveNumber === 1 (AI swapped, which didn't increment
+      // moveNumber, so one undo already restores the start) or when we're
+      // at the swap-decision boundary (stop there to let the human reconsider).
+      if (aiActive && moveNumber > 1 && !atSwapBoundary) dispatch(undoMove());
     }
-  }, [dispatch, netplayActive, moveHistory.length, aiActive]);
+  }, [
+    dispatch,
+    netplayActive,
+    moveHistory.length,
+    aiActive,
+    moveNumber,
+    atSwapBoundary,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
