@@ -1114,10 +1114,14 @@ function UndoButton(props: UndoButtonProps) {
       dispatch(undoMove());
       // Also undo the AI's preceding move so the human steps back to their
       // own last turn rather than triggering an immediate AI re-reply —
-      // except when moveNumber === 1 (AI swapped, which didn't increment
-      // moveNumber, so one undo already restores the start) or when we're
-      // at the swap-decision boundary (stop there to let the human reconsider).
-      if (aiActive && moveNumber > 1 && !atSwapBoundary) dispatch(undoMove());
+      // except when we're at the swap-decision boundary (stop there to let
+      // the human reconsider). When the AI just swapped (moveNumber=1,
+      // swapPhaseComplete=true), a first undo re-opens the swap offer and a
+      // second then clears the board.
+      const aiJustSwapped =
+        aiActive && useSwapRule && swapPhaseComplete && moveNumber === 1;
+      if ((aiActive && moveNumber > 1 && !atSwapBoundary) || aiJustSwapped)
+        dispatch(undoMove());
     }
   }, [
     dispatch,
@@ -1126,6 +1130,8 @@ function UndoButton(props: UndoButtonProps) {
     aiActive,
     moveNumber,
     atSwapBoundary,
+    useSwapRule,
+    swapPhaseComplete,
   ]);
 
   useEffect(() => {

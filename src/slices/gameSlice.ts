@@ -82,6 +82,22 @@ const gameSlice = createSlice({
     },
     undoMove: (state) => {
       const { moveHistory } = state;
+      // Undoing the swap decision before any further move was played:
+      // re-open the swap offer without removing the first stone from the board.
+      if (
+        state.settings.useSwapRule &&
+        state.swapPhaseComplete &&
+        state.moveNumber === 1 &&
+        moveHistory.length === 1
+      ) {
+        if (state.swapped) {
+          const move = moveHistory[0];
+          state.moveHistory[0] = [move[1], move[0]];
+        }
+        state.swapPhaseComplete = false;
+        state.swapped = false;
+        return;
+      }
       moveHistory.pop();
       state.moveNumber -= 1;
       if (moveHistory.length === 0) {

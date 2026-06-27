@@ -55,23 +55,33 @@ describe('undoMove', () => {
     expect(state.moveHistory).toEqual([[1, 2]]); // coords unchanged (no swap)
   });
 
-  it('resets swapPhaseComplete/swapped once undo empties the move history', () => {
+  it('undoes the swap decision, re-opening the swap offer', () => {
     let state = gameReducer(initialState, moveMade([0, 0]));
     state = gameReducer(state, swapChosen(true));
 
     state = gameReducer(state, undoMove());
 
-    expect(state.moveHistory).toHaveLength(0);
+    expect(state.moveNumber).toBe(1);
+    expect(state.moveHistory).toEqual([[0, 0]]);
     expect(state.swapPhaseComplete).toBe(false);
     expect(state.swapped).toBe(false);
   });
 
-  it('does not underflow moveNumber when undoing from moveNumber=1 (AI-swap case)', () => {
-    // AI swapped: swap was accepted without incrementing moveNumber.
+  it('undoes the swap decision one step at a time (no moveNumber underflow)', () => {
+    // After the swap is accepted, one undo re-opens the swap offer; a second
+    // undo removes the first stone (empty board). This mirrors what HexGame's
+    // undo button does in AI mode: dispatches undoMove() twice.
     let state = gameReducer(initialState, moveMade([1, 2]));
     state = gameReducer(state, swapChosen(true)); // moveNumber still 1
 
-    state = gameReducer(state, undoMove()); // one undo should reach 0, not -1
+    state = gameReducer(state, undoMove()); // re-opens swap offer
+
+    expect(state.moveNumber).toBe(1);
+    expect(state.moveHistory).toEqual([[1, 2]]);
+    expect(state.swapPhaseComplete).toBe(false);
+    expect(state.swapped).toBe(false);
+
+    state = gameReducer(state, undoMove()); // clears the board
 
     expect(state.moveNumber).toBe(0);
     expect(state.moveHistory).toHaveLength(0);
