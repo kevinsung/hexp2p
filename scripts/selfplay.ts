@@ -6,7 +6,12 @@
 // so that both sides get to exercise opening and swap decisions.
 //
 // Usage:
-//   node --require @babel/register scripts/selfplay.ts
+//   node --require @babel/register scripts/selfplay.ts [CORES]
+//   npm run selfplay -- [CORES]
+//
+// CORES defaults to 1 (sequential).  Pass a higher number to fan games out
+// across worker threads, e.g.:
+//   npm run selfplay -- 8
 //
 // Environment overrides (all optional):
 //   SELFPLAY_SIZE      board size(s), comma-separated (default: "11,13")
@@ -15,9 +20,9 @@
 //
 // The script prints per-game results and a final summary: win rate ± 95% CI
 // and the corresponding Elo difference.
-//
-// Run `npm run selfplay` to invoke with the default settings.
 
+import * as path from 'path';
+import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
 import {
   search as candidateSearch,
   decideSwap as candidateDecideSwap,
@@ -170,81 +175,30 @@ function formatElo(p: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Main
+// Reporting helpers
 // ---------------------------------------------------------------------------
 
-function parseSizes(raw: string): number[] {
-  return raw
-    .split(',')
-    .map((s) => parseInt(s.trim(), 10))
-    .filter((n) => !isNaN(n) && n > 0);
-}
-
-const sizes = parseSizes(process.env.SELFPLAY_SIZE ?? '11,13');
-const gamesPerSize = parseInt(process.env.SELFPLAY_GAMES ?? '100', 10);
-const maxIterations = parseInt(process.env.SELFPLAY_ITERS ?? '200', 10);
-
-const opts: SearchOptions = { budgetMs: Infinity, maxIterations };
-
-console.log('='.repeat(60));
-console.log('Self-play harness  —  candidate vs baseline');
-console.log(`Board sizes: ${sizes.join(', ')}`);
-console.log(
-  `Games per size: ${gamesPerSize}  |  Iters per move: ${maxIterations}`,
-);
-console.log('='.repeat(60));
-
-let grandWins = 0;
-let grandGames = 0;
-
-for (const size of sizes) {
-  let wins = 0; // wins for CANDIDATE across all color assignments
-
-  console.log(`\n--- Board ${size}×${size} (${gamesPerSize} games) ---`);
-
-  for (let g = 0; g < gamesPerSize; g += 1) {
-    // Alternate which engine moves first: even games → candidate first,
-    // odd games → baseline first.
-    const candidateIsFirst = g % 2 === 0;
-    const firstMover = candidateIsFirst ? CANDIDATE : BASELINE;
-    const secondMover = candidateIsFirst ? BASELINE : CANDIDATE;
-
-    const winnerColor = playGame(size, firstMover, secondMover, opts);
-
-    // Candidate wins if: it was first mover and BLACK won, or it was second
-    // mover and WHITE won.
-    const candidateWon =
-      (candidateIsFirst && winnerColor === HexagonState.BLACK) ||
-      (!candidateIsFirst && winnerColor === HexagonState.WHITE);
-
-    if (candidateWon) wins += 1;
-
-    const label = candidateIsFirst ? 'candidate=BLACK' : 'candidate=WHITE';
-    const result = candidateWon ? 'candidate wins' : 'baseline wins';
-    const runningRate = wins / (g + 1);
-    process.stdout.write(
-      `  game ${String(g + 1).padStart(3)}/${gamesPerSize}  [${label}]  ` +
-        `${result}  cumulative: ${wins}/${g + 1} (${(runningRate * 100).toFixed(1)}%)\n`,
-    );
-  }
-
-  const ci = wilsonCI(wins, gamesPerSize);
-  const eloCtr = formatElo(wins / gamesPerSize);
+function reportSize(size: number, wins: number, total: number): void {
+  const ci = wilsonCI(wins, total);
+  const eloCtr = formatElo(wins / total);
   const eloLow = formatElo(ci.low);
   const eloHigh = formatElo(ci.high);
 
   console.log(`\n  Size ${size}×${size} result:`);
   console.log(
-    `    Win rate: ${wins}/${gamesPerSize} = ${((wins / gamesPerSize) * 100).toFixed(1)}%` +
+    `    Win rate: ${wins}/${total} = ${((wins / total) * 100).toFixed(1)}%` +
       `  (95% CI: ${(ci.low * 100).toFixed(1)}%–${(ci.high * 100).toFixed(1)}%)`,
   );
   console.log(`    Elo diff: ${eloCtr}  (95% CI: ${eloLow}–${eloHigh})`);
-
-  grandWins += wins;
-  grandGames += gamesPerSize;
 }
 
-if (sizes.length > 1) {
+function reportCombined(
+  sizes: number[],
+  winsBySize: Map<number, number>,
+  gamesPerSize: number,
+): void {
+  const grandWins = sizes.reduce((s, sz) => s + (winsBySize.get(sz) ?? 0), 0);
+  const grandGames = sizes.length * gamesPerSize;
   const ci = wilsonCI(grandWins, grandGames);
   console.log('\n' + '='.repeat(60));
   console.log('  Combined result (all sizes):');
@@ -256,4 +210,196 @@ if (sizes.length > 1) {
     `    Elo diff: ${formatElo(grandWins / grandGames)}  (95% CI: ${formatElo(ci.low)}–${formatElo(ci.high)})`,
   );
   console.log('='.repeat(60));
+}
+
+// ---------------------------------------------------------------------------
+// Worker thread types and entry
+// ---------------------------------------------------------------------------
+
+interface WorkerTask {
+  size: number;
+  gameIndex: number;
+}
+
+interface WorkerData {
+  tasks: WorkerTask[];
+  maxIterations: number;
+}
+
+interface GameResult {
+  size: number;
+  gameIndex: number;
+  candidateWon: boolean;
+}
+
+if (!isMainThread) {
+  // Worker: run the assigned games and post one result message per game.
+  const { tasks, maxIterations: iters } = workerData as WorkerData;
+  const opts: SearchOptions = { budgetMs: Infinity, maxIterations: iters };
+
+  for (const { size, gameIndex } of tasks) {
+    const candidateIsFirst = gameIndex % 2 === 0;
+    const firstMover = candidateIsFirst ? CANDIDATE : BASELINE;
+    const secondMover = candidateIsFirst ? BASELINE : CANDIDATE;
+
+    const winnerColor = playGame(size, firstMover, secondMover, opts);
+    const candidateWon =
+      (candidateIsFirst && winnerColor === HexagonState.BLACK) ||
+      (!candidateIsFirst && winnerColor === HexagonState.WHITE);
+
+    const result: GameResult = { size, gameIndex, candidateWon };
+    parentPort!.postMessage(result);
+  }
+} else {
+  // ---------------------------------------------------------------------------
+  // Main thread
+  // ---------------------------------------------------------------------------
+
+  function parseSizes(raw: string): number[] {
+    return raw
+      .split(',')
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => !isNaN(n) && n > 0);
+  }
+
+  const sizes = parseSizes(process.env.SELFPLAY_SIZE ?? '11,13');
+  const gamesPerSize = parseInt(process.env.SELFPLAY_GAMES ?? '100', 10);
+  const maxIterations = parseInt(process.env.SELFPLAY_ITERS ?? '200', 10);
+  const cores = Math.max(1, parseInt(process.argv[2] ?? '1', 10));
+
+  const opts: SearchOptions = { budgetMs: Infinity, maxIterations };
+
+  console.log('='.repeat(60));
+  console.log('Self-play harness  —  candidate vs baseline');
+  console.log(`Board sizes: ${sizes.join(', ')}`);
+  console.log(
+    `Games per size: ${gamesPerSize}  |  Iters per move: ${maxIterations}`,
+  );
+  console.log('='.repeat(60));
+
+  if (cores === 1) {
+    // Sequential path — behavior identical to the original single-core harness.
+    const winsBySize = new Map<number, number>(sizes.map((s) => [s, 0]));
+
+    for (const size of sizes) {
+      let wins = 0;
+
+      console.log(`\n--- Board ${size}×${size} (${gamesPerSize} games) ---`);
+
+      for (let g = 0; g < gamesPerSize; g += 1) {
+        // Alternate which engine moves first: even games → candidate first,
+        // odd games → baseline first.
+        const candidateIsFirst = g % 2 === 0;
+        const firstMover = candidateIsFirst ? CANDIDATE : BASELINE;
+        const secondMover = candidateIsFirst ? BASELINE : CANDIDATE;
+
+        const winnerColor = playGame(size, firstMover, secondMover, opts);
+
+        // Candidate wins if: it was first mover and BLACK won, or it was second
+        // mover and WHITE won.
+        const candidateWon =
+          (candidateIsFirst && winnerColor === HexagonState.BLACK) ||
+          (!candidateIsFirst && winnerColor === HexagonState.WHITE);
+
+        if (candidateWon) wins += 1;
+
+        const label = candidateIsFirst ? 'candidate=BLACK' : 'candidate=WHITE';
+        const result = candidateWon ? 'candidate wins' : 'baseline wins';
+        const runningRate = wins / (g + 1);
+        process.stdout.write(
+          `  game ${String(g + 1).padStart(3)}/${gamesPerSize}  [${label}]  ` +
+            `${result}  cumulative: ${wins}/${g + 1} (${(runningRate * 100).toFixed(1)}%)\n`,
+        );
+      }
+
+      winsBySize.set(size, wins);
+      reportSize(size, wins, gamesPerSize);
+    }
+
+    if (sizes.length > 1) {
+      reportCombined(sizes, winsBySize, gamesPerSize);
+    }
+  } else {
+    // Parallel path — fan independent games out across worker threads.
+
+    // Build flat task list in game-index order across all sizes.
+    const allTasks: WorkerTask[] = [];
+    for (const size of sizes) {
+      for (let g = 0; g < gamesPerSize; g += 1) {
+        allTasks.push({ size, gameIndex: g });
+      }
+    }
+
+    const totalGames = allTasks.length;
+    const actualCores = Math.min(cores, Math.max(1, totalGames));
+
+    // Round-robin distribute tasks across workers so each gets a balanced
+    // mix of sizes and color assignments.
+    const workerTaskLists: WorkerTask[][] = Array.from(
+      { length: actualCores },
+      () => [],
+    );
+    for (let i = 0; i < allTasks.length; i += 1) {
+      workerTaskLists[i % actualCores].push(allTasks[i]);
+    }
+
+    // The worker entry is the CommonJS shim that installs @babel/register.
+    const workerEntry = path.join(__dirname, 'run-selfplay.js');
+
+    // Per-size accumulators.
+    const winsBySize = new Map<number, number>(sizes.map((s) => [s, 0]));
+    const completedBySize = new Map<number, number>(sizes.map((s) => [s, 0]));
+    let totalDone = 0;
+
+    console.log(
+      `\nUsing ${actualCores} worker thread${actualCores === 1 ? '' : 's'}.\n`,
+    );
+
+    for (const tasks of workerTaskLists) {
+      const data: WorkerData = { tasks, maxIterations };
+      const w = new Worker(workerEntry, { workerData: data });
+
+      w.on('message', (result: GameResult) => {
+        const { size, gameIndex, candidateWon } = result;
+
+        if (candidateWon) {
+          winsBySize.set(size, (winsBySize.get(size) ?? 0) + 1);
+        }
+        completedBySize.set(size, (completedBySize.get(size) ?? 0) + 1);
+        totalDone += 1;
+
+        const wins = winsBySize.get(size) ?? 0;
+        const completed = completedBySize.get(size) ?? 0;
+        const candidateIsFirst = gameIndex % 2 === 0;
+        const label = candidateIsFirst ? 'candidate=BLACK' : 'candidate=WHITE';
+        const resultStr = candidateWon ? 'candidate wins' : 'baseline wins ';
+        process.stdout.write(
+          `  [${size}×${size}]  [${label}]  ${resultStr}  ` +
+            `${size}×${size}: ${wins}/${completed} (${((wins / completed) * 100).toFixed(1)}%)\n`,
+        );
+
+        if (totalDone === totalGames) {
+          // All games done — print per-size and combined summaries.
+          for (const s of sizes) {
+            reportSize(s, winsBySize.get(s) ?? 0, gamesPerSize);
+          }
+          if (sizes.length > 1) {
+            reportCombined(sizes, winsBySize, gamesPerSize);
+          }
+        }
+      });
+
+      w.on('error', (err: Error) => {
+        console.error('Worker error:', err);
+        process.exit(1);
+      });
+
+      w.on('exit', (code: number) => {
+        if (code !== 0) {
+          console.error(`Worker exited with code ${code}`);
+          process.exit(code);
+        }
+      });
+    }
+  }
 }
