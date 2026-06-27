@@ -275,6 +275,15 @@ export function search(
     throw new Error('search() called on a position with no legal moves');
   }
 
+  // Always take an immediate win if one exists, without spending MCTS budget.
+  for (const move of legalMoves(rootBoard)) {
+    const testBoard = cloneHexBoard(rootBoard);
+    placeStone(testBoard, move, colorToMove);
+    if (testBoard.winner === colorToMove) {
+      return { move, value: 1, root };
+    }
+  }
+
   let iterations = 0;
   do {
     runIteration(rootBoard, root, priorMove);
