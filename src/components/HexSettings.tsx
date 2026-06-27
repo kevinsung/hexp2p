@@ -64,11 +64,11 @@ function resolveIsBlack(color: string): boolean {
   }
 }
 
-function BoardSizeSelector(props: BoardSizeSelectorProps) {
+export function BoardSizeSelector(props: BoardSizeSelectorProps) {
   const { size, setBoardSize } = props;
   return (
     <div>
-      <h3>Board size</h3>
+      <h3 style={{ textAlign: 'center' }}>Board size</h3>
       <label className="BoardSizeSelector" htmlFor="boardSize">
         <div className="BoardSize">{size}</div>
         <div>

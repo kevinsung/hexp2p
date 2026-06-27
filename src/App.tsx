@@ -18,6 +18,7 @@ import { Provider } from 'react-redux';
 import { Router, Switch, Route } from 'react-router-dom';
 import HexGame from './components/HexGame';
 import Home from './components/Home';
+import OpeningStudy from './components/OpeningStudy';
 import { stopNetplay } from './netplayClient';
 import { resetGameState } from './slices/gameSlice';
 import { deactivateNetplay } from './slices/netplaySlice';
@@ -49,6 +50,7 @@ export default function App() {
       <Router history={history}>
         <Switch>
           <Route path="/game" component={HexGame} />
+          <Route path="/opening-study" component={OpeningStudy} />
           <Route path="/" component={Home} />
         </Switch>
       </Router>

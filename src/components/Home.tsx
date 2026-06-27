@@ -20,6 +20,7 @@ import { stopNetplay } from '../netplayClient';
 import { resetGameState } from '../slices/gameSlice';
 import { activateNetplay, deactivateNetplay } from '../slices/netplaySlice';
 import { activateAi, deactivateAi } from '../slices/aiSlice';
+import { history } from '../store';
 import ConnectToPeer from './ConnectToPeer';
 import HexSettings from './HexSettings';
 import HostNetplay from './HostNetplay';
@@ -85,6 +86,9 @@ export default function Home() {
         }}
       >
         Play vs computer
+      </button>
+      <button type="button" onClick={() => history.push('/opening-study')}>
+        Opening study
       </button>
       <RulesButton />
       {modal === 'settings' && (
