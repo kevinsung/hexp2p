@@ -450,6 +450,18 @@ a:hover {
   background: rgba(64, 64, 64, 0.6);
 }
 
+.ModalTransparent button {
+  background-color: rgba(192, 192, 192, 0.6);
+}
+
+.ModalTransparent button:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.ModalTransparent button:disabled:hover {
+  background-color: rgba(192, 192, 192, 0.6);
+}
+
 .Modal h1 {
   margin: 0 32px 16px;
   text-align: center;
