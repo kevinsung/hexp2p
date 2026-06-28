@@ -54,7 +54,7 @@ const EXPLORATION_CONSTANT = 0.3;
 // of its own statistics. Larger values trust RAVE for longer.
 const RAVE_EQUIVALENCE = 300;
 
-interface Node {
+export interface Node {
   // The cell played to reach this node from its parent; -1 for the root.
   move: number;
   parent: Node | null;
@@ -82,12 +82,18 @@ export interface SearchOptions {
   // Safety cap on iterations, mainly useful in tests so they terminate
   // quickly regardless of wall-clock time.
   maxIterations?: number;
+  // One-shot extension budget (ms) added when the position is "unstable"
+  // (most-visited child ≠ highest-win-rate child) at the main deadline.
+  // Defaults to half of budgetMs; pass 0 to disable.
+  extensionMs?: number;
 }
 
 export interface SearchOutcome {
   move: number;
   // Estimated win probability for the color that made `move`.
   value: number;
+  // The search root, exposed for tree reuse on the next turn.
+  root: Node;
 }
 
 function shuffled(items: Array<number>): Array<number> {
@@ -136,7 +142,7 @@ function selectChild(node: Node): Node {
     const r = raveVisits > 0 ? raveWins / raveVisits : 0;
     const exploration =
       EXPLORATION_CONSTANT * Math.sqrt(logParentVisits / child.visits);
-    const score = (1 - beta) * q + beta * r + exploration;
+    const score = (1 - beta) * (q + exploration) + beta * r;
     if (score > bestScore) {
       bestScore = score;
       best = child;
@@ -252,18 +258,30 @@ function runIteration(
 // along with its estimated win probability for colorToMove. `priorMove`, if
 // given, is the most recent real move played before this search (used so
 // that a savebridge reply is considered on the very first simulated ply).
+// `existingRoot`, if provided, is a previously-built subtree to resume from
+// (tree reuse: the worker passes the cached child for the opponent's reply).
 export function search(
   rootBoard: HexBoard,
   colorToMove: Player,
   options: SearchOptions,
   priorMove: number | null = null,
+  existingRoot?: Node,
 ): SearchOutcome {
   const deadline = Date.now() + options.budgetMs;
   const maxIterations = options.maxIterations ?? Infinity;
-  const root = createNode(-1, null, colorToMove, rootBoard);
+  const root = existingRoot ?? createNode(-1, null, colorToMove, rootBoard);
 
-  if (root.untriedMoves.length === 0) {
+  if (root.untriedMoves.length === 0 && root.children.size === 0) {
     throw new Error('search() called on a position with no legal moves');
+  }
+
+  // Always take an immediate win if one exists, without spending MCTS budget.
+  for (const move of legalMoves(rootBoard)) {
+    const testBoard = cloneHexBoard(rootBoard);
+    placeStone(testBoard, move, colorToMove);
+    if (testBoard.winner === colorToMove) {
+      return { move, value: 1, root };
+    }
   }
 
   let iterations = 0;
@@ -272,8 +290,29 @@ export function search(
     iterations += 1;
   } while (iterations < maxIterations && Date.now() < deadline);
 
+  // Extend-on-unstable (MoHex 2.0 §3.2, +35 Elo): if the most-visited child
+  // is not also the highest-win-rate child the position hasn't converged yet.
+  // Run one extension of half the original budget to let it settle.
+  if (root.children.size > 0 && iterations < maxIterations) {
+    const extensionBudget = options.extensionMs ?? options.budgetMs / 2;
+    if (
+      extensionBudget > 0 &&
+      mostVisitedChild(root) !== highestWinRateChild(root)
+    ) {
+      const extDeadline = Date.now() + extensionBudget;
+      do {
+        runIteration(rootBoard, root, priorMove);
+        iterations += 1;
+      } while (iterations < maxIterations && Date.now() < extDeadline);
+    }
+  }
+
   const bestChild = mostVisitedChild(root);
-  return { move: bestChild.move, value: bestChild.wins / bestChild.visits };
+  return {
+    move: bestChild.move,
+    value: bestChild.wins / bestChild.visits,
+    root,
+  };
 }
 
 function mostVisitedChild(node: Node): Node {
@@ -285,6 +324,22 @@ function mostVisitedChild(node: Node): Node {
   });
   if (best === null) {
     throw new Error('mostVisitedChild() called on a node with no children');
+  }
+  return best;
+}
+
+function highestWinRateChild(node: Node): Node {
+  let best: Node | null = null;
+  let bestRate = -Infinity;
+  node.children.forEach((child) => {
+    const rate = child.visits > 0 ? child.wins / child.visits : -Infinity;
+    if (rate > bestRate) {
+      bestRate = rate;
+      best = child;
+    }
+  });
+  if (best === null) {
+    throw new Error('highestWinRateChild() called on a node with no children');
   }
   return best;
 }
