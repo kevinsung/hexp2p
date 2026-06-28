@@ -89,22 +89,31 @@ describe('search', () => {
 });
 
 describe('decideSwap', () => {
-  // A small board keeps simulation noise low enough for raw random-rollout
-  // MCTS to reliably detect that the center is a strong opening within a
-  // realistic search budget; on larger boards this same judgment needs more
-  // computation than a single test should spend (see the AI design plan's
-  // notes on strength scaling with board size).
-  it('prefers swapping when the lone opening stone is the strong center cell', () => {
-    const size = 5;
+  // decideSwap now uses precomputed win rates from opening-study.json rather
+  // than running MCTS searches, so the results are deterministic and fast.
+  // Size 7 is the smallest board covered by the study.
+  it('swaps when the opening stone is the strong center cell', () => {
+    const size = 7;
     const board = createHexBoard(size);
     const center = Math.floor(size / 2);
     placeStone(board, toIndex(center, center, size), HexagonState.BLACK);
 
-    const { swap, declineMove } = decideSwap(board, HexagonState.WHITE, {
-      budgetMs: 1200,
-    });
+    const { swap } = decideSwap(board, HexagonState.WHITE, { budgetMs: 100 });
 
     expect(swap).toBe(true);
+  });
+
+  it('declines and returns a legal move when the opening stone is a weak corner cell', () => {
+    const size = 7;
+    const board = createHexBoard(size);
+    // (0, 0) has winrate ≈ 0.003 in the study — clearly not worth swapping.
+    placeStone(board, toIndex(0, 0, size), HexagonState.BLACK);
+
+    const { swap, declineMove } = decideSwap(board, HexagonState.WHITE, {
+      budgetMs: 300,
+    });
+
+    expect(swap).toBe(false);
     expect(legalMoves(board)).toContain(declineMove);
-  }, 10000);
+  }, 5000);
 });

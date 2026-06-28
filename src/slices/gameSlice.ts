@@ -65,6 +65,10 @@ const gameSlice = createSlice({
         const { moveHistory } = state;
         const swap = action.payload;
         if (swap) {
+          // Guard against a stale worker response arriving after undo cleared
+          // the board: moveHistory is empty but swapPhaseComplete is still
+          // false, so the normal guard above didn't fire.
+          if (moveHistory.length === 0) return;
           const [row, col] = moveHistory.pop() as Array<number>;
           moveHistory.push([col, row]);
           state.swapped = true;

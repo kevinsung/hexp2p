@@ -52,6 +52,7 @@ export default function useAiOpponent(gameOver: boolean): void {
 
   const workerRef = useRef<Worker | null>(null);
   const pendingRequestId = useRef<number | null>(null);
+  const swapDelayTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Always hold the latest commit callbacks so the worker's message handler
   // (attached once per worker, below) never closes over a stale version.
   const commitMoveRef = useRef(commitMove);
@@ -75,6 +76,21 @@ export default function useAiOpponent(gameOver: boolean): void {
         // flight; ignore it.
         return;
       }
+      // Brief delay before committing a swap so it doesn't appear instant.
+      // thinking stays true during the delay so no second request fires.
+      if (event.data.type === 'swap' && event.data.swap) {
+        const { requestId } = event.data;
+        swapDelayTimeout.current = setTimeout(() => {
+          swapDelayTimeout.current = null;
+          if (requestId !== pendingRequestId.current) return;
+          unstable_batchedUpdates(() => {
+            pendingRequestId.current = null;
+            dispatch(aiThinkingChanged(false));
+            commitSwapRef.current();
+          });
+        }, 500);
+        return;
+      }
       // Batch all dispatches into a single render + effect flush. Without this,
       // React 17 in legacy mode processes each dispatch separately (worker
       // callbacks are outside React synthetic event handlers and therefore not
@@ -85,11 +101,7 @@ export default function useAiOpponent(gameOver: boolean): void {
         pendingRequestId.current = null;
         dispatch(aiThinkingChanged(false));
         if (event.data.type === 'swap') {
-          if (event.data.swap) {
-            commitSwapRef.current();
-          } else {
-            commitMoveRef.current(event.data.declineMove);
-          }
+          commitMoveRef.current(event.data.declineMove);
         } else {
           commitMoveRef.current(event.data.move);
         }
@@ -100,6 +112,10 @@ export default function useAiOpponent(gameOver: boolean): void {
       worker.terminate();
       workerRef.current = null;
       pendingRequestId.current = null;
+      if (swapDelayTimeout.current !== null) {
+        clearTimeout(swapDelayTimeout.current);
+        swapDelayTimeout.current = null;
+      }
     };
   }, [active, dispatch]);
 

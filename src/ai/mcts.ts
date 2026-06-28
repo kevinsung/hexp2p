@@ -33,7 +33,6 @@ import {
   HexBoard,
   Player,
   cloneHexBoard,
-  createHexBoard,
   legalMoves,
   opponent,
   placeStone,
@@ -42,6 +41,7 @@ import {
   toRowCol,
 } from './hexBoard';
 import { HexagonState } from '../types';
+import { openingWinrate } from './openingBook';
 
 // Exploration constant in the UCT term. MoHex 2.0 reports that with RAVE
 // present, the best setting for their analogous constant is 0 (relying on
@@ -353,44 +353,34 @@ function findSoleStone(board: HexBoard): number {
   throw new Error('expected exactly one stone on the board');
 }
 
-// Builds the position that results from accepting the swap: the lone
-// opening stone (currently `opponent(mover)`'s color) is mirrored across the
-// board's diagonal and recolored to `mover`, exactly as swapChosen(true)
-// does to moveHistory in gameSlice.ts.
-function mirroredSwapBoard(board: HexBoard, mover: Player): HexBoard {
-  const index = findSoleStone(board);
-  const [row, col] = toRowCol(index, board.size);
-  const mirroredIndex = toIndex(col, row, board.size);
-  const fresh = createHexBoard(board.size);
-  placeStone(fresh, mirroredIndex, mover);
-  return fresh;
-}
-
 export interface SwapDecision {
   swap: boolean;
-  // mover's best reply if declining, computed either way: useCommitMove
-  // already folds "decline" into making this move (see HexGame.tsx's
-  // useCommitMove), so the caller needs it in hand for that case without a
-  // second search.
+  // mover's best reply if declining. Only meaningful when swap === false;
+  // set to -1 on the swap path (the caller never uses it in that case).
   declineMove: number;
 }
 
 // Decides whether `mover` (the player facing the swap decision, with exactly
-// one stone on the board) should swap, by comparing mover's estimated win
-// probability if they decline and play their best reply, against their win
-// probability if they accept the swap.
+// one stone on the board) should swap, using the precomputed win rates in
+// src/data/opening-study.json. A win rate above 50% means the opening is
+// strong for the first player, so it is worth taking (swap === true). When
+// the board size is not covered by the study, the AI declines and plays its
+// best MCTS reply instead.
 export function decideSwap(
   boardAfterOpening: HexBoard,
   mover: Player,
   options: SearchOptions,
 ): SwapDecision {
+  const stone = findSoleStone(boardAfterOpening);
+  const [row, col] = toRowCol(stone, boardAfterOpening.size);
+  const winrate = openingWinrate(boardAfterOpening.size, row, col);
+
+  if (winrate !== null && winrate > 0.5) {
+    return { swap: true, declineMove: -1 };
+  }
+
   const decline = search(boardAfterOpening, mover, options);
-
-  const swappedBoard = mirroredSwapBoard(boardAfterOpening, mover);
-  const opponentReply = search(swappedBoard, opponent(mover), options);
-  const acceptValue = 1 - opponentReply.value;
-
-  return { swap: acceptValue > decline.value, declineMove: decline.move };
+  return { swap: false, declineMove: decline.move };
 }
 
 // A small set of near-fair opening cells for when the AI plays first under
