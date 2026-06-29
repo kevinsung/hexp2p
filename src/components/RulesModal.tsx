@@ -38,26 +38,17 @@ export default function RulesButton(props: RulesButtonProps) {
           onClose={() => setOpen(false)}
         >
           <p>
-            <strong>Goal:</strong> Be the first to link your two sides of the
-            board with an unbroken chain of your stones.
+            Hex is played on a rhombus of hexagons. Each player owns the two
+            opposite board edges drawn in their color, and wins by linking their
+            pair of edges with an unbroken chain of their own stones. Players
+            alternate placing one stone on any empty hexagon, and Black moves
+            first.
           </p>
           <p>
-            <strong>Sides:</strong> Black connects the top and bottom edges.
-            White connects the left and right edges.
-          </p>
-          <p>
-            <strong>Play:</strong> Players alternate turns, placing one stone on
-            any empty hexagon. Black moves first.
-          </p>
-          <p>
-            <strong>Winning:</strong> The first player to complete a connected
-            path between their two edges wins. Hex can never end in a draw -
-            exactly one player wins.
-          </p>
-          <p>
-            <strong>Swap rule:</strong> When enabled, after the first move the
-            second player may either play normally or swap, taking the opening
-            move as their own. This offsets the first-player advantage.
+            <strong>Swap rule:</strong> When enabled, the second player may
+            respond to the opening move by swapping instead of playing normally,
+            claiming that first stone as their own. This offsets the advantage
+            of moving first, discouraging an overpowering opening move.
           </p>
         </Modal>
       )}
