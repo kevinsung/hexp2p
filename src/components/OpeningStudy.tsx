@@ -33,7 +33,7 @@ function useIsPortraitViewport(): boolean {
 }
 
 function winrateToFill(winrate: number): string {
-  const v = Math.round(winrate * 255);
+  const v = Math.round((1 - winrate) * 255);
   return `rgb(${v},${v},${v})`;
 }
 

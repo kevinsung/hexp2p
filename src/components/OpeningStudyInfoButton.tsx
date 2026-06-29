@@ -40,7 +40,7 @@ export default function OpeningStudyInfoButton(
         >
           <p style={{ textAlign: 'left' }}>
             Each cell represents playing there as the first move of the game.
-            Its shade represents the win rate — lighter means higher probability
+            Its shade represents the win rate — darker means higher probability
             of winning. Hover any cell to see the exact win rate. Win rates were
             estimated using{' '}
             <a
