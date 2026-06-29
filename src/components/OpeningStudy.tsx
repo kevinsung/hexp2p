@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import openingStudyData from '../data/opening-study.json';
 import { BoardSizeSelector } from './HexSettings';
+import OpeningStudyInfoButton from './OpeningStudyInfoButton';
 import '../App.global.scss';
 
 const COORDINATE_LETTERS = 'ABCDEFGHJKLMNOPQRST';
@@ -527,6 +528,7 @@ export default function OpeningStudy() {
           <Link to="/" tabIndex={-1}>
             <button type="button">Home</button>
           </Link>
+          <OpeningStudyInfoButton visits={openingStudyData.visits} />
         </div>
       </div>
       <StudyBoard
