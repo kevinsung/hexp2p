@@ -509,6 +509,18 @@ a:hover {
   .Modal h1 {
     margin: 0 8px 12px;
   }
+
+  .HexSettings {
+    font-size: 1.1rem;
+  }
+
+  .HexSettings h3 {
+    margin: 6px 0;
+  }
+
+  .HexSettings > div {
+    margin-bottom: 12px;
+  }
 }
 
 // Small screens: move the move-history nav buttons beside the board instead
