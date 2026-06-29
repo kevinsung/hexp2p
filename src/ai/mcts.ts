@@ -41,7 +41,7 @@ import {
   toRowCol,
 } from './hexBoard';
 import { HexagonState } from '../types';
-import { openingWinrate } from './openingBook';
+import { OpeningCell, openingCells, openingWinrate } from './openingBook';
 
 // Exploration constant in the UCT term. MoHex 2.0 reports that with RAVE
 // present, the best setting for their analogous constant is 0 (relying on
@@ -383,18 +383,58 @@ export function decideSwap(
   return { swap: false, declineMove: decline.move };
 }
 
-// A small set of near-fair opening cells for when the AI plays first under
-// the swap rule. The board center is the strongest opening and would make
-// declining to swap an easy call for the human; cells adjacent to the acute
-// corners are known to be much closer to fair, so offering one of them
-// makes the swap decision genuinely interesting.
+// Shared helper: groups opening-study cells into orbits under the board's
+// 180° rotational symmetry ((row,col) ↔ (size-1-row, size-1-col)) — symmetric
+// openings are strategically equivalent for the first player and count as one
+// distinct choice. The `rank` function maps a winrate to a sort key (lower =
+// preferred). We take the best `size` orbits and draw uniformly from the
+// combined pool of their cells (~2·size cells, since each orbit has 2 members
+// except the center on odd boards). The board-size slider is clamped to 7–19,
+// which is exactly the study's coverage, so a null return from openingCells
+// represents a programmer error rather than a runtime condition.
+function pickTopOpening(
+  size: number,
+  rank: (winrate: number) => number,
+): number {
+  const cells = openingCells(size);
+  if (cells === null) {
+    throw new Error(`opening study has no data for board size ${size}`);
+  }
+  // Build orbits: each orbit's key is the smaller of the two symmetric indices.
+  const orbits = new Map<number, OpeningCell[]>();
+  for (const cell of cells) {
+    const idx = toIndex(cell.row, cell.col, size);
+    const rotIdx = toIndex(size - 1 - cell.row, size - 1 - cell.col, size);
+    const key = Math.min(idx, rotIdx);
+    let orbit = orbits.get(key);
+    if (orbit === undefined) {
+      orbit = [];
+      orbits.set(key, orbit);
+    }
+    orbit.push(cell);
+  }
+  // Sort orbits by rank(winrate), take the best `size`, then pick uniformly
+  // from all their cells.
+  const pool = [...orbits.values()]
+    .sort((a, b) => rank(a[0].winrate) - rank(b[0].winrate))
+    .slice(0, size)
+    .flat();
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+  return toIndex(chosen.row, chosen.col, size);
+}
+
+// Chooses a near-fair opening for when the AI plays first under the swap rule.
+// Under optimal swap-rule play, black's guaranteed winrate from opening cell c
+// with study winrate w(c) is min(w(c), 1-w(c)), maximized when w(c) ≈ 0.5.
+// We therefore pick uniformly from the `size` orbits closest to winrate 0.5,
+// so white faces a genuine swap decision rather than an easy one.
 export function chooseBalancedOpening(size: number): number {
-  const candidates: Array<[number, number]> = [
-    [0, 1],
-    [1, 0],
-    [size - 1, size - 2],
-    [size - 2, size - 1],
-  ];
-  const [row, col] = candidates[Math.floor(Math.random() * candidates.length)];
-  return toIndex(row, col, size);
+  return pickTopOpening(size, (w) => Math.abs(w - 0.5));
+}
+
+// Chooses the strongest opening for when the AI plays first without the swap
+// rule. We pick uniformly from the `size` highest-winrate orbits so the
+// opening is strong but not predictably identical every game.
+export function chooseStrongestOpening(size: number): number {
+  return pickTopOpening(size, (w) => -w);
 }

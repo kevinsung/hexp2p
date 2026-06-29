@@ -20,7 +20,13 @@
 // netplayClient.ts's incoming messages are stateless dispatches.
 
 import { buildHexBoard, colorToMoveAfter, toIndex, toRowCol } from './hexBoard';
-import { Node, chooseBalancedOpening, decideSwap, search } from './mcts';
+import {
+  Node,
+  chooseBalancedOpening,
+  chooseStrongestOpening,
+  decideSwap,
+  search,
+} from './mcts';
 import {
   EngineRequest,
   EngineResponse,
@@ -52,6 +58,16 @@ const ctx = self as unknown as Worker;
 
 function handleMove(request: MoveRequest): EngineResponse {
   const { requestId, boardSize, moveHistory, swapped, budgetMs } = request;
+
+  // When there are no prior moves, the swap rule is off and the AI plays
+  // first on an empty board. Skip MCTS and pick from the strongest openings
+  // in the study (the 'opening' request type handles the swap-rule-on path).
+  if (moveHistory.length === 0) {
+    cachedTree = null;
+    const move = chooseStrongestOpening(boardSize);
+    return { type: 'move', requestId, move: toRowCol(move, boardSize) };
+  }
+
   const board = buildHexBoard(
     boardSize,
     moveHistory,

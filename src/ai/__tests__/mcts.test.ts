@@ -1,5 +1,11 @@
 import { createHexBoard, legalMoves, placeStone, toIndex } from '../hexBoard';
-import { search, decideSwap } from '../mcts';
+import {
+  search,
+  decideSwap,
+  chooseBalancedOpening,
+  chooseStrongestOpening,
+} from '../mcts';
+import { openingCells } from '../openingBook';
 import { HexagonState } from '../../types';
 
 describe('search', () => {
@@ -116,4 +122,68 @@ describe('decideSwap', () => {
     expect(swap).toBe(false);
     expect(legalMoves(board)).toContain(declineMove);
   }, 5000);
+});
+
+// Builds the expected cell-index pool for the top `size` orbits ranked by
+// `rank(winrate)` (ascending). Used by the chooseBalancedOpening and
+// chooseStrongestOpening tests to check pool membership without duplicating
+// the production orbit logic in a black-box way.
+function buildExpectedPool(
+  size: number,
+  rank: (winrate: number) => number,
+): Set<number> {
+  const cells = openingCells(size)!;
+  // Group into orbits keyed by min(idx, rotIdx).
+  const orbits = new Map<number, Array<{ row: number; col: number }>>();
+  for (const cell of cells) {
+    const idx = toIndex(cell.row, cell.col, size);
+    const rotIdx = toIndex(size - 1 - cell.row, size - 1 - cell.col, size);
+    const key = Math.min(idx, rotIdx);
+    let orbit = orbits.get(key);
+    if (orbit === undefined) {
+      orbit = [];
+      orbits.set(key, orbit);
+    }
+    orbit.push(cell);
+  }
+  // Sort orbits by rank of the first member's winrate, take best `size`.
+  const sorted = [...orbits.entries()].sort(([, a], [, b]) => {
+    const wa = cells.find(
+      (c) => c.row === a[0].row && c.col === a[0].col,
+    )!.winrate;
+    const wb = cells.find(
+      (c) => c.row === b[0].row && c.col === b[0].col,
+    )!.winrate;
+    return rank(wa) - rank(wb);
+  });
+  const pool = new Set<number>();
+  for (const [, orbit] of sorted.slice(0, size)) {
+    for (const cell of orbit) {
+      pool.add(toIndex(cell.row, cell.col, size));
+    }
+  }
+  return pool;
+}
+
+describe('chooseBalancedOpening', () => {
+  it('returns a cell from the top-n balanced orbits (closest to winrate 0.5)', () => {
+    const size = 11;
+    const pool = buildExpectedPool(size, (w) => Math.abs(w - 0.5));
+    // Run several times to exercise the randomization.
+    for (let i = 0; i < 20; i += 1) {
+      const move = chooseBalancedOpening(size);
+      expect(pool.has(move)).toBe(true);
+    }
+  });
+});
+
+describe('chooseStrongestOpening', () => {
+  it('returns a cell from the top-n strongest orbits (highest winrate)', () => {
+    const size = 11;
+    const pool = buildExpectedPool(size, (w) => -w);
+    for (let i = 0; i < 20; i += 1) {
+      const move = chooseStrongestOpening(size);
+      expect(pool.has(move)).toBe(true);
+    }
+  });
 });
