@@ -559,12 +559,6 @@ export default function OpeningStudy() {
             </strong>
           </div>
           <div>Win rate: {(hoveredCell.winrate * 100).toFixed(1)}%</div>
-          <div>
-            Policy:{' '}
-            {hoveredCell.policy !== null
-              ? `${(hoveredCell.policy * 100).toFixed(2)}%`
-              : 'N/A'}
-          </div>
         </div>
       )}
       <BoardSizeSelector size={boardSize} setBoardSize={handleSizeChange} />
