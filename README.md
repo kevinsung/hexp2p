@@ -10,7 +10,7 @@ Try it at https://kevinsung.github.io/hexp2p/.
 
 #### Dependencies
 
-- [Node.js](https://nodejs.org) 14
+- [Node.js](https://nodejs.org)
 - [npm](https://www.npmjs.com)
 
 #### Instructions
