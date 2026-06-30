@@ -25,6 +25,12 @@ import {
 } from '../slices/netplaySlice';
 import { aiColorChosen, selectAiState } from '../slices/aiSlice';
 import { GameSettings } from '../types';
+import {
+  MIN_BOARD_SIZE,
+  MAX_BOARD_SIZE,
+  getLastSettings,
+  setLastSettings,
+} from '../lastGameSettings';
 import '../App.global.scss';
 
 interface BoardSizeSelectorProps {
@@ -41,10 +47,6 @@ interface ColorSelectorProps {
   value: string;
   setColor: (color: string) => void;
 }
-
-const MIN_BOARD_SIZE = 7;
-const MAX_BOARD_SIZE = 19;
-const DEFAULT_BOARD_SIZE = 13;
 
 function randomBoolean() {
   return crypto.getRandomValues(new Uint8Array(1))[0] < 128;
@@ -193,12 +195,14 @@ export default function HexSettings(props: HexSettingsProps) {
   const { active: aiActive } = useSelector(selectAiState);
   const connected = useSelector(selectIsConnected);
 
-  const [boardSize, setBoardSize] = useState(DEFAULT_BOARD_SIZE);
-  const [useSwapRule, setUseSwapRule] = useState(true);
-  const [color, setColor] = useState('random');
+  const initial = getLastSettings();
+  const [boardSize, setBoardSize] = useState(initial.boardSize);
+  const [useSwapRule, setUseSwapRule] = useState(initial.useSwapRule);
+  const [color, setColor] = useState(initial.color);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLastSettings({ boardSize, useSwapRule, color });
     const settings: GameSettings = { boardSize, useSwapRule };
     dispatch(gameStarted(settings));
     if (netplayActive) {
