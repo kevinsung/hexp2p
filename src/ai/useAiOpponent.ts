@@ -21,8 +21,9 @@
 
 import { useEffect, useRef } from 'react';
 import { unstable_batchedUpdates } from 'react-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { selectAiState, aiThinkingChanged } from '../slices/aiSlice';
+import type { RootState } from '../store';
 import { selectGameState, selectIsBlackTurn } from '../slices/gameSlice';
 import { useCommitMove, useCommitSwap } from '../hooks/useGameCommit';
 import { EngineRequest, EngineResponse, Move } from './protocol';
@@ -42,7 +43,9 @@ let nextRequestId = 0;
 // getWinningConnectedComponent for rendering).
 export default function useAiOpponent(gameOver: boolean): void {
   const dispatch = useDispatch();
-  const { active, aiPlaysBlack, thinking } = useSelector(selectAiState);
+  const store = useStore<RootState>();
+  const { active, aiPlaysBlack, thinking, generation } =
+    useSelector(selectAiState);
   const { moveHistory, moveNumber, settings, swapPhaseComplete, swapped } =
     useSelector(selectGameState);
   const { useSwapRule, boardSize } = settings;
@@ -74,6 +77,14 @@ export default function useAiOpponent(gameOver: boolean): void {
       if (event.data.requestId !== pendingRequestId.current) {
         // A stale reply, e.g. the game was reset while this request was in
         // flight; ignore it.
+        return;
+      }
+      // Guard against the window between an undo's aiThinkingCancelled dispatch
+      // (synchronous, so `thinking` is already false) and the effect-driven
+      // worker.terminate() (asynchronous). If thinking was cancelled, drop
+      // the reply without committing the move onto the post-undo board.
+      if (!store.getState().ai.thinking) {
+        pendingRequestId.current = null;
         return;
       }
       // Brief delay before committing a swap so it doesn't appear instant.
@@ -117,7 +128,12 @@ export default function useAiOpponent(gameOver: boolean): void {
         swapDelayTimeout.current = null;
       }
     };
-  }, [active, dispatch]);
+    // `generation` is included so that aiThinkingCancelled (which bumps it)
+    // triggers a worker teardown + fresh-worker setup, discarding the
+    // in-flight computation and making the worker idle for the next move.
+    // `store` is stable (useStore returns a singleton ref), but included to
+    // satisfy react-hooks/exhaustive-deps.
+  }, [active, generation, dispatch, store]);
 
   // Whenever it becomes the AI's turn, send exactly one request.
   useEffect(() => {

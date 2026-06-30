@@ -61,4 +61,8 @@ export interface AiState {
   // Whether a request to the AI worker is currently outstanding, so the UI
   // can show a "thinking" indicator and keep the board locked.
   thinking: boolean;
+  // Incremented each time a thinking request is cancelled (e.g. by undo).
+  // useAiOpponent keys the worker lifecycle on this value so the in-flight
+  // computation is terminated and a fresh worker is stood up for the next move.
+  generation: number;
 }

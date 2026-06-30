@@ -28,6 +28,7 @@ const initialState: AiState = {
   active: false,
   aiPlaysBlack: false,
   thinking: false,
+  generation: 0,
 };
 
 const aiSlice = createSlice({
@@ -46,11 +47,24 @@ const aiSlice = createSlice({
     aiThinkingChanged: (state, action: { payload: boolean }) => {
       state.thinking = action.payload;
     },
+    // Cancels an in-flight thinking request (e.g. when the human undoes while
+    // the AI is computing). Clears `thinking` and bumps `generation` so
+    // useAiOpponent's worker-lifecycle effect tears down the current worker and
+    // replaces it with a fresh idle one, discarding the stale computation.
+    aiThinkingCancelled: (state) => {
+      state.thinking = false;
+      state.generation += 1;
+    },
   },
 });
 
-export const { activateAi, deactivateAi, aiColorChosen, aiThinkingChanged } =
-  aiSlice.actions;
+export const {
+  activateAi,
+  deactivateAi,
+  aiColorChosen,
+  aiThinkingChanged,
+  aiThinkingCancelled,
+} = aiSlice.actions;
 
 export const selectAiState = (state: RootState) => state.ai;
 

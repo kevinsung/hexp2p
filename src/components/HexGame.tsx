@@ -15,7 +15,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import classnames from 'classnames';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, useStore } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
   hexagonSelected,
@@ -37,7 +37,8 @@ import getWinningConnectedComponent from '../slices/getWinningConnectedComponent
 import { Move, useCommitMove, useCommitSwap } from '../hooks/useGameCommit';
 import useAiOpponent from '../ai/useAiOpponent';
 import useHotkeys from '../hooks/useHotkeys';
-import { selectAiState } from '../slices/aiSlice';
+import { selectAiState, aiThinkingCancelled } from '../slices/aiSlice';
+import type { RootState } from '../store';
 import { HexagonState } from '../types';
 import RulesButton from './RulesModal';
 import Modal from './Modal';
@@ -1017,26 +1018,12 @@ function MoveHistoryButtons() {
 function UndoButton(props: UndoButtonProps) {
   let { disabled } = props;
   const dispatch = useDispatch();
+  const store = useStore<RootState>();
   const { active: netplayActive, isBlack } = useSelector(selectNetplayState);
-  const {
-    active: aiActive,
-    aiPlaysBlack,
-    thinking: aiThinking,
-  } = useSelector(selectAiState);
-  const { moveHistory, moveNumber, swapPhaseComplete, settings } =
+  const { active: aiActive, aiPlaysBlack } = useSelector(selectAiState);
+  const { moveHistory, moveNumber, swapPhaseComplete } =
     useSelector(selectGameState);
-  const { useSwapRule } = settings;
   const isBlackTurn = useSelector(selectIsBlackTurn);
-
-  // True when we're exactly one undo away from the swap-decision point
-  // (AI opened first, human just completed the swap phase). Stop at
-  // moveNumber=1 so the human can reconsider the swap for the same opening.
-  const atSwapBoundary =
-    aiActive &&
-    aiPlaysBlack &&
-    useSwapRule &&
-    swapPhaseComplete &&
-    moveNumber === 2;
 
   disabled =
     disabled ||
@@ -1046,38 +1033,59 @@ function UndoButton(props: UndoButtonProps) {
     moveNumber !== moveHistory.length ||
     // disable during own turn
     (netplayActive && isBlack === isBlackTurn) ||
-    // disable while AI is computing (prevents racing the in-flight request)
-    (aiActive && aiThinking) ||
     // when AI goes first, disable until human has made their first move
-    (aiActive && aiPlaysBlack && moveHistory.length <= 1);
+    // (accepting the swap counts as that move even though it doesn't grow history)
+    (aiActive && aiPlaysBlack && moveHistory.length <= 1 && !swapPhaseComplete);
 
   const handleClick = useCallback(() => {
     if (netplayActive) {
       sendRequestUndo(moveHistory.length);
       dispatch(undoRequestSent(moveHistory.length));
     } else {
+      // Read fresh state so decisions aren't based on stale selector values:
+      // an AI reply may have been committed between the last render and now.
+      const { game, ai } = store.getState();
+      const {
+        moveNumber: mn,
+        swapPhaseComplete: spc,
+        swapped,
+        settings: s,
+      } = game;
+      const freshIsBlackTurn = Boolean(mn % 2) === swapped;
+      const aiTurn = ai.aiPlaysBlack === freshIsBlackTurn;
+
+      // Cancel the in-flight AI computation before touching the board so
+      // the worker's eventual reply finds `thinking` false and bails out.
+      if (ai.thinking) {
+        dispatch(aiThinkingCancelled());
+      }
+
       dispatch(undoMove());
-      // Also undo the AI's preceding move so the human steps back to their
-      // own last turn rather than triggering an immediate AI re-reply —
-      // except when we're at the swap-decision boundary (stop there to let
-      // the human reconsider). When the AI just swapped (moveNumber=1,
-      // swapPhaseComplete=true), a first undo re-opens the swap offer and a
-      // second then clears the board.
-      const aiJustSwapped =
-        aiActive && useSwapRule && swapPhaseComplete && moveNumber === 1;
-      if ((aiActive && moveNumber > 1 && !atSwapBoundary) || aiJustSwapped)
+
+      // When the AI has already replied (it's the human's turn), also undo
+      // the AI's preceding move so the human steps back to their own last
+      // turn rather than triggering an immediate AI re-reply.
+      //
+      // When the AI is thinking (it's the AI's turn), the last move on the
+      // board is already the human's, so one undo is enough.
+      //
+      // Special cases that only occur on the human's turn (!aiTurn):
+      //   atSwapBoundary: human just completed the swap phase and AI opened
+      //     first — stop at moveNumber=1 so the human can reconsider.
+      //   aiJustSwapped: AI accepted the swap on moveNumber=1 — first undo
+      //     re-opens the swap offer, second clears the board.
+      const atSwapBoundary =
+        ai.active && ai.aiPlaysBlack && s.useSwapRule && spc && mn === 2;
+      const aiJustSwapped = ai.active && s.useSwapRule && spc && mn === 1;
+      if (
+        ai.active &&
+        !aiTurn &&
+        ((mn > 1 && !atSwapBoundary) || aiJustSwapped)
+      ) {
         dispatch(undoMove());
+      }
     }
-  }, [
-    dispatch,
-    netplayActive,
-    moveHistory.length,
-    aiActive,
-    moveNumber,
-    atSwapBoundary,
-    useSwapRule,
-    swapPhaseComplete,
-  ]);
+  }, [dispatch, store, netplayActive, moveHistory.length]);
 
   useHotkeys({ u: handleClick }, !disabled);
 
