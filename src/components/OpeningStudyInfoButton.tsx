@@ -30,19 +30,13 @@ export default function OpeningStudyInfoButton(
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
-        Info
+        About
       </button>
       {open && (
-        <Modal
-          title="About the opening study"
-          wide
-          onClose={() => setOpen(false)}
-        >
+        <Modal title="Opening study" wide onClose={() => setOpen(false)}>
           <p style={{ textAlign: 'left' }}>
             Each cell represents playing there as the first move of the game.
-            Its shade represents the win rate — darker means higher probability
-            of winning. Hover any cell to see the exact win rate. Win rates were
-            estimated using{' '}
+            Its shade represents the win rate as estimated using{' '}
             <a
               href="https://github.com/hzyhhzy/KataGomo"
               target="_blank"
@@ -51,12 +45,14 @@ export default function OpeningStudyInfoButton(
             >
               KataHex
             </a>{' '}
-            with {visits} visits per move.
+            with {visits} visits per move. Darker means higher probability of
+            winning. Hover any cell to see the value.
           </p>
           <p style={{ textAlign: 'left' }}>
-            The blue markers indicate fair opening moves. A small marker appears
-            for moves with win rate 30–70%, and a larger marker for win rate
-            40–60%. These are the best moves to play under the swap rule.
+            The blue markers indicate the fairest opening moves. A small marker
+            appears for moves with win rate between 30–70%, and a larger marker
+            for win rate between 40–60%. These are the best moves to play under
+            the swap rule.
           </p>
         </Modal>
       )}
