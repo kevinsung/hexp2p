@@ -117,18 +117,17 @@ a:hover {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  font-size: 1.3rem;
 }
 
 .HexSettings h3 {
-  margin: 12px 0px;
+  margin: 8px 0px;
 }
 
 .HexSettings > div {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .HexSettings input[type='checkbox'] {
@@ -508,18 +507,6 @@ a:hover {
 
   .Modal h1 {
     margin: 0 8px 12px;
-  }
-
-  .HexSettings {
-    font-size: 1.1rem;
-  }
-
-  .HexSettings h3 {
-    margin: 6px 0;
-  }
-
-  .HexSettings > div {
-    margin-bottom: 12px;
   }
 }
 
