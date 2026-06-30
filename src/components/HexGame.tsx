@@ -36,6 +36,7 @@ import {
 import getWinningConnectedComponent from '../slices/getWinningConnectedComponent';
 import { Move, useCommitMove, useCommitSwap } from '../hooks/useGameCommit';
 import useAiOpponent from '../ai/useAiOpponent';
+import useHotkeys from '../hooks/useHotkeys';
 import { selectAiState } from '../slices/aiSlice';
 import { HexagonState } from '../types';
 import RulesButton from './RulesModal';
@@ -133,22 +134,6 @@ const INVERSE_GOLDEN_RATIO = 0.618033988749895;
 // edge lands exactly where the hexagon's own gray stroke ends, leaving
 // hexagon edges fully visible with no overlap.
 const BORDER_OFFSET = 0.125;
-
-// Determines whether a keydown event should be treated as a hotkey: ignores
-// the event if a modifier key is held or the user is typing into a form field.
-function isHotkeyEvent(event: KeyboardEvent): boolean {
-  if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
-    return false;
-  }
-  const { target } = event;
-  if (
-    target instanceof HTMLElement &&
-    (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')
-  ) {
-    return false;
-  }
-  return true;
-}
 
 // Tracks whether the viewport is taller than it is wide, so the board can be
 // rotated 90 degrees to make better use of the available space.
@@ -253,19 +238,7 @@ function UndoDialog() {
     }
   }, [dispatch, undoRequestReceived, moveHistory.length]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isHotkeyEvent(event) || !undoRequestReceived) {
-        return;
-      }
-      if (event.key.toLowerCase() === 'a') {
-        event.preventDefault();
-        handleClick();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [undoRequestReceived, handleClick]);
+  useHotkeys({ a: handleClick }, Boolean(undoRequestReceived));
 
   useEffect(() => {
     setDismissed(false);
@@ -1008,42 +981,14 @@ function MoveHistoryButtons() {
     [dispatch, moveHistory.length, moveNumber],
   );
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isHotkeyEvent(event)) {
-        return;
-      }
-      switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault();
-          shiftMoveNumber(-1);
-          break;
-        case 'ArrowRight':
-          event.preventDefault();
-          shiftMoveNumber(1);
-          break;
-        case 'PageUp':
-          event.preventDefault();
-          shiftMoveNumber(-6);
-          break;
-        case 'PageDown':
-          event.preventDefault();
-          shiftMoveNumber(6);
-          break;
-        case 'Home':
-          event.preventDefault();
-          shiftMoveNumber(-Infinity);
-          break;
-        case 'End':
-          event.preventDefault();
-          shiftMoveNumber(Infinity);
-          break;
-        // no default
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [shiftMoveNumber]);
+  useHotkeys({
+    arrowleft: () => shiftMoveNumber(-1),
+    arrowright: () => shiftMoveNumber(1),
+    pageup: () => shiftMoveNumber(-6),
+    pagedown: () => shiftMoveNumber(6),
+    home: () => shiftMoveNumber(-Infinity),
+    end: () => shiftMoveNumber(Infinity),
+  });
 
   return (
     <div className="MoveHistoryButtons">
@@ -1134,19 +1079,7 @@ function UndoButton(props: UndoButtonProps) {
     swapPhaseComplete,
   ]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isHotkeyEvent(event) || disabled) {
-        return;
-      }
-      if (event.key.toLowerCase() === 'u') {
-        event.preventDefault();
-        handleClick();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [disabled, handleClick]);
+  useHotkeys({ u: handleClick }, !disabled);
 
   return (
     <button type="button" onClick={handleClick} disabled={disabled}>
@@ -1173,19 +1106,7 @@ function ResignButton(props: ResignButtonProps) {
     setConfirmOpen(true);
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isHotkeyEvent(event) || disabled) {
-        return;
-      }
-      if (event.key.toLowerCase() === 'r') {
-        event.preventDefault();
-        handleClick();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [disabled, handleClick]);
+  useHotkeys({ r: handleClick }, !disabled);
 
   return (
     <>
