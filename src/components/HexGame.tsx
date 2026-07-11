@@ -40,6 +40,7 @@ import useHotkeys from '../hooks/useHotkeys';
 import { selectAiState, aiThinkingCancelled } from '../slices/aiSlice';
 import type { RootState } from '../store';
 import { HexagonState } from '../types';
+import gameStateToSgf from '../sgf';
 import RulesButton from './RulesModal';
 import Modal from './Modal';
 import HexSettings from './HexSettings';
@@ -1148,6 +1149,37 @@ function ResignButton(props: ResignButtonProps) {
   );
 }
 
+function timestampForFilename(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const time = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  return `${date}-${time}`;
+}
+
+function DownloadSgfButton() {
+  const gameState = useSelector(selectGameState);
+
+  const handleDownload = useCallback(() => {
+    const sgf = gameStateToSgf(gameState);
+    const blob = new Blob([sgf], { type: 'application/x-go-sgf' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `hexp2p-${timestampForFilename()}.sgf`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  }, [gameState]);
+
+  return (
+    <button type="button" onClick={handleDownload}>
+      Download SGF
+    </button>
+  );
+}
+
 function DisconnectDialog() {
   const dispatch = useDispatch();
   const { active: netplayActive, connectionStatus } =
@@ -1365,6 +1397,7 @@ export default function HexGame() {
           </Link>
           <RulesButton transparent />
           <NewGameButton />
+          <DownloadSgfButton />
           <ConfirmMoveToggle
             enabled={confirmMoves}
             onChange={setConfirmMoves}
