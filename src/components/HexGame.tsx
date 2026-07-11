@@ -44,6 +44,14 @@ import gameStateToSgf from '../sgf';
 import RulesButton from './RulesModal';
 import Modal from './Modal';
 import HexSettings from './HexSettings';
+import {
+  SkipToStartIcon,
+  RewindIcon,
+  StepBackIcon,
+  StepForwardIcon,
+  FastForwardIcon,
+  SkipToEndIcon,
+} from './MoveNavIcons';
 import '../App.global.scss';
 
 interface HexagonProps {
@@ -994,23 +1002,47 @@ function MoveHistoryButtons() {
 
   return (
     <div className="MoveHistoryButtons">
-      <button type="button" onClick={() => shiftMoveNumber(-Infinity)}>
-        |&lt;
+      <button
+        type="button"
+        aria-label="First move"
+        onClick={() => shiftMoveNumber(-Infinity)}
+      >
+        <SkipToStartIcon />
       </button>
-      <button type="button" onClick={() => shiftMoveNumber(-6)}>
-        &lt;&lt;
+      <button
+        type="button"
+        aria-label="Back six moves"
+        onClick={() => shiftMoveNumber(-6)}
+      >
+        <RewindIcon />
       </button>
-      <button type="button" onClick={() => shiftMoveNumber(-1)}>
-        &lt;
+      <button
+        type="button"
+        aria-label="Previous move"
+        onClick={() => shiftMoveNumber(-1)}
+      >
+        <StepBackIcon />
       </button>
-      <button type="button" onClick={() => shiftMoveNumber(1)}>
-        &gt;
+      <button
+        type="button"
+        aria-label="Next move"
+        onClick={() => shiftMoveNumber(1)}
+      >
+        <StepForwardIcon />
       </button>
-      <button type="button" onClick={() => shiftMoveNumber(6)}>
-        &gt;&gt;
+      <button
+        type="button"
+        aria-label="Forward six moves"
+        onClick={() => shiftMoveNumber(6)}
+      >
+        <FastForwardIcon />
       </button>
-      <button type="button" onClick={() => shiftMoveNumber(Infinity)}>
-        &gt;|
+      <button
+        type="button"
+        aria-label="Last move"
+        onClick={() => shiftMoveNumber(Infinity)}
+      >
+        <SkipToEndIcon />
       </button>
     </div>
   );

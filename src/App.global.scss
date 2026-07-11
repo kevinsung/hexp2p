@@ -394,6 +394,11 @@ a:hover {
   padding: 10px 8px;
 }
 
+.MoveHistoryButtons > button > svg {
+  display: block;
+  margin: 0 auto;
+}
+
 .ConnectionStatus {
   flex: 1;
   display: flex;
