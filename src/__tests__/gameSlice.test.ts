@@ -1,8 +1,12 @@
 import gameReducer, {
   moveMade,
-  undoMove,
+  navigateMoveHistory,
+  selectBoardState,
+  selectIsBlackTurn,
   swapChosen,
+  undoMove,
 } from '../slices/gameSlice';
+import type { RootState } from '../store';
 import { GameState, HexagonState } from '../types';
 
 const initialState: GameState = {
@@ -72,7 +76,7 @@ describe('undoMove', () => {
     // undo removes the first stone (empty board). This mirrors what HexGame's
     // undo button does in AI mode: dispatches undoMove() twice.
     let state = gameReducer(initialState, moveMade([1, 2]));
-    state = gameReducer(state, swapChosen(true)); // moveNumber still 1
+    state = gameReducer(state, swapChosen(true)); // moveNumber = 2 (swap slot)
 
     state = gameReducer(state, undoMove()); // re-opens swap offer
 
@@ -91,14 +95,74 @@ describe('undoMove', () => {
 
   it('leaves swap state untouched when undoing to moveNumber > 1', () => {
     let state = gameReducer(initialState, moveMade([1, 2]));
-    state = gameReducer(state, swapChosen(true));
+    state = gameReducer(state, swapChosen(true)); // moveNumber = 2 (swap slot)
     state = gameReducer(state, moveMade([3, 3]));
-    state = gameReducer(state, moveMade([4, 4])); // moveNumber = 3
+    state = gameReducer(state, moveMade([4, 4])); // moveNumber = 4
 
-    state = gameReducer(state, undoMove()); // undo [4,4] → moveNumber=2
+    state = gameReducer(state, undoMove()); // undo [4,4] → moveNumber=3
 
-    expect(state.moveNumber).toBe(2);
+    expect(state.moveNumber).toBe(3);
     expect(state.swapPhaseComplete).toBe(true);
     expect(state.swapped).toBe(true);
+  });
+});
+
+describe('swap navigation', () => {
+  // Black opens at [1, 2], then the swap is accepted (stored transposed to
+  // [2, 1] and recolored white). The accepted swap adds its own navigable slot.
+  const swappedGame = () => {
+    let state = gameReducer(initialState, moveMade([1, 2]));
+    state = gameReducer(state, swapChosen(true));
+    return state;
+  };
+
+  const boardAt = (state: GameState) =>
+    selectBoardState({ game: state } as RootState);
+  const isBlackTurn = (state: GameState) =>
+    selectIsBlackTurn({ game: state } as RootState);
+
+  it('advances the cursor to the post-swap slot on accept', () => {
+    const state = swappedGame();
+    expect(state.moveNumber).toBe(2);
+    expect(state.moveHistory).toEqual([[2, 1]]);
+    expect(state.swapped).toBe(true);
+  });
+
+  it('shows the post-swap opening (white) at moveNumber 2', () => {
+    const board = boardAt(swappedGame());
+    expect(board[2][1]).toBe(HexagonState.WHITE);
+    expect(board[1][2]).toBe(HexagonState.EMPTY);
+    expect(isBlackTurn(swappedGame())).toBe(true);
+  });
+
+  it('shows the PRE-swap opening (black, original position) at moveNumber 1', () => {
+    const state = gameReducer(swappedGame(), navigateMoveHistory(1));
+    const board = boardAt(state);
+    expect(board[1][2]).toBe(HexagonState.BLACK); // original coords, un-reflected
+    expect(board[2][1]).toBe(HexagonState.EMPTY);
+    expect(isBlackTurn(state)).toBe(false);
+  });
+
+  it('shows the empty board at moveNumber 0', () => {
+    const state = gameReducer(swappedGame(), navigateMoveHistory(0));
+    const board = boardAt(state);
+    expect(board[1][2]).toBe(HexagonState.EMPTY);
+    expect(board[2][1]).toBe(HexagonState.EMPTY);
+  });
+
+  it('makes the pre-swap and post-swap openings distinct positions', () => {
+    const state = swappedGame();
+    const pre = boardAt(gameReducer(state, navigateMoveHistory(1)));
+    const post = boardAt(gameReducer(state, navigateMoveHistory(2)));
+    expect(pre).not.toEqual(post);
+  });
+
+  it('increments to the next slot when a move is made after the swap', () => {
+    const state = gameReducer(swappedGame(), moveMade([3, 3]));
+    expect(state.moveNumber).toBe(3);
+    expect(state.moveHistory).toEqual([
+      [2, 1],
+      [3, 3],
+    ]);
   });
 });

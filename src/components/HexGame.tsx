@@ -24,6 +24,8 @@ import {
   selectBoardState,
   selectGameState,
   selectIsBlackTurn,
+  selectLastMove,
+  selectLatestMoveNumber,
   undoMove,
 } from '../slices/gameSlice';
 import { sendRequestUndo, sendAcceptUndo, sendResign } from '../netplayClient';
@@ -306,14 +308,10 @@ function Hexagon(props: HexagonProps) {
     rotated,
   } = props;
   const dispatch = useDispatch();
-  const {
-    moveHistory,
-    moveNumber,
-    selectedHexagon,
-    settings,
-    swapPhaseComplete,
-  } = useSelector(selectGameState);
+  const { moveNumber, selectedHexagon, settings, swapPhaseComplete } =
+    useSelector(selectGameState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
+  const lastMove = useSelector(selectLastMove);
   const [selectedRow, selectedCol] = selectedHexagon;
   const { useSwapRule } = settings;
 
@@ -325,7 +323,6 @@ function Hexagon(props: HexagonProps) {
   const markerScale = INVERSE_GOLDEN_RATIO;
   const markerPoints = `0,${markerScale} ${d * markerScale},${0.5 * markerScale} ${d * markerScale},${-0.5 * markerScale} 0,${-markerScale} ${-d * markerScale},${-0.5 * markerScale} ${-d * markerScale},${0.5 * markerScale}`;
 
-  const lastMove = moveNumber > 0 ? moveHistory[moveNumber - 1] : [NaN, NaN];
   const [lrow, lcol] = lastMove;
   const markerInvisible = lrow !== row || lcol !== col;
 
@@ -978,17 +975,16 @@ function HexBoard(props: HexBoardProps) {
 
 function MoveHistoryButtons() {
   const dispatch = useDispatch();
-  const { moveHistory, moveNumber } = useSelector(selectGameState);
+  const { moveNumber } = useSelector(selectGameState);
+  const latest = useSelector(selectLatestMoveNumber);
 
   const shiftMoveNumber = useCallback(
     (offset: number) => {
       dispatch(
-        navigateMoveHistory(
-          Math.max(0, Math.min(moveHistory.length, moveNumber + offset)),
-        ),
+        navigateMoveHistory(Math.max(0, Math.min(latest, moveNumber + offset))),
       );
     },
-    [dispatch, moveHistory.length, moveNumber],
+    [dispatch, latest, moveNumber],
   );
 
   useHotkeys({
@@ -1056,14 +1052,16 @@ function UndoButton(props: UndoButtonProps) {
   const { active: aiActive, aiPlaysBlack } = useSelector(selectAiState);
   const { moveHistory, moveNumber, swapPhaseComplete } =
     useSelector(selectGameState);
+  const latest = useSelector(selectLatestMoveNumber);
   const isBlackTurn = useSelector(selectIsBlackTurn);
 
   disabled =
     disabled ||
     // disable when no moves have been made
     !moveHistory.length ||
-    // disable when board not set to latest position
-    moveNumber !== moveHistory.length ||
+    // disable when board not set to latest position (an accepted swap adds one
+    // navigable slot, so latest is length + (swapped ? 1 : 0))
+    moveNumber !== latest ||
     // disable during own turn
     (netplayActive && isBlack === isBlackTurn) ||
     // when AI goes first, disable until human has made their first move
@@ -1084,7 +1082,12 @@ function UndoButton(props: UndoButtonProps) {
         swapped,
         settings: s,
       } = game;
-      const freshIsBlackTurn = Boolean(mn % 2) === swapped;
+      // An accepted swap advances the cursor to its own slot (mn 2) and flips
+      // colors, so derive the turn with the same swap-aware mapping the board
+      // selectors use rather than the raw parity of mn.
+      const swapApplied = swapped && mn >= 2;
+      const shown = swapApplied ? mn - 1 : mn;
+      const freshIsBlackTurn = Boolean(shown % 2) === swapApplied;
       const aiTurn = ai.aiPlaysBlack === freshIsBlackTurn;
 
       // Cancel the in-flight AI computation before touching the board so
@@ -1102,19 +1105,20 @@ function UndoButton(props: UndoButtonProps) {
       // When the AI is thinking (it's the AI's turn), the last move on the
       // board is already the human's, so one undo is enough.
       //
-      // Special cases that only occur on the human's turn (!aiTurn):
-      //   atSwapBoundary: human just completed the swap phase and AI opened
-      //     first — stop at moveNumber=1 so the human can reconsider.
-      //   aiJustSwapped: AI accepted the swap on moveNumber=1 — first undo
-      //     re-opens the swap offer, second clears the board.
+      // atSwapBoundary: the AI opened first and the human accepted the swap,
+      // and the AI has since played its one reply (mn 3, swap accepted). Here a
+      // single undo already re-opens the swap offer, so stop — the human can
+      // reconsider. The discriminator is `swapped` (equivalently mn === one past
+      // moveHistory.length), not the raw mn: a *declined* swap also reaches mn 3
+      // but needs the second undo to step back past the AI's reply.
       const atSwapBoundary =
-        ai.active && ai.aiPlaysBlack && s.useSwapRule && spc && mn === 2;
-      const aiJustSwapped = ai.active && s.useSwapRule && spc && mn === 1;
-      if (
         ai.active &&
-        !aiTurn &&
-        ((mn > 1 && !atSwapBoundary) || aiJustSwapped)
-      ) {
+        ai.aiPlaysBlack &&
+        s.useSwapRule &&
+        spc &&
+        swapped &&
+        mn === 3;
+      if (ai.active && !aiTurn && mn > 1 && !atSwapBoundary) {
         dispatch(undoMove());
       }
     }
@@ -1369,8 +1373,8 @@ export default function HexGame() {
     aiPlaysBlack,
     thinking: aiThinking,
   } = useSelector(selectAiState);
-  const { moveHistory, moveNumber, resignationState } =
-    useSelector(selectGameState);
+  const { moveNumber, resignationState } = useSelector(selectGameState);
+  const latest = useSelector(selectLatestMoveNumber);
   const boardState = useSelector(selectBoardState);
   const isBlackTurn = useSelector(selectIsBlackTurn);
   const commitMove = useCommitMove();
@@ -1386,7 +1390,7 @@ export default function HexGame() {
 
   const disabled =
     // disable board when it is not set to latest position
-    moveNumber !== moveHistory.length ||
+    moveNumber !== latest ||
     // disable board during opponent's turn
     (netplayActive && isBlack !== isBlackTurn) ||
     // disable board during the computer's turn (including while it's

@@ -140,8 +140,11 @@ export default function useAiOpponent(gameOver: boolean): void {
     if (!active || gameOver || thinking) {
       return;
     }
-    // Board not at the latest position (history navigation): don't act.
-    if (moveNumber !== moveHistory.length) {
+    // Board not at the latest position (history navigation): don't act. An
+    // accepted swap adds one navigable slot, so latest is length + (swapped ? 1
+    // : 0) — this must move in lockstep with selectIsBlackTurn or the AI-black
+    // opener would think it's not its turn right after a swap.
+    if (moveNumber !== moveHistory.length + (swapped ? 1 : 0)) {
       return;
     }
     if (aiPlaysBlack !== isBlackTurn) {
