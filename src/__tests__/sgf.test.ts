@@ -32,24 +32,25 @@ describe('gameStateToSgf', () => {
         [4, 4],
       ]),
     );
-    expect(sgf).toBe('(;FF[4]GM[11]SZ[14]AP[hexp2p];B[cc];W[aa];B[ee])');
+    expect(sgf).toBe('(;FF[4]GM[11]SZ[14]AP[hexp2p];B[c3];W[a1];B[e5])');
   });
 
   it('does not skip the letter i in the coordinate alphabet', () => {
-    // Column index 8 -> 'i' (no skipping), row index 0 -> 'a'.
+    // Column index 8 -> 'i' (no skipping), row index 0 -> row number 1.
     const sgf = gameStateToSgf(withMoves([[0, 8]]));
-    expect(sgf).toContain(';B[ia]');
+    expect(sgf).toContain(';B[i1]');
   });
 
-  it('encodes the row as a letter beyond single digits', () => {
-    // Column index 2 -> 'c', row index 9 -> 'j'.
+  it('encodes the row as a multi-digit number', () => {
+    // Column index 2 -> 'c', row index 9 -> row number 10.
     const sgf = gameStateToSgf(withMoves([[9, 2]]));
-    expect(sgf).toContain(';B[cj]');
+    expect(sgf).toContain(';B[c10]');
   });
 
-  it('flips colors and uses the transposed opening move when swapped', () => {
-    // After a swap the opening move is stored transposed and the parity flips,
-    // so history index 0 becomes White.
+  it('emits the swap as B[original]W[swap-pieces] when swapped', () => {
+    // The opening is stored transposed ([origCol, origRow]); it is emitted as
+    // Black at its original cell (un-transposed) followed by the swap-pieces
+    // reflection token, keeping a legal Black-first move order.
     const sgf = gameStateToSgf(
       withMoves(
         [
@@ -59,7 +60,15 @@ describe('gameStateToSgf', () => {
         { swapped: true },
       ),
     );
-    expect(sgf).toBe('(;FF[4]GM[11]SZ[14]AP[hexp2p];W[cb];B[dd])');
+    expect(sgf).toBe(
+      '(;FF[4]GM[11]SZ[14]AP[hexp2p];B[b3];W[swap-pieces];B[d4])',
+    );
+  });
+
+  it('emits the swap-pieces token exactly once with Black moving first', () => {
+    const sgf = gameStateToSgf(withMoves([[1, 2]], { swapped: true }));
+    expect(sgf).toBe('(;FF[4]GM[11]SZ[14]AP[hexp2p];B[b3];W[swap-pieces])');
+    expect(sgf.match(/swap-pieces/g)).toHaveLength(1);
   });
 
   it('adds RE[W+Resign] when Black resigned', () => {

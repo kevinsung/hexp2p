@@ -20,12 +20,19 @@ const HEX_GAME_TYPE = 11;
 
 const SGF_LETTERS = 'abcdefghijklmnopqrstuvwxyz';
 
-// Serializes a game to an SGF string using standard two-letter move notation
-// (e.g. ';B[cc]', ';W[aa]'), where the first letter is the column and the
-// second is the row, both drawn from a straight 'a'-'z' alphabet ('a' = 0).
+// Serializes a game to an SGF string using the Hex FF[4] point format
+// (e.g. ';B[c3]', ';W[a1]'), where a cell is a column letter from a straight
+// 'a'-'z' alphabet ('a' = 0) followed by a 1-indexed row number.
 // Colors are resolved with the same rule as `selectBoardState`, so the swap
 // case (transposed opening move plus flipped parity) comes out correct. The
 // full move history is emitted, regardless of the current navigation position.
+//
+// An accepted swap is emitted as the standard reflection token: the opening is
+// written as Black at its original (un-transposed) cell, immediately followed
+// by ';W[swap-pieces]'. `swapChosen` clears the opening and stores it
+// transposed as the White stone, and the swap-pieces token itself carries the
+// reflection, so a viewer re-derives the same board (original cell cleared,
+// White on the mirrored cell) while keeping a legal Black-first move order.
 export default function gameStateToSgf(state: GameState): string {
   const { settings, moveHistory, swapped, resignationState } = state;
   const { boardSize } = settings;
@@ -39,9 +46,18 @@ export default function gameStateToSgf(state: GameState): string {
   }
 
   for (let i = 0; i < moveHistory.length; i += 1) {
+    if (i === 0 && swapped) {
+      // The opening is stored transposed as [origCol, origRow]; emit it as
+      // Black at its original cell (reversing the transposition), then the
+      // swap-pieces token that reflects it to the stored White position.
+      const [origCol, origRow] = moveHistory[0];
+      sgf += `;B[${SGF_LETTERS[origCol]}${origRow + 1}]`;
+      sgf += ';W[swap-pieces]';
+      continue;
+    }
     const [row, col] = moveHistory[i];
     const color = Boolean(i % 2) === swapped ? 'B' : 'W';
-    const coordinate = `${SGF_LETTERS[col]}${SGF_LETTERS[row]}`;
+    const coordinate = `${SGF_LETTERS[col]}${row + 1}`;
     sgf += `;${color}[${coordinate}]`;
   }
 
